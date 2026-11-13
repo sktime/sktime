@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.pandas import df_map
 
 __author__ = ["mloning"]
 
@@ -13,12 +12,11 @@ class TSInterpolator(BaseTransformer):
     """Time series interpolator/re-sampler.
 
     Transformer that rescales series for another number of points.
-    For each cell in dataframe transformer fits scipy linear interp1d
-    and samples user defined number of points. Points are generated
+    For each time series, the transformer fits a scipy linear interp1d
+    and samples a user-defined number of points. Points are generated
     by numpy.linspace.
 
-    After transformation each cell will be a pd.Series of given length.
-    Indices of the pd.Series will be changed to integer indices.
+    After transformation each time series will have the given length.
 
     Parameters
     ----------
@@ -32,7 +30,7 @@ class TSInterpolator(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-multiindex",
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
         "python_dependencies": "scipy",
@@ -51,43 +49,62 @@ class TSInterpolator(BaseTransformer):
         self.length = length
         super().__init__()
 
-    def _resize_cell(self, cell):
-        """Resize a single array.
+    def _resize_series(self, values):
+        """Resize a single 1D array via linear interpolation.
 
-        Resizes the array. Firstly 1d linear interpolation is fitted on
-           original array as y and numpy.linspace(0, 1, len(cell)) as x.
-           Then user defined number of points is sampled in
-           numpy.linspace(0, 1, length) and returned into cell as numpy array.
+        Fits a 1D linear interpolation on the original array and samples
+        ``self.length`` evenly spaced points.
 
         Parameters
         ----------
-        cell : array-like
+        values : np.ndarray
+            1D array of values to interpolate.
 
         Returns
         -------
-        numpy.array : with user defined size
+        np.ndarray : interpolated array with ``self.length`` elements.
         """
         from scipy import interpolate
 
-        f = interpolate.interp1d(list(np.linspace(0, 1, len(cell))), cell.to_numpy())
-        Xt = f(np.linspace(0, 1, self.length))
-        return pd.Series(Xt)
+        x_old = np.linspace(0, 1, len(values))
+        x_new = np.linspace(0, 1, self.length)
+        f = interpolate.interp1d(x_old, values)
+        return f(x_new)
 
     def _transform(self, X, y=None):
-        """Take series in each cell, train linear interpolation and samples n.
+        """Interpolate each time series in the panel to a fixed length.
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_samples, n_features]
-            Nested dataframe with time series in cells, following nested_univ format.
+        X : pd.DataFrame with pd.MultiIndex
+            Panel data in pd-multiindex format. MultiIndex has two levels:
+            first level is instance index, second level is time index.
         y : ignored argument for interface compatibility
 
         Returns
         -------
-        pandas DataFrame : Transformed pandas DataFrame of shape [n_samples, n_features]
-            follows nested_univ format
+        Xt : pd.DataFrame with pd.MultiIndex, same format as X
+            Transformed version of X where every instance has been
+            resampled to ``self.length`` time points.
         """
-        return df_map(X)(self._resize_cell)
+        instances = X.index.get_level_values(0).unique()
+
+        result_frames = []
+        for inst_id in instances:
+            inst_data = X.loc[inst_id]
+
+            transformed = {}
+            for col in X.columns:
+                transformed[col] = self._resize_series(inst_data[col].values)
+
+            inst_df = pd.DataFrame(transformed)
+            inst_df.index = pd.MultiIndex.from_arrays(
+                [[inst_id] * self.length, range(self.length)],
+                names=X.index.names,
+            )
+            result_frames.append(inst_df)
+
+        return pd.concat(result_frames)
 
     @classmethod
     def get_test_params(cls):
