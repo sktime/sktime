@@ -95,6 +95,7 @@ class AutoREG(_StatsModelsAdapter):
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
@@ -222,7 +223,7 @@ class AutoREG(_StatsModelsAdapter):
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(
-            start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
+            start=start, end=end, exog=self._cur_X, exog_oos=X, dynamic=self.dynamic
         )
         y_pred.name = self._y_name
 

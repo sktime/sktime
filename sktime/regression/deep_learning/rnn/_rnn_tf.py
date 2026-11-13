@@ -72,6 +72,10 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.rnn._rnn_tf"],
     }
 
     def __init__(
@@ -209,7 +213,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
                     reduce_lr,
                 ]
             elif isinstance(self.callbacks, tuple):
-                self.callbacks_ = deepcopy([i for i in self.callbacks])
+                self.callbacks_ = deepcopy([*self.callbacks])
                 if not any(
                     isinstance(callback, keras.callbacks.ReduceLROnPlateau)
                     for callback in self.callbacks

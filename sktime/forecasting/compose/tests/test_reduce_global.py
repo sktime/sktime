@@ -19,12 +19,15 @@ from sklearn.pipeline import make_pipeline
 from sktime.datasets import load_airline, load_solar
 from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.compose import make_reduction
+from sktime.forecasting.compose import (
+    DirectTabularRegressionForecaster,
+    RecursiveTabularRegressionForecaster,
+    make_reduction,
+)
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
@@ -100,9 +103,17 @@ def y_dict():
 
     freq_inferred = y_train.index.freq
 
-    y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
-        lambda df: df.drop(x_names, axis=1).set_index(time_names).asfreq(freq_inferred)
-    )
+    if _check_soft_dependencies("pandas>=3.0", severity="none"):
+        y_train_hier_unequal = X3.groupby(
+            x_names,
+            as_index=True,
+        ).apply(lambda df: df.set_index(time_names).asfreq(freq_inferred))
+    else:
+        y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
+            lambda df: df.drop(x_names, axis=1)
+            .set_index(time_names)
+            .asfreq(freq_inferred),
+        )
     y_dict["y_train_hier_unequal"] = y_train_hier_unequal
 
     # Create integer index data
@@ -112,12 +123,6 @@ def y_dict():
     y_dict["y_numeric"] = y_numeric
 
     return y_dict
-
-
-# Get different WindowSummarizer functions
-kwargs = WindowSummarizer.get_test_params()[0]
-kwargs_alternames = WindowSummarizer.get_test_params()[1]
-kwargs_variant = WindowSummarizer.get_test_params()[2]
 
 
 def check_eval(test_input, expected):
@@ -156,11 +161,16 @@ def check_eval(test_input, expected):
 )
 def test_recursive_reduction(y, index_names, y_dict):
     """Test index column names match input names for recursive reduction."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = y_dict[y]
 
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
+
+    # Get different WindowSummarizer functions
+    kwargs = WindowSummarizer.get_test_params()[0]
 
     forecaster2 = make_reduction(
         regressor,
@@ -203,11 +213,16 @@ def test_recursive_reduction(y, index_names, y_dict):
 )
 def test_direct_reduction(y, index_names, y_dict):
     """Test index column names match input names for direct reduction."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = y_dict[y]
 
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
+
+    # Get different WindowSummarizer functions
+    kwargs = WindowSummarizer.get_test_params()[0]
 
     forecaster2 = make_reduction(
         regressor,
@@ -249,11 +264,17 @@ def test_direct_reduction(y, index_names, y_dict):
 )
 def test_list_reduction(y, index_names, y_dict):
     """Test index column names match input names for recursive reduction."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = y_dict[y]
 
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
+
+    # Get different WindowSummarizer functions
+    kwargs = WindowSummarizer.get_test_params()[0]
+    kwargs_variant = WindowSummarizer.get_test_params()[2]
 
     forecaster2 = make_reduction(
         regressor,
@@ -282,11 +303,13 @@ def test_list_reduction(y, index_names, y_dict):
 )
 def test_equality_transfo_nontranso(regressor):
     """Test that recursive reducers return same results for global / local forecasts."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = load_airline()[:36]
     y_train, y_test = temporal_train_test_split(y, test_size=12)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
 
-    lag_vec = [i for i in range(6, 0, -1)]
+    lag_vec = [*range(6, 0, -1)]
     kwargs = {
         "lag_feature": {
             "lag": lag_vec,
@@ -319,6 +342,8 @@ def test_equality_transfo_nontranso(regressor):
 )
 def test_nofreq_pass():
     """Test that recursive reducers return same results with / without freq given."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     regressor = make_pipeline(
         LinearRegression(),
     )
@@ -368,6 +393,9 @@ def test_nofreq_pass():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_timezoneaware_index():
+    """Test that recursive reducers handle timezone-aware indices correctly."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = load_solar(api_version=None)
     y_notz = y.copy().tz_localize(None)
 
@@ -402,3 +430,36 @@ def test_timezoneaware_index():
 
     # These should give us identical predictions
     np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
+
+
+@pytest.mark.parametrize("invalid_val", [np.nan, np.inf, -np.inf])
+@pytest.mark.parametrize(
+    "forecaster_cls",
+    [
+        DirectTabularRegressionForecaster,
+        RecursiveTabularRegressionForecaster,
+    ],
+)
+def test_global_reduction_nan_inf_returns_nan(invalid_val, forecaster_cls):
+    """Test that global pooling reducer returns NaN when window contains NaN or Inf.
+
+    Fixes #11521.
+    """
+    y = pd.DataFrame({"y": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]})
+    fh = [1, 2, 3]
+
+    reducer = forecaster_cls(
+        estimator=LinearRegression(),
+        window_length=3,
+        pooling="global",
+    )
+    reducer.fit(y, fh=fh)
+
+    # Clean data returns valid forecasts
+    res_clean = reducer.predict(fh=fh)
+    assert not res_clean.isna().any().any()
+
+    # Invalid value in last window triggers NaN predictions
+    reducer._cur_y.iloc[-1, 0] = invalid_val
+    res_invalid = reducer.predict(fh=fh)
+    assert res_invalid.isna().all().all()

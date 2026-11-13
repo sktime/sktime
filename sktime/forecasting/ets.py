@@ -1,6 +1,6 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements automatic and manually exponential time series smoothing models."""
+"""Exponential time series smoothing models."""
 
 __author__ = ["hyang1996", "sabasiddique1"]
 __all__ = ["AutoETS"]
@@ -182,6 +182,7 @@ class AutoETS(_StatsModelsAdapter):
         "python_dependencies": ["statsmodels", "joblib"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

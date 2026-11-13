@@ -79,7 +79,7 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         The number of epochs to train the model.
     batch_size : int, default=4
         The size of each mini-batch during training.
-    optimizer : case insensitive str or None or an instance of optimizers
+    optimizer : case insensitive str or None, or a class or instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model.
     optimizer_kwargs : dict or None, default = None
@@ -127,10 +127,13 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         # --------------
         "authors": ["jnrusson1", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.macnn._macnn_torch"],
     }
 
     def __init__(

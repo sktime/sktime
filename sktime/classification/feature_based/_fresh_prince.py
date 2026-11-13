@@ -80,8 +80,7 @@ class FreshPRINCE(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst"],
-        "python_version": "<3.10",
-        "python_dependencies": "tsfresh",
+        "python_dependencies": ["tsfresh", ["tsfresh>=0.21", "scipy<1.15"]],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -89,6 +88,11 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # test and CI flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -160,11 +164,13 @@ class FreshPRINCE(BaseClassifier):
             disable_progressbar=self.verbose < 1,
         )
 
-        X_t = self._tsfresh.fit_transform(X, y)
-        self._rotf.fit(X_t, y)
+        Xt = self._tsfresh.fit_transform(X, y)
+        self._rotf.fit(Xt, y)
+
+        self._Xt_cols = Xt.columns
 
         if self.save_transformed_data:
-            self.transformed_data_ = X_t
+            self.transformed_data_ = Xt
 
         return self
 
@@ -181,7 +187,9 @@ class FreshPRINCE(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
-        return self._rotf.predict(self._tsfresh.transform(X))
+        Xt = self._tsfresh.transform(X)
+        Xt = Xt.reindex(columns=self._Xt_cols, fill_value=0)
+        return self._rotf.predict(Xt)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
@@ -196,7 +204,9 @@ class FreshPRINCE(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        return self._rotf.predict_proba(self._tsfresh.transform(X))
+        Xt = self._tsfresh.transform(X)
+        Xt = Xt.reindex(columns=self._Xt_cols, fill_value=0)
+        return self._rotf.predict_proba(Xt)
 
     def _get_train_probs(self, X, y) -> np.ndarray:
         from sktime.datatypes import convert_to
@@ -252,9 +262,15 @@ class FreshPRINCE(BaseClassifier):
                 "n_estimators": 10,
                 "default_fc_parameters": "minimal",
             }
-        else:
-            return {
-                "n_estimators": 2,
-                "default_fc_parameters": "minimal",
-                "save_transformed_data": True,
-            }
+
+        params1 = {
+            "n_estimators": 2,
+            "default_fc_parameters": "minimal",
+            "save_transformed_data": True,
+        }
+        params2 = {
+            "n_estimators": 3,
+            "default_fc_parameters": "efficient",
+            "save_transformed_data": True,
+        }
+        return [params1, params2]

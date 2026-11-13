@@ -84,6 +84,14 @@ class MyForecaster(BaseForecaster):
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="forecaster", as_dataframe=True)
         #
+        # category = fitting principle of the estimator
+        # see sktime.registry._tags.category
+        # valid values: list of strings, subset of
+        #   "statistical", "naive", "machine_learning", "deep_learning",
+        #   "foundation_model", "reduction", "composition", "adapter",
+        #   "tuning", "agentic"
+        "category": ["statistical"],
+        #
         # behavioural tags: internal type
         # -------------------------------
         #
@@ -155,6 +163,19 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # if True, implement _pretrain and optionally _pretrain_update below
         # enables the pretrain -> fit -> predict workflow for global learning
+        #
+        # property:randomness = does the estimator behave deterministically or randomly?
+        "property:randomness": "deterministic",
+        # valid values: str, one of "deterministic", "stochastic", "derandomized"
+        #   "deterministic": estimator gives same results every run
+        #   "stochastic": estimator may give different results every run
+        #   "derandomized": estimator is stochastic but can be seeded via random_state
+        #
+        # capability:random_state = does the estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, the estimator has a random_state parameter for derandomization
+        # should be set to True if property:randomness is "derandomized"
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages

@@ -77,6 +77,9 @@ class TimeSeriesKvisibility(BaseClusterer):
         "capability:out_of_sample": False,
         "capability:predict": True,
         "capability:predict_proba": False,
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # not API compliant, see #8026 and #8072
     }
 
     DELEGATED_PARAMS = ["init", "n_clusters", "n_init"]

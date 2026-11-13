@@ -444,8 +444,10 @@ class WindowWarp(nn.Module):
     (https://halshs.archives-ouvertes.fr/halshs-01357973/document).
     """
 
-    def __init__(self, p, window_ratio=0.1, scales=[0.5, 2.0]):
+    def __init__(self, p, window_ratio=0.1, scales=None):
         super().__init__()
+        if scales is None:
+            scales = [0.5, 2.0]
         # 'p' is the probability of applying the window warp to the input data.
         self.p = p
 

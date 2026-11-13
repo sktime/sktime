@@ -43,11 +43,11 @@ def _convert_tsf_to_hierarchical(
 
     if freq is None:
         freq_map = {
-            "4_seconds": "4S",
+            "4_seconds": "4s",
             "minutely": "min",
             "10_minutes": "10min",
             "half_hourly": "30min",
-            "hourly": "H",
+            "hourly": "h",
             "daily": "D",
             "weekly": "W",
             "monthly": "MS",
@@ -118,8 +118,7 @@ def load_tsf_to_dataframe(
     """Convert the contents in a .tsf file into a dataframe.
 
     This code was extracted from
-    https://github.com/rakshitha123/TSForecasting/blob
-    /master/utils/data_loader.py.
+    https://github.com/rakshitha123/TSForecasting/blob/master/utils/data_loader.py.
 
     Parameters
     ----------

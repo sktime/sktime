@@ -51,12 +51,15 @@ class Catch22Wrapper(BaseTransformer):
         while to process for large values.
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
+
     col_names : str, one of {"range", "int_feat", "str_feat"}, optional, default="range"
-        The type of column names to return. If "range", column names will be
-        a regular range of integers, as in a RangeIndex.
-        If "int_feat", column names will be the integer feature indices,
-        as defined in pycatch22.
-        If "str_feat", column names will be the string feature names.
+        The type of column names to return.
+
+        * If "range", column names will be
+          a regular range of integers, as in a RangeIndex.
+        * If "int_feat", column names will be the integer feature indices,
+          as defined in pycatch22.
+        * If "str_feat", column names will be the string feature names.
 
     See Also
     --------
@@ -71,6 +74,16 @@ class Catch22Wrapper(BaseTransformer):
     .. [2] Fulcher, B. D., Little, M. A., & Jones, N. S. (2013). Highly comparative
     time-series analysis: the empirical structure of time series and their methods.
     Journal of the Royal Society Interface, 10(83), 20130048.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.catch22wrapper import (
+    ...     Catch22Wrapper
+    ... )  # doctest: +SKIP
+    >>> X = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # doctest: +SKIP
+    >>> transformer = Catch22Wrapper()  # doctest: +SKIP
+    >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
     """
 
     _tags = {

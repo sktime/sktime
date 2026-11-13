@@ -88,6 +88,7 @@ class Toto2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "None",
         "capability:multivariate": True,
@@ -109,6 +110,15 @@ class Toto2Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_toto2"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "toto_2_0_4m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-4m")',
+            "toto_2_0_22m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-22m")',
+            "toto_2_0_313m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-313m")',
+            "toto_2_0_1b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-1B")',
+            "toto_2_0_2_5b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-2.5B")',
+        },
     }
 
     def __init__(
@@ -164,6 +174,8 @@ class Toto2Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         import torch
 
         if self.device is None:
@@ -218,7 +230,7 @@ class Toto2Forecaster(BaseForecaster):
         relative_indices = fh.to_relative(self._cutoff) - 1
         selected = all_predictions[relative_indices]
 
-        return pd.DataFrame(selected, index=pred_index, columns=self._y.columns)
+        return pd.DataFrame(selected, index=pred_index, columns=self._cur_y.columns)
 
     def _run_forecast(self, fh):
         """Load the cached model, align the context, and run the raw forecast.
@@ -326,7 +338,7 @@ class Toto2Forecaster(BaseForecaster):
         knots = model.output_head.knots
         q = quantiles.squeeze(1).cpu().numpy()
 
-        var_names = self._y.columns
+        var_names = self._cur_y.columns
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = np.asarray(fh.to_relative(self._cutoff)) - 1
 

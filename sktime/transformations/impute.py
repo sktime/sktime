@@ -158,7 +158,7 @@ class Imputer(BaseTransformer):
                 }
             )
 
-        if method in "forecaster":
+        if method == "forecaster":
             self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
 
     def _fit(self, X, y=None):
@@ -247,9 +247,9 @@ class Imputer(BaseTransformer):
             elif self.method in ["pad", "ffill"]:
                 X = X.groupby(level=X_group_levels).ffill()
             elif self.method == "mean":
-                X = X.groupby(level=X_group_levels).fillna(value=self._mean)
+                X = X.fillna(value=self._mean)
             elif self.method == "median":
-                X = X.groupby(level=X_group_levels).fillna(value=self._median)
+                X = X.fillna(value=self._median)
             else:
                 raise AssertionError("Code should not be reached")
 

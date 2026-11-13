@@ -5,8 +5,8 @@ __author__ = ["fkiraly"]
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._registry import (
-    MTYPE_SOFT_DEPS,
     generate_mtype_register,
+    generate_mtype_soft_deps,
     mtype_to_scitype,
     scitype_to_mtype,
 )
@@ -90,13 +90,15 @@ def test_scitype_to_mtype(mtype, scitype):
     )
     assert mtype in result, msg
 
+    mtype_soft_deps = generate_mtype_soft_deps()
+
     # check that mtype is not returned in "exclude" setting if requires soft dep
     result_no_softdeps = scitype_to_mtype(scitype, softdeps="exclude")
-    assert (mtype in MTYPE_SOFT_DEPS.keys()) != (mtype in result_no_softdeps)
+    assert (mtype in mtype_soft_deps.keys()) != (mtype in result_no_softdeps)
 
-    if mtype in MTYPE_SOFT_DEPS.keys():
+    if mtype in mtype_soft_deps.keys():
         softdep_present = _check_soft_dependencies(
-            MTYPE_SOFT_DEPS[mtype], severity="none"
+            mtype_soft_deps[mtype], severity="none"
         )
     else:
         softdep_present = True

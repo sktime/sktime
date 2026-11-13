@@ -23,6 +23,23 @@ class ForecastingBenchmark(BaseBenchmark):
     cross validation splitting strategies and performance metrics, and return results as
     a df (as well as saving to file).
 
+    Each task is evaluated via :func:`sktime.forecasting.model_evaluation.evaluate`.
+    By default, this applies temporal cross-validation on a single series or panel.
+    Global benchmarking is supported by passing ``cv_global`` (and optionally
+    ``cv_global_temporal``) to :meth:`add_task`.
+
+    Global benchmarking applies a two-level split:
+
+    1. ``cv_global`` splits panel data at instance level into a pretrain set
+       ``y_pretrain`` and a test panel ``y_test_global`` (index ``j``).
+    2. ``cv_splitter`` splits ``y_test_global`` temporally into ``y_train`` and
+       ``y_test`` (index ``i``).
+    3. The forecaster is pretrained on ``y_pretrain``, fitted on ``y_train``, and
+       scored against ``y_test``.
+
+    For the full evaluation algorithm, including ``strategy`` handling and exogenous
+    data, see the docstring of :func:`~sktime.forecasting.model_evaluation.evaluate`.
+
     Parameters
     ----------
     id_format: str, optional (default=None)
@@ -109,23 +126,32 @@ class ForecastingBenchmark(BaseBenchmark):
             name combined with cv_splitter class name.
 
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
-            If ``cv_global`` is passed, then global benchmarking is applied, as follows:
+            If passed, enables global benchmarking as described in the class docstring.
+            See also :func:`~sktime.forecasting.model_evaluation.evaluate` for the
+            full evaluation algorithm.
 
-            1. the ``cv_global`` splitter is used to split data at instance level,
-            into a global training set ``y_train``,
-            and a global test set ``y_test_global``.
-            2. The estimator is fitted to the global training set ``y_train``.
-            3. ``cv_splitter`` then splits the global test set ``y_test_global``
-            temporally, to obtain temporal splits ``y_past``, ``y_true``.
+            1. The ``cv_global`` splitter is used to split data at instance level,
+               into a global pretrain set ``y_pretrain``,
+               and a global test set ``y_test_global``. This is index ``j``.
+            2. ``cv_splitter`` then splits the global test set ``y_test_global``
+               temporally, to obtain temporal splits ``y_train``, ``y_test``.
+               This is index ``i``.
+            3. If ``i == 0`` or ``strategy == "refit"``, the estimator is
+               cloned, pretrained on ``y_pretrain``, and fitted on ``y_train``.
+               Otherwise it is updated on ``y_train`` according to ``strategy``.
+            4. The estimator produces predictions ``y_pred``, of ``y_test``.
 
-            Overall, with ``y_train``, ``y_past``, ``y_true`` as above,
-            the following evaluation will be applied:
+            Overall, with ``y_pretrain``, ``y_train``, ``y_test`` as above,
+            the following evaluation will be applied at the start of each
+            instance fold (``i == 0``) and on every fold if
+            ``strategy == "refit"``:
 
             .. code-block:: python
 
+                forecaster.pretrain(y=y_pretrain, fh=cv.fh)
                 forecaster.fit(y=y_train, fh=cv.fh)
-                y_pred = forecaster.predict(y=y_past)
-                metric(y_true, y_pred)
+                y_pred = forecaster.predict()
+                metric(y_test, y_pred)
 
         error_score : "raise" or numeric, default="raise"
             Value to assign to the score if an exception occurs in estimator fitting.

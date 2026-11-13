@@ -1,14 +1,30 @@
 .. _data_format:
 
-Data Format Specifications
-==========================
+Data and File Format Specifications
+===================================
 
 This section provides specifications for:
 
+* serialized file formats used by ``sktime``: model serialization files, data files
 * python in-memory data containers used in ``sktime`` (e.g., time series, panel data, etc.)
-* serialized file formats used by ``sktime`` (e.g., ts)
+
 
 For utilities to check and convert data formats, see the API reference on :ref:`utils_ref`.
+
+
+Serialized File Format Specifications
+-------------------------------------
+
+``sktime`` supports a variety of file formats for serialized data,
+specific to storing time series data.
+
+Specifications for file formats specific to ``sktime`` are provided below:
+
+.. toctree::
+    :maxdepth: 1
+
+    file_specifications/model_serialization
+    file_specifications/ts
 
 
 In-memory Data Specifications
@@ -151,16 +167,3 @@ The ``Table`` mtype represents a (non-temporal) data frame table.
     TableNp2D
     TableListOfDict
     TablePolarsEager
-
-Serialized File Format Specifications
--------------------------------------
-
-``sktime`` supports a variety of file formats for serialized data,
-specific to storing time series data.
-
-Specifications for file formats specific to ``sktime`` are provided below:
-
-.. toctree::
-    :maxdepth: 1
-
-    file_specifications/ts

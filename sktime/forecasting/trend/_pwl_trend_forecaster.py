@@ -66,7 +66,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
 
     References
     ----------
-    .. [1] https://facebook.github.io/prophet
+    .. [1] https://meta.github.io/prophet/
 
     Examples
     --------
@@ -84,6 +84,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["sbuse", "bletham", "tcuongd"],
         # bletham, tcuongd for prophet
         "maintainers": ["sbuse"],
@@ -206,8 +207,8 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         y_pred = out.loc[:, "trend"]
         y_pred.index = future.index
 
-        if isinstance(self._y.columns[0], str):
-            y_pred.name = self._y.columns[0]
+        if isinstance(self._cur_y.columns[0], str):
+            y_pred.name = self._cur_y.columns[0]
         else:
             y_pred.name = None
 

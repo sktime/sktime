@@ -41,6 +41,8 @@ class PlateauFinder(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        # CI and test tags
+        # ----------------
         "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
     }
 
@@ -137,6 +139,32 @@ class DerivativeSlopeTransformer(BaseTransformer):
 
     where n is the length of the time series, and indices
     range from 0 to n-1.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.summarize import DerivativeSlopeTransformer
+    >>> X = pd.DataFrame({"a": [10, 12, 15, 20, 22]})
+    >>> t = DerivativeSlopeTransformer()
+    >>> t.fit_transform(X)
+         a
+    0  2.0
+    1  2.5
+    2  4.0
+    3  3.5
+    4  2.0
+
+    Works on multivariate data as well, computing the derivative independently
+    for each column:
+
+    >>> X2 = pd.DataFrame({"a": [10, 12, 15, 20, 22], "b": [5, 5, 6, 8, 8]})
+    >>> t.fit_transform(X2)
+         a    b
+    0  2.0  0.0
+    1  2.5  0.5
+    2  4.0  1.5
+    3  3.5  1.0
+    4  2.0  0.0
     """
 
     _tags = {
@@ -213,6 +241,9 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # and for y?
+        # CI and test flags
+        # -----------------
+        "tests:skip_all": True,  # mac failures, see #3103
     }
 
     def __init__(
@@ -337,6 +368,37 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
         return Xt
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        import numpy as np
+
+        return [
+            {},
+            {
+                "n_intervals": 2,
+                "min_length": 3,
+                "features": [np.mean, np.std],
+                "random_state": 0,
+            },
+        ]
+
 
 class FittedParamExtractor(BaseTransformer):
     """Fitted parameter extractor.
@@ -358,6 +420,36 @@ class FittedParamExtractor(BaseTransformer):
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> from sktime.transformations.summarize import FittedParamExtractor
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0]),
+    ...         pd.Series([10.0, 8.0, 6.0, 4.0]),
+    ...     ]
+    ... })
+    >>> t = FittedParamExtractor(
+    ...     forecaster=TrendForecaster(), param_names="regressor__intercept"
+    ... )
+    >>> t.fit_transform(X)
+       regressor__intercept
+    0                   1.0
+    1                  10.0
+
+    Multiple fitted parameters can be extracted at once, one column each:
+
+    >>> t = FittedParamExtractor(
+    ...     forecaster=TrendForecaster(),
+    ...     param_names=["regressor__intercept", "regressor__coef"],
+    ... )
+    >>> t.fit_transform(X)
+       regressor__intercept  regressor__coef
+    0                   1.0              1.0
+    1                  10.0             -2.0
     """
 
     _tags = {
@@ -372,6 +464,14 @@ class FittedParamExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
+        "tests:python_dependencies": ["statsmodels"],
+        "tests:specific": [
+            "sktime.transformations.summarize.tests.test_fittedparamextractor",
+        ],
     }
 
     def __init__(self, forecaster, param_names, n_jobs=None):
@@ -469,7 +569,12 @@ class FittedParamExtractor(BaseTransformer):
             {
                 "forecaster": TrendForecaster(),
                 "param_names": ["regressor__intercept"],
-            }
+            },
+            # soft dependency free second parameter set, several parameters
+            {
+                "forecaster": TrendForecaster(),
+                "param_names": ["regressor__intercept", "regressor__n_features_in"],
+            },
         ]
 
         # ExponentialSmoothing requires statsmodels

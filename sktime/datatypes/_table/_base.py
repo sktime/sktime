@@ -65,6 +65,7 @@ class ScitypeTable(BaseDatatype):
         "name": None,  # any string
         "name_python": None,  # lower_snake_case
         "name_aliases": [],
+        "description": "data table with primitive column types",
         "python_version": None,
         "python_dependencies": None,
     }
