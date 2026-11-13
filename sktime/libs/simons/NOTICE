@@ -1,0 +1,57 @@
+Simons
+Copyright 2026 Abel AI Lab
+
+This product includes software developed at Abel AI Lab (https://abel.ai).
+
+Training data
+-------------
+
+The Simons model weights were trained on third-party datasets. Each dataset keeps its own license
+and terms. The public datasets whose terms allow it are redistributed in the Hugging Face dataset
+Simons-Pretrain (https://huggingface.co/datasets/abel-lab/Simons-Pretrain). Its NOTICE.md
+(https://huggingface.co/datasets/abel-lab/Simons-Pretrain/blob/main/NOTICE.md) lists the
+public datasets with their sources, licenses and attributions; the data were cleaned, resampled and
+cut into training windows. The licenses of the following data require these notices:
+
+- ERA5: Contains modified Copernicus Climate Change Service information 2026. Neither the European
+  Commission nor ECMWF is responsible for any use that may be made of the Copernicus information
+  or data it contains.
+- CAMS European air-quality forecasts: Contains modified Copernicus Atmosphere Monitoring Service
+  information 2026. Neither the European Commission nor ECMWF is responsible for any use that may
+  be made of the Copernicus information or data it contains.
+- ECMWF IFS weather forecasts, retrieved through the Open-Meteo archive: Weather data by
+  Open-Meteo.com (https://open-meteo.com/), CC BY 4.0. Based on data and products of the European
+  Centre for Medium-Range Weather Forecasts (ECMWF, https://www.ecmwf.int/), CC BY 4.0.
+- NASA POWER: Weather data were obtained from the NASA Langley Research Center POWER Project
+  funded through the NASA Earth Science Directorate Applied Science Program.
+- NCEP/CPC L3 Half Hourly 4km Global Merged IR (GPM_MERGIR): NASA is the source of these data
+  (https://disc.gsfc.nasa.gov/datasets/GPM_MERGIR_1/summary).
+- Elexon BMRS: Contains BMRS data © Elexon Limited copyright and database right 2026.
+- National Highways WebTRIS: Contains public sector information licensed under the Open Government
+  Licence v3.0.
+- NESO Data Portal: Supported by National Energy SO Open Data.
+- EirGrid: Supported by EirGrid Group Data.
+- Retrosheet: The information used here was obtained free of charge from and is copyrighted by
+  Retrosheet. Interested parties may contact Retrosheet at "www.retrosheet.org".
+- WorldTrace: Contains information from WorldTrace, which is made available in Simons-Pretrain
+  under the Open Database License (ODbL).
+- Banco Central do Brasil Focus survey: Contains information from the Focus market expectations
+  survey of Banco Central do Brasil, which is made available in Simons-Pretrain under the Open
+  Database License (ODbL).
+- Wikipedia: The NBA, NHL and WNBA event dates in covariates/nyc_subway_events of
+  Simons-Pretrain come from Wikipedia team-season articles by Wikipedia contributors, licensed
+  under CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/). That part is made available
+  in Simons-Pretrain under CC BY-SA 4.0.
+- opentransportdata.swiss: Source of the raw data: opentransportdata.swiss.
+- RTE eCO2mix: Data from RTE éCO2mix (https://odre.opendatasoft.com/), Licence Ouverte 2.0.
+- CausalRivers: Data from CausalRivers (https://causalrivers.github.io/), licensed under
+  dl-de/by-2-0 (https://www.govdata.de/dl-de/by-2-0).
+- AEMO: Contains data from the Australian Energy Market Operator (AEMO), used under AEMO's
+  copyright permissions.
+- Elia: Contains data from Elia Open Data (https://opendata.elia.be/).
+- LargeAQ: from CauAir (https://github.com/PoorOtterBob/CauAir), CC BY 4.0. Ma et al., "Causal
+  Learning Meet Covariates: Empowering Lightweight and Effective Nationwide Air Quality
+  Forecasting", IJCAI 2025 (https://www.ijcai.org/proceedings/2025/353).
+- Datasets under CC BY 4.0, CC BY-SA 4.0 and other attribution licenses are credited, with links
+  to their sources and licenses, in the NOTICE.md of Simons-Pretrain
+  (https://huggingface.co/datasets/abel-lab/Simons-Pretrain/blob/main/NOTICE.md).
