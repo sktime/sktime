@@ -171,7 +171,9 @@ def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
 
         is_start_window = cv_window[-1] == cv.window_length - 1
         is_end_window = cv_window[-1] == len(Z) - 1
-        if is_start_window:
+        if is_start_window and is_end_window:
+            idx_range = cv_window
+        elif is_start_window:
             idx_range = range(cv_window[0], half_window_length + 1)
         elif is_end_window:
             if cv.window_length % 2 == 0:
