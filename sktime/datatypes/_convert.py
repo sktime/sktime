@@ -71,25 +71,29 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._check import mtype as infer_mtype
-from sktime.datatypes._panel import convert_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
-from sktime.datatypes._series import convert_dict_Series
-from sktime.datatypes._table import convert_dict_Table
 
 # conversions obtained via an anchor mtype, applied in this order
 # triples (mtype, anchor_mtype, scitype): conversions from and to mtype are
 # obtained via anchor_mtype, for all mtypes of scitype, if not defined directly
 _EXTENSION_SEQUENCE = [
+    ("xr.DataArray", "pd.DataFrame", "Series"),
+    ("dask_series", "pd.DataFrame", "Series"),
+    ("gluonts_ListDataset_series", "pd.DataFrame", "Series"),
+    ("gluonts_PandasDataset_series", "pd.DataFrame", "Series"),
+    ("numpyflat", "numpy3D", "Panel"),
+    ("pd-long", "pd-multiindex", "Panel"),
+    ("dask_panel", "pd-multiindex", "Panel"),
+    ("polars_panel", "pd-multiindex", "Panel"),
+    ("gluonts_ListDataset_panel", "pd-multiindex", "Panel"),
+    ("gluonts_PandasDataset_panel", "pd-multiindex", "Panel"),
     ("dask_hierarchical", "pd_multiindex_hier", "Hierarchical"),
     ("polars_hierarchical", "pd_multiindex_hier", "Hierarchical"),
+    ("pd_Series_Table", "pd_DataFrame_Table", "Table"),
+    ("list_of_dict", "pd_DataFrame_Table", "Table"),
+    ("polars_eager_table", "pd_DataFrame_Table", "Table"),
+    ("polars_lazy_table", "pd_DataFrame_Table", "Table"),
 ]
-
-# conversions not yet migrated to BaseConverter classes,
-# these are function based and merged into the generated convert_dict
-_convert_dict_legacy = dict()
-_convert_dict_legacy.update(convert_dict_Series)
-_convert_dict_legacy.update(convert_dict_Panel)
-_convert_dict_legacy.update(convert_dict_Table)
 
 
 def get_convert_dict(soft_deps="present"):
@@ -125,7 +129,7 @@ def generate_convert_dict(soft_deps="present"):
     """Generate convert_dict using lookup of BaseConverter classes.
 
     Collects all ``BaseConverter`` subclasses in ``sktime.datatypes``,
-    and adds the function based conversions not yet migrated to classes.
+    and adds the conversions via anchor mtypes in ``_EXTENSION_SEQUENCE``.
     """
     from skbase.utils.dependencies import _check_estimator_deps
 
@@ -141,7 +145,7 @@ def generate_convert_dict(soft_deps="present"):
     if soft_deps == "present":
         classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
 
-    convert_dict = dict(_convert_dict_legacy)
+    convert_dict = {}
     for cls in classes:
         if not cls.get_class_tag("multiple_conversions", False):
             converters = [cls()]

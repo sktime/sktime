@@ -9,8 +9,7 @@ from sktime.datatypes._convert import get_convert_dict
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
 
-# scitypes whose conversions are fully migrated to BaseConverter classes
-MIGRATED_SCITYPES = ["Hierarchical", "Proba"]
+SCITYPES = ["Series", "Panel", "Hierarchical", "Table", "Proba"]
 
 
 @pytest.mark.skipif(
@@ -41,20 +40,20 @@ def test_convert_dict_keys_and_values(soft_deps):
     not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
-@pytest.mark.parametrize("scitype", MIGRATED_SCITYPES)
-def test_migrated_conversions_are_baseconverters(scitype):
-    """Test that migrated conversions are BaseConverter matching their key."""
+@pytest.mark.parametrize("scitype", SCITYPES)
+def test_conversions_are_baseconverters(scitype):
+    """Test that conversions are BaseConverter matching their key."""
     convert_dict = get_convert_dict(soft_deps="all")
     keys = [k for k in convert_dict if k[2] == scitype]
     assert len(keys) > 0
 
     for key in keys:
         converter = convert_dict[key]
-        assert isinstance(converter, BaseConverter)
-        assert converter._get_key() == key
         mtype_from, mtype_to, _ = key
+        assert isinstance(converter, BaseConverter), f"{key} is not a BaseConverter"
         assert converter.get_tag("mtype_from") == mtype_from
         assert converter.get_tag("mtype_to") == mtype_to
+        assert converter._get_key() == key
 
 
 @pytest.mark.skipif(

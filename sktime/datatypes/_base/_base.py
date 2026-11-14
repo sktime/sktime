@@ -433,9 +433,23 @@ class BaseConverter(BaseObject):
         """
         cls_from, cls_to = self._get_cls_from_to()
 
-        mtype_from = cls_from.get_class_tag("name")
-        mtype_to = cls_to.get_class_tag("name")
-        scitype = cls_to.get_class_tag("scitype")
+        # mtypes without a datatype class, e.g., pd-long, are given as strings;
+        # their scitype is taken from the other mtype, or from the mtype register
+        mtype_from = self.get_tag("mtype_from")
+        mtype_to = self.get_tag("mtype_to")
+        if cls_from is not None:
+            mtype_from = cls_from.get_class_tag("name")
+        if cls_to is not None:
+            mtype_to = cls_to.get_class_tag("name")
+
+        if cls_to is not None:
+            scitype = cls_to.get_class_tag("scitype")
+        elif cls_from is not None:
+            scitype = cls_from.get_class_tag("scitype")
+        else:
+            from sktime.datatypes._registry import mtype_to_scitype
+
+            scitype = mtype_to_scitype(mtype_to)
         return (mtype_from, mtype_to, scitype)
 
 
