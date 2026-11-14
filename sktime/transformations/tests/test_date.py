@@ -393,6 +393,39 @@ def test_month_of_quarter(df_panel):
     not run_test_for_class(DateTimeFeatures),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_manual_selection_millisecond_of_second():
+    """Tests that millisecond_of_second is the 0-999 offset into the second.
+
+    Regression test: ``_calendar_dummies`` used ``microsecond * 1000`` instead of
+    ``microsecond // 1000``, producing values such as 123456000 instead of 123.
+    """
+    y = pd.DataFrame(
+        data={"y": [1, 1, 1, 1, 1]},
+        index=pd.date_range(start="2020-01-01 00:00:00", freq="250ms", periods=5),
+    )
+    transformer = DateTimeFeatures(
+        manual_selection=["millisecond_of_second"], keep_original_columns=True
+    )
+
+    yt = transformer.fit_transform(y)
+    expected = pd.DataFrame(
+        data={"y": [1, 1, 1, 1, 1], "millisecond_of_second": [0, 250, 500, 750, 0]},
+        index=y.index,
+    )
+    assert_frame_equal(yt, expected)
+
+    y_frac = pd.DataFrame(
+        data={"y": [1.0]},
+        index=pd.DatetimeIndex(["2020-01-01 00:00:00.123456"]),
+    )
+    yt_frac = transformer.fit_transform(y_frac)
+    assert yt_frac["millisecond_of_second"].iloc[0] == 123
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_manual_selection_hour_of_week(df_panel):
     """Tests that "hour_of_week" returns correct result in `manual_selection`."""
     y = pd.DataFrame(
