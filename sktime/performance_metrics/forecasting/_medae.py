@@ -142,7 +142,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
                 return raw_values
 
             if multioutput == "uniform_average":
-                return raw_values.median(axis=1)
+                return raw_values.mean(axis=1)
 
         # else, we expect multioutput to be array-like
         return raw_values.dot(multioutput)
