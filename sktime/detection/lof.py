@@ -192,9 +192,44 @@ class SubLOF(BaseDetector):
             interval: LocalOutlierFactor(**model_params) for interval in intervals
         }
 
+        training_anomaly_indexes = []
         for interval, model in self.models.items():
             mask = (X.index >= interval.left) & (X.index < interval.right)
-            model.fit(X.loc[mask])
+            X_subset = X.loc[mask]
+
+            if self.novelty:
+                model.fit(X_subset)
+            else:
+                y_subset = model.fit_predict(X_subset)
+                interval_ilocs = np.flatnonzero(mask)
+                training_anomaly_indexes.extend(interval_ilocs[y_subset == -1])
+
+        if not self.novelty:
+            self._fit_predict_output_ = pd.DataFrame(
+                {"ilocs": pd.Series(training_anomaly_indexes, dtype="int64")}
+            )
+
+    def fit_predict(self, X, y=None):
+        """Fit to data and return anomaly locations in the training data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame, pd.Series or np.ndarray
+            Training data to fit model to (time series).
+        y : pd.DataFrame with RangeIndex, optional
+            Known events for training. Unused because ``SubLOF`` is unsupervised.
+
+        Returns
+        -------
+        y : pd.DataFrame with RangeIndex
+            Detected anomaly locations in the ``"ilocs"`` column.
+        """
+        self.fit(X, y=y)
+
+        if self.novelty:
+            return self.predict(X)
+
+        return self._fit_predict_output_.copy()
 
     @staticmethod
     def _split_into_intervals(x, interval_size):
