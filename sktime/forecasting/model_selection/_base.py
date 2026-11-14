@@ -247,7 +247,9 @@ class BaseGridSearch(_DelegatedForecaster):
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+        self.best_forecaster_ = self.forecaster.clone().set_params(
+            **_clone_params(self.best_params_)
+        )
 
         # Refit model with best parameters.
         if self.refit:
@@ -268,7 +270,7 @@ class BaseGridSearch(_DelegatedForecaster):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = self.forecaster.clone().set_params(**params)
+            forecaster = self.forecaster.clone().set_params(**_clone_params(params))
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y=y, X=X, fh=fh)
@@ -352,6 +354,18 @@ class BaseGridSearch(_DelegatedForecaster):
         return self
 
 
+def _clone_params(params):
+    """Clone estimator values in a parameter dict, to avoid mutating them.
+
+    ``set_params`` with nested parameters, e.g., ``pipeline__forecaster__strategy``,
+    changes the object passed as ``pipeline`` in place. If that object comes from
+    the user's ``param_grid``, it would get mutated, so we clone it first.
+    """
+    from sklearn.base import clone
+
+    return {key: clone(value, safe=False) for key, value in params.items()}
+
+
 def _fit_and_score(params, meta):
     """Fit and score forecaster with given parameters.
 
@@ -363,7 +377,7 @@ def _fit_and_score(params, meta):
 
     # Set parameters.
     forecaster = meta.pop("forecaster").clone()
-    forecaster.set_params(**params)
+    forecaster.set_params(**_clone_params(params))
 
     # Evaluate.
     out = evaluate(forecaster, **meta)

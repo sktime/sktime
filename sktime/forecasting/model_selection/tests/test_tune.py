@@ -530,3 +530,52 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
             )
             total_combinations = calculate_total_combinations(kwargs[key])
             assert len(searchCV.n_best_forecasters_) == total_combinations
+
+
+def test_tuning_does_not_mutate_param_grid_estimators():
+    """Test that tuning does not mutate estimators passed in param_grid.
+
+    Failure case of bug #6894: nested params were set on the estimator objects
+    from ``param_grid`` in place, mutating the user's objects and making
+    ``n_best_forecasters_`` share one object.
+    """
+    from sktime.datasets import load_airline
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.split import SlidingWindowSplitter
+    from sktime.transformations.series.exponent import ExponentTransformer
+
+    y = load_airline()
+
+    inner = TransformedTargetForecaster(
+        [("t", ExponentTransformer()), ("forecaster", NaiveForecaster())]
+    )
+    outer = TransformedTargetForecaster(
+        [("t", ExponentTransformer()), ("inner", inner)]
+    )
+
+    strategies = ["last", "drift", "mean"]
+    param_grid = {"inner": [inner], "inner__forecaster__strategy": strategies}
+
+    gscv = ForecastingGridSearchCV(
+        outer,
+        param_grid=param_grid,
+        cv=SlidingWindowSplitter(window_length=60, fh=[1, 2, 3]),
+        return_n_best_forecasters=3,
+        # sequential backend: candidates are evaluated in the same process,
+        # on the objects from param_grid, which exposes the in-place mutation.
+        # Default "loky" pickles params to subprocesses, which hides the bug.
+        backend=None,
+    )
+    gscv.fit(y, fh=[1, 2, 3])
+
+    # the user's estimator in param_grid must not be mutated
+    assert inner.get_params()["forecaster__strategy"] == "last"
+
+    # each of the n best forecasters must use its own requested strategy
+    fitted_strategies = {
+        f.get_params()["inner__forecaster__strategy"]
+        for _, f in gscv.n_best_forecasters_
+    }
+    assert fitted_strategies == set(strategies)
