@@ -94,7 +94,6 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 [time series distances/kernels]: https://github.com/sktime/sktime/tree/main/sktime/dists_kernels
 [time series alignment]: https://github.com/sktime/sktime/tree/main/sktime/alignment
 [transformations]: https://github.com/sktime/sktime/tree/main/sktime/transformations
-[distributions and simulation]: https://github.com/sktime/sktime/tree/main/sktime/proba
 [time series splitters]: https://github.com/sktime/sktime/tree/main/sktime/split
 [parameter fitting]: https://github.com/sktime/sktime/tree/main/sktime/param_est
 
