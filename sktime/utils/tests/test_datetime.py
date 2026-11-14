@@ -77,6 +77,15 @@ def test_coerce_duration_to_int() -> None:
         pd.Index([3, 4], dtype=int),
     )
 
+    duration = pd.Timedelta(days=21)
+    assert _coerce_duration_to_int(duration=duration, freq="W-SUN") == 3
+
+    duration = pd.to_timedelta([14, 28], unit="D")
+    pd.testing.assert_index_equal(
+        _coerce_duration_to_int(duration=duration, freq="2W-SUN"),
+        pd.Index([1, 2], dtype=int),
+    )
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.utils", "sktime.datatypes"]),
