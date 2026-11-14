@@ -115,6 +115,10 @@ class MiniRocketMultivariateVariable(BaseTransformer):
         "requires_y": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_no_global_numpy_random_state_side_effects"],
+        # sets the global numpy random seed, remove once #11395 is merged
     }
 
     def __init__(
