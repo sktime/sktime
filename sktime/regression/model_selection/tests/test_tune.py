@@ -152,3 +152,28 @@ def test_no_sklearn_gridsearch_delegate():
 
     assert not isinstance(tuner.best_estimator_, GridSearchCV)
     assert not hasattr(tuner, "estimator_")
+
+
+def test_tuning_does_not_mutate_param_grid_estimators():
+    """Estimators passed in param_grid are not mutated, see #11829."""
+    from sklearn.model_selection import KFold
+
+    from sktime.regression.compose import RegressorPipeline
+    from sktime.regression.dummy import DummyRegressor
+    from sktime.regression.model_selection import TSRGridSearchCV
+    from sktime.transformations.series.exponent import ExponentTransformer
+
+    rng = np.random.default_rng(0)
+    X = rng.random((20, 1, 10))
+    y = rng.random(20)
+    inner = DummyRegressor(strategy="median")
+    pipe = RegressorPipeline(regressor=inner, transformers=[ExponentTransformer()])
+    param_grid = {
+        "regressor": [inner],
+        "regressor__strategy": ["mean", "constant"],
+        "regressor__constant": [0.5],
+    }
+    TSRGridSearchCV(pipe, param_grid, cv=KFold(n_splits=2)).fit(X, y)
+
+    # the user's estimator in param_grid must not be mutated
+    assert inner.get_params()["strategy"] == "median"

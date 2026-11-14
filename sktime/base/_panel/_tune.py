@@ -97,6 +97,18 @@ def _score_times(results):
     return results[cols].sum(axis=1).to_numpy(dtype=float)
 
 
+def _clone_params(params):
+    """Clone estimator values in a parameter dict, to avoid mutating them.
+
+    ``set_params`` with nested parameters, e.g., ``classifier__strategy``, changes
+    the object passed as ``classifier`` in place. If that object comes from the
+    user's ``param_grid``, it would get mutated, so we clone it first.
+    """
+    from sklearn.base import clone
+
+    return {key: clone(value, safe=False) for key, value in params.items()}
+
+
 def _fit_and_score(params, meta):
     """Backtest one parameter candidate, via native evaluate.
 
@@ -107,7 +119,7 @@ def _fit_and_score(params, meta):
     # see sktime/tests/test_cross_module_imports.py
     from sktime.classification.model_evaluation import evaluate
 
-    estimator = meta["estimator"].clone().set_params(**params)
+    estimator = meta["estimator"].clone().set_params(**_clone_params(params))
     scoring = meta["scoring"]
 
     # scoring is always passed explicitly, so the default of evaluate never applies,
@@ -411,7 +423,9 @@ def _fit_tuner(tuner, X, y, estimator_type):
     for name, value in results.items():
         setattr(tuner, name, value)
 
-    tuner.best_estimator_ = tuner.estimator.clone().set_params(**tuner.best_params_)
+    tuner.best_estimator_ = tuner.estimator.clone().set_params(
+        **_clone_params(tuner.best_params_)
+    )
     if tuner.refit:
         tuner.refit_time_ = _fit_and_time(tuner.best_estimator_, X, y)
 
