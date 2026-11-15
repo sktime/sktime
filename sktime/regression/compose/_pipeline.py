@@ -172,7 +172,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     @property
     def _steps(self):
-        return self._check_estimators(self.transformers) + [
+        return self._check_estimators(self.transformers, allow_empty=True) + [
             self._coerce_estimator_tuple(self.regressor)
         ]
 
@@ -493,7 +493,7 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     @property
     def _steps(self):
-        return self._check_estimators(self.transformers) + [
+        return self._check_estimators(self.transformers, allow_empty=True) + [
             self._coerce_estimator_tuple(self.regressor)
         ]
 
