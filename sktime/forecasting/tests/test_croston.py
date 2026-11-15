@@ -254,6 +254,21 @@ def test_croston_in_sample_after_update(remember_data):
 
 
 @pytest.mark.parametrize("remember_data", [True, False])
+def test_croston_in_sample_after_first_demand(remember_data):
+    """Refitting on the first demand preserves the history across updates."""
+    y = pd.Series(
+        [0.0, 0.0, 0.0, 4.0, 0.0, 7.0],
+        index=pd.date_range("2020-01-01", periods=6, freq="D"),
+    )
+    incremental = Croston(0.1).set_config(remember_data=remember_data).fit(y.iloc[:2])
+    incremental.update(y.iloc[2:3])
+    incremental.update(y.iloc[3:])
+    full = Croston(0.1).fit(y)
+    fh = [-5, -4, -3, -2, -1, 0, 1]
+    pd.testing.assert_series_equal(incremental.predict(fh=fh), full.predict(fh=fh))
+
+
+@pytest.mark.parametrize("remember_data", [True, False])
 def test_croston_unobserved_historical_dates(remember_data):
     """Never wrap negative positions or invent estimates for unobserved dates."""
     y = pd.Series([2.0, 4.0, 0.0, 8.0], index=[10, 12, 15, 20])

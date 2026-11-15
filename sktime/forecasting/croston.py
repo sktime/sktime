@@ -190,7 +190,9 @@ class Croston(BaseForecaster):
         # produce. Refitting on the accumulated history restores exactness.
         if not self._seen_demand and np.any(y > 0):
             y_with_zeros = np.concatenate([np.zeros(self._n_zeros), y])
-            return self._fit(y=y_with_zeros, X=X, fh=None)
+            history_index = self._f_index.append(new_index)
+            history = pd.DataFrame(y_with_zeros, index=history_index)
+            return self._fit(y=history, X=X, fh=None)
 
         smoothing = self.smoothing
 
