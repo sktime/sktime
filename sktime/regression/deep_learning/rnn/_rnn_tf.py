@@ -213,7 +213,7 @@ class SimpleRNNRegressor(BaseDeepRegressor):
                     reduce_lr,
                 ]
             elif isinstance(self.callbacks, tuple):
-                self.callbacks_ = deepcopy([i for i in self.callbacks])
+                self.callbacks_ = deepcopy([*self.callbacks])
                 if not any(
                     isinstance(callback, keras.callbacks.ReduceLROnPlateau)
                     for callback in self.callbacks

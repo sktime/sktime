@@ -200,10 +200,10 @@ class Step:
     def _fetch_input_data(self, fit, required_method, mro, kwargs):
         input_data = {}
         all_none = True
-        transformer_names = []
 
         for step_name, steps in self.input_edges.items():
             results = []
+            transformer_names = []
             for step in steps:
                 transformer_names.append(step.name)
                 result = step.get_result(

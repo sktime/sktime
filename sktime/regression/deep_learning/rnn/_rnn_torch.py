@@ -135,6 +135,7 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.rnn._rnn_torch"],
+        "tests:core": True,
     }
 
     def __init__(

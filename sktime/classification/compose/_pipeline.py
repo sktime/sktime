@@ -77,13 +77,13 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     Examples
     --------
     >>> from sktime.transformations.pca import PCATransformer
-    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.classification.compose import ClassifierPipeline
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> pipeline = ClassifierPipeline(
-    ...     TimeSeriesForestClassifier(n_estimators=5), [PCATransformer()]
+    ...     KNeighborsTimeSeriesClassifier(n_neighbors=5), [PCATransformer()]
     ... )
     >>> pipeline.fit(X_train, y_train)
     ClassifierPipeline(...)
@@ -91,7 +91,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     Alternative construction via dunder method:
 
-    >>> pipeline = PCATransformer() * TimeSeriesForestClassifier(n_estimators=5)
+    >>> pipeline = PCATransformer() * KNeighborsTimeSeriesClassifier(n_neighbors=5)
     """
 
     _tags = {

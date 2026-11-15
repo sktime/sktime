@@ -75,6 +75,7 @@ class Chronos2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": ["priyanshuharshbodhi1", "fkiraly"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],
@@ -87,7 +88,6 @@ class Chronos2Forecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:insample": False,
-        "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
@@ -95,6 +95,22 @@ class Chronos2Forecaster(BaseForecaster):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "chronos_2": (
+                'Chronos2Forecaster(model_path="amazon/chronos-2", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_small": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-small", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_synth": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-synth", '
+                'config={"device_map": "auto"})'
+            ),
+        },
     }
 
     _default_config = {
@@ -197,6 +213,8 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         self
         """
+        self._cur_y = y
+        self._cur_X = X
         self.model_pipeline = self._load_pipeline()
 
         context_length = self._config["context_length"]
@@ -242,15 +260,15 @@ class Chronos2Forecaster(BaseForecaster):
         context = self._context
         input_dict = {"target": context}
 
-        if self._X is not None:
+        if self._cur_X is not None:
             actual_len = context.shape[1]
-            past_X = self._X.values[-actual_len:]
+            past_X = self._cur_X.values[-actual_len:]
             input_dict["past_covariates"] = {
-                col: past_X[:, i] for i, col in enumerate(self._X.columns)
+                col: past_X[:, i] for i, col in enumerate(self._cur_X.columns)
             }
 
         if X is not None:
-            if self._X is None:
+            if self._cur_X is None:
                 raise ValueError(
                     "X was not provided in fit but is provided in predict. "
                     "To use future covariates, provide past covariate values "
