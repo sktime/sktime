@@ -381,7 +381,7 @@ def _calendar_dummies(x, funcs):
         df.loc[(df["quarter"] == 1) & (df["week"] < 52), "qweek"] = 0
         cd = df["week"] - df["qweek"] + 1
     elif funcs == "millisecond":
-        cd = date_sequence.microsecond * 1000
+        cd = date_sequence.microsecond // 1000
     elif funcs == "day_of_quarter":
         quarter = date_sequence.quarter
         quarter_start = pd.DatetimeIndex(

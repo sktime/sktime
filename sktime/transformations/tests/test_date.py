@@ -423,3 +423,22 @@ def test_fit_transform_no_warnings():
         warnings.simplefilter("always")
         transformer.fit_transform(y)
         assert len(w) == 0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_manual_selection_millisecond_of_second():
+    """Regression test for millisecond_of_second calculation."""
+    idx = pd.DatetimeIndex(["2020-01-01 00:00:00.123456"])
+    X = pd.DataFrame({"y": [1.0]}, index=idx)
+    transformer = DateTimeFeatures(manual_selection=["millisecond_of_second"])
+    Xt = transformer.fit_transform(X)
+    assert Xt["millisecond_of_second"].iloc[0] == 123
+
+    idx_grid = pd.date_range("2020-01-01 00:00:00", periods=5, freq="250ms")
+    X_grid = pd.DataFrame({"y": range(5)}, index=idx_grid)
+    Xt_grid = transformer.fit_transform(X_grid)
+    assert Xt_grid["millisecond_of_second"].tolist() == [0, 250, 500, 750, 0]
+
