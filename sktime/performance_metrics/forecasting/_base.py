@@ -692,14 +692,39 @@ class BaseForecastingErrorMetric(BaseMetric):
             )
 
         if not same_rows:
-            warn(
-                "y_pred and y_true do not have the same row index. "
-                "This may indicate incorrect objects passed to the metric. "
-                "Indices of y_true will be used for y_pred.",
-                obj=self,
-            )
-            y_pred_orig = y_pred_orig.copy()
-            y_pred_orig.index = y_true.index
+            if hasattr(y_true_orig, "sort_index") and hasattr(
+                y_pred_orig, "sort_index"
+            ):
+                y_true_sorted = y_true_orig.sort_index()
+                y_pred_sorted = y_pred_orig.sort_index()
+                if y_true_sorted.index.equals(y_pred_sorted.index):
+                    warn(
+                        "y_pred and y_true do not have the same row index order. "
+                        "Indices have been sorted to align y_true and y_pred.",
+                        obj=self,
+                    )
+                    y_true_orig = y_true_sorted
+                    y_pred_orig = y_pred_sorted
+                else:
+                    warn(
+                        "y_pred and y_true do not have the same row index. "
+                        "This may indicate incorrect objects passed to the metric. "
+                        "Indices of y_true will be used for y_pred.",
+                        obj=self,
+                    )
+                    if hasattr(y_pred_orig, "copy"):
+                        y_pred_orig = y_pred_orig.copy()
+                    y_pred_orig.index = y_true.index
+            else:
+                warn(
+                    "y_pred and y_true do not have the same row index. "
+                    "This may indicate incorrect objects passed to the metric. "
+                    "Indices of y_true will be used for y_pred.",
+                    obj=self,
+                )
+                if hasattr(y_pred_orig, "copy"):
+                    y_pred_orig = y_pred_orig.copy()
+                y_pred_orig.index = y_true.index
         if not same_cols:
             warn(
                 "y_pred and y_true do not have the same column index. "
@@ -707,7 +732,8 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
-            y_pred_orig = y_pred_orig.copy()
+            if hasattr(y_pred_orig, "copy"):
+                y_pred_orig = y_pred_orig.copy()
             y_pred_orig.columns = y_true.columns
         # check multioutput arg
         # todo: add this back when variance_weighted is supported
