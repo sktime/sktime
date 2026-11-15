@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
+from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to, update_data
 from sktime.datatypes._utilities import get_slice
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.warnings import warn
@@ -208,17 +208,23 @@ class ConformalIntervals(BaseForecaster):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
+        self._cur_y = update_data(self._cur_y, y)
+        self._cur_X = update_data(self._cur_X, X)
         self.forecaster_.update(y, X, update_params=update_params)
 
-        if update_params and len(y.index.difference(self.residuals_matrix_.index)) > 2:
+        if update_params and self.fh_early_:
+            # Rebuild from the full history: updates can also correct observations
+            # used to fit cached calibration forecasters.
+            self.forecasters_ = []
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y,
-                X,
-                self.forecaster_,
+                self._cur_y,
+                self._cur_X,
+                self.forecaster,
                 self.initial_window,
                 self.sample_frac,
-                update=True,
             )
+
+        return self
 
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction quantiles for a forecast.
