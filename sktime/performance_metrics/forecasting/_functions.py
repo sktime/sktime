@@ -339,6 +339,26 @@ def mean_asymmetric_error(
     return _handle_output(loss, multioutput)
 
 
+def _check_sp_and_y_train(sp, y_train, metric_name):
+    """Validate seasonal periodicity sp and y_train for scaled metrics."""
+    from sktime.utils.validation.forecasting import check_sp
+
+    if sp is None:
+        raise ValueError(
+            f"Seasonal periodicity `sp` in {metric_name} must be an int >= 1, "
+            "but found None."
+        )
+    sp = check_sp(sp)
+
+    if sp >= y_train.shape[0]:
+        raise ValueError(
+            f"Seasonal periodicity sp={sp} exceeds or equals the number of training "
+            f"observations ({y_train.shape[0]}). "
+            f"{metric_name} requires len(y_train) > sp."
+        )
+    return sp
+
+
 def mean_absolute_scaled_error(
     y_true, y_pred, sp=1, horizon_weight=None, multioutput="uniform_average", **kwargs
 ):
@@ -454,6 +474,7 @@ def mean_absolute_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    sp = _check_sp_and_y_train(sp, y_train, "mean_absolute_scaled_error")
     y_pred_naive = y_train[:-sp]
 
     # mean absolute error of naive seasonal prediction
@@ -584,6 +605,7 @@ def median_absolute_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    sp = _check_sp_and_y_train(sp, y_train, "median_absolute_scaled_error")
     y_pred_naive = y_train[:-sp]
 
     # mean absolute error of naive seasonal prediction
@@ -723,6 +745,7 @@ def mean_squared_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    sp = _check_sp_and_y_train(sp, y_train, "mean_squared_scaled_error")
     y_pred_naive = y_train[:-sp]
 
     # mean squared error of naive seasonal prediction
@@ -855,6 +878,7 @@ def median_squared_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    sp = _check_sp_and_y_train(sp, y_train, "median_squared_scaled_error")
     y_pred_naive = y_train[:-sp]
 
     # median squared error of naive seasonal prediction
