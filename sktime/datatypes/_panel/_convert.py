@@ -10,6 +10,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._base import BaseConverter
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
+from sktime.datatypes._convert_utils._convert import _ConverterNoDatatypeCls
 from sktime.utils.pandas import df_map
 
 # this needs to be refactored with the convert module
@@ -38,7 +39,7 @@ MTYPE_LIST_PANEL = [
 ##############################################################
 
 
-class PanelIdentity(BaseConverter):
+class PanelIdentity(_ConverterNoDatatypeCls):
     """All Panel scitype conversions of an mtype to itself."""
 
     _tags = {
@@ -98,7 +99,7 @@ class PanelNestedUnivToNumpyFlat(BaseConverter):
         return from_nested_to_2d_np_array(obj, store=store)
 
 
-class PanelNestedUnivToPdWide(BaseConverter):
+class PanelNestedUnivToPdWide(_ConverterNoDatatypeCls):
     """Conversion: nested_univ -> pd-wide, of Panel scitype."""
 
     _tags = {
@@ -114,7 +115,7 @@ class PanelNestedUnivToPdWide(BaseConverter):
         return from_nested_to_pdwide(obj, store=store)
 
 
-class PanelPdWideToNestedUniv(BaseConverter):
+class PanelPdWideToNestedUniv(_ConverterNoDatatypeCls):
     """Conversion: pd-wide -> nested_univ, of Panel scitype."""
 
     _tags = {
@@ -130,7 +131,7 @@ class PanelPdWideToNestedUniv(BaseConverter):
         return from_pd_wide_to_nested(obj, store=store)
 
 
-class PanelNestedUnivToPdLong(BaseConverter):
+class PanelNestedUnivToPdLong(_ConverterNoDatatypeCls):
     """Conversion: nested_univ -> pd-long, of Panel scitype."""
 
     _tags = {
@@ -146,7 +147,7 @@ class PanelNestedUnivToPdLong(BaseConverter):
         return from_nested_to_long_adp(obj, store=store)
 
 
-class PanelPdLongToNestedUniv(BaseConverter):
+class PanelPdLongToNestedUniv(_ConverterNoDatatypeCls):
     """Conversion: pd-long -> nested_univ, of Panel scitype."""
 
     _tags = {
@@ -162,7 +163,7 @@ class PanelPdLongToNestedUniv(BaseConverter):
         return from_long_to_nested_adp(obj, store=store)
 
 
-class PanelPdMultiIndexToPdLong(BaseConverter):
+class PanelPdMultiIndexToPdLong(_ConverterNoDatatypeCls):
     """Conversion: pd-multiindex -> pd-long, of Panel scitype."""
 
     _tags = {
@@ -178,7 +179,7 @@ class PanelPdMultiIndexToPdLong(BaseConverter):
         return from_multiindex_to_long(obj, store=store)
 
 
-class PanelPdLongToPdMultiIndex(BaseConverter):
+class PanelPdLongToPdMultiIndex(_ConverterNoDatatypeCls):
     """Conversion: pd-long -> pd-multiindex, of Panel scitype."""
 
     _tags = {

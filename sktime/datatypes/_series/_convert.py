@@ -16,6 +16,7 @@ from sktime.datatypes._base import BaseConverter
 # methods to convert one machine type to another machine type
 ##############################################################
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
+from sktime.datatypes._convert_utils._convert import _ConverterNoDatatypeCls
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_SERIES = [
@@ -287,7 +288,7 @@ class SeriesPdSeriesToPolars(BaseConverter):
         return convert_uvs_to_polars_as_series(obj, store=store)
 
 
-class SeriesPolarsLazyToPdDataFrame(BaseConverter):
+class SeriesPolarsLazyToPdDataFrame(_ConverterNoDatatypeCls):
     """Conversion: pl.LazyFrame -> pd.DataFrame, of Series scitype."""
 
     _tags = {
@@ -303,7 +304,7 @@ class SeriesPolarsLazyToPdDataFrame(BaseConverter):
         return convert_polars_lazy_to_mvs_as_series(obj, store=store)
 
 
-class SeriesPdDataFrameToPolarsLazy(BaseConverter):
+class SeriesPdDataFrameToPolarsLazy(_ConverterNoDatatypeCls):
     """Conversion: pd.DataFrame -> pl.LazyFrame, of Series scitype."""
 
     _tags = {
