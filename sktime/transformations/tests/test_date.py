@@ -423,3 +423,48 @@ def test_fit_transform_no_warnings():
         warnings.simplefilter("always")
         transformer.fit_transform(y)
         assert len(w) == 0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_timezone_aware_utc_hour_features():
+    """Tests that hour_of_day and hour_of_week use UTC for timezone-aware indexes."""
+    idx_ny = pd.date_range(
+        "2024-11-03 00:00", periods=7, freq="h", tz="America/New_York"
+    )
+    X_ny = pd.DataFrame({"y": range(7)}, index=idx_ny)
+    transformer = DateTimeFeatures(manual_selection=["hour_of_day", "hour_of_week"])
+
+    res_ny = transformer.fit_transform(X_ny)
+    expected = pd.DataFrame(
+        {
+            "hour_of_day": np.int64([4, 5, 6, 7, 8, 9, 10]),
+            "hour_of_week": np.int64([148, 149, 150, 151, 152, 153, 154]),
+        },
+        index=idx_ny,
+    )
+    assert_frame_equal(res_ny, expected)
+
+    # Equivalent instants in UTC and Asia/Tokyo must produce identical hour features.
+    for tz in ("UTC", "Asia/Tokyo"):
+        idx_tz = idx_ny.tz_convert(tz)
+        X_tz = pd.DataFrame({"y": range(7)}, index=idx_tz)
+        res_tz = transformer.fit_transform(X_tz)
+        assert_frame_equal(
+            res_tz.reset_index(drop=True), expected.reset_index(drop=True)
+        )
+
+    # Timezone-naive index preserves local clock behavior.
+    idx_naive = pd.date_range("2024-11-03 00:00", periods=4, freq="h")
+    X_naive = pd.DataFrame({"y": range(4)}, index=idx_naive)
+    res_naive = transformer.fit_transform(X_naive)
+    expected_naive = pd.DataFrame(
+        {
+            "hour_of_day": np.int64([0, 1, 2, 3]),
+            "hour_of_week": np.int64([144, 145, 146, 147]),
+        },
+        index=idx_naive,
+    )
+    assert_frame_equal(res_naive, expected_naive)
