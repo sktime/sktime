@@ -4,6 +4,7 @@ from collections.abc import Callable
 
 from sktime.networks.mcdcnn import MCDCNNNetworkTorch
 from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
+from sktime.utils.warnings import warn
 
 
 class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
@@ -14,8 +15,9 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
 
     Parameters
     ----------
-    n_epochs : int, optional (default=120)
-        The number of epochs to train the model.
+    n_epochs : int, optional, default="deprecated"
+        Deprecated, and will be removed in sktime 1.5.0. Renamed to
+        ``num_epochs``.
     batch_size : int, optional (default=16)
         The number of samples per gradient update.
     kernel_sizes : tuple, optional (default=(5, 5))
@@ -74,15 +76,13 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         should be supported by PyTorch.
     criterion_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the loss function.
-    optim: str or None or an instance of optimizers defined in torch.optim,
-        optional (default=None)
-        The optimizer to use for training the model. If left with None, "SGD" is
-        used with momentum=0.9, weight_decay=0.0005.
-        List of available optimizers:
-        https://pytorch.org/docs/stable/optim.html#algorithms
-    optim_kwargs : dict or None, optional (default=None)
-        Additional keyword arguments to pass to the optimizer.
-        If None, SGD is used with momentum=0.9, weight_decay=0.0005.
+    optim : str or None, or a class or instance of optimizers defined in
+        torch.optim, optional, default="deprecated"
+        Deprecated, and will be removed in sktime 1.5.0. Renamed to
+        ``optimizer``.
+    optim_kwargs : dict or None, optional, default="deprecated"
+        Deprecated, and will be removed in sktime 1.5.0. Renamed to
+        ``optimizer_kwargs``.
     callbacks : None or str or a tuple of str, optional (default=None)
         Currently only learning rate schedulers are supported as callbacks.
         If more than one scheduler is passed, they are applied sequentially in the
@@ -101,6 +101,16 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         Whether to print progress information during training.
     random_state : int, optional (default=0)
         The seed to any random action.
+    num_epochs : int, optional (default=120)
+        The number of epochs to train the model.
+    optimizer : str or None, or a class or instance of optimizers defined in
+        torch.optim, optional (default=None)
+        The optimizer to use for training the model. If left as None, SGD is used
+        with momentum=0.9, weight_decay=0.0005.
+        List of available optimizers:
+        https://pytorch.org/docs/stable/optim.html#algorithms
+    optimizer_kwargs : dict or None, optional (default=None)
+        Additional keyword arguments to pass to the optimizer.
 
     References
     ----------
@@ -113,7 +123,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
     >>> from sktime.regression.deep_learning.mcdcnn import MCDCNNRegressorTorch
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> mcdcnn = MCDCNNRegressorTorch(n_epochs=1, kernel_sizes=(4, 4)) # doctest: +SKIP
+    >>> mcdcnn = MCDCNNRegressorTorch(num_epochs=1)  # doctest: +SKIP
     >>> mcdcnn.fit(X_train, y_train) # doctest: +SKIP
     MCDCNNRegressorTorch(...)
     """
@@ -132,7 +142,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
 
     def __init__(
         self: "MCDCNNRegressorTorch",
-        n_epochs: int = 120,
+        n_epochs: int | str = "deprecated",
         batch_size: int = 16,
         kernel_sizes: tuple[int, ...] = (5, 5),
         pool_size: int = 2,
@@ -145,16 +155,68 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         use_bias: bool = True,
         criterion: str | None | Callable = "MSELoss",
         criterion_kwargs: dict | None = None,
-        optim: str | None | Callable = None,
-        optim_kwargs: dict | None = None,
+        optim: str | None | Callable = "deprecated",
+        optim_kwargs: dict | str | None = "deprecated",
         callbacks: str | tuple[str, ...] | None = None,
         callback_kwargs: dict | None = None,
         metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.01,
         verbose: bool = False,
         random_state: int = 0,
+        num_epochs: int = 120,
+        optimizer: str | None | Callable = None,
+        optimizer_kwargs: dict | None = None,
     ):
         self.n_epochs = n_epochs
+        self.optim = optim
+        self.optim_kwargs = optim_kwargs
+
+        # todo 1.5.0: remove the deprecated parameters n_epochs, optim and
+        # optim_kwargs from the signature and docstring, move num_epochs,
+        # optimizer and optimizer_kwargs to the positions of the deprecated
+        # parameters, and remove the alias resolution below as well as the
+        # _fit and _instantiate_optimizer overrides.
+        if n_epochs != "deprecated":
+            warn(
+                f"in `{type(self).__name__}`, parameter 'n_epochs' will be "
+                "renamed to num_epochs in version '1.5.0'. To keep current "
+                "behaviour and to silence this warning, use 'num_epochs' "
+                "instead of 'n_epochs', set num_epochs explicitly via kwarg, "
+                "and do not set n_epochs.",
+                DeprecationWarning,
+            )
+            self._num_epochs = n_epochs
+        else:
+            self._num_epochs = num_epochs
+
+        if optim != "deprecated":
+            warn(
+                f"in `{type(self).__name__}`, parameter 'optim' will be "
+                "renamed to optimizer in version '1.5.0'. To keep current "
+                "behaviour and to silence this warning, use 'optimizer' "
+                "instead of 'optim', set optimizer explicitly via kwarg, "
+                "and do not set optim.",
+                DeprecationWarning,
+            )
+            self._optim = optim
+        else:
+            self._optim = optimizer
+
+        if optim_kwargs != "deprecated":
+            warn(
+                f"in `{type(self).__name__}`, parameter 'optim_kwargs' will "
+                "be renamed to optimizer_kwargs in version '1.5.0'. To keep "
+                "current behaviour and to silence this warning, use "
+                "'optimizer_kwargs' instead of 'optim_kwargs', set "
+                "optimizer_kwargs explicitly via kwarg, and do not set "
+                "optim_kwargs.",
+                DeprecationWarning,
+            )
+            self._optim_kwargs = optim_kwargs
+        else:
+            self._optim_kwargs = optimizer_kwargs
+
+        self.num_epochs = num_epochs
         self.batch_size = batch_size
         self.kernel_sizes = kernel_sizes
         self.pool_size = pool_size
@@ -163,32 +225,29 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.conv_padding = conv_padding
         self.pool_padding = pool_padding
         self.criterion = criterion
-        self.criterion_kwargs = criterion_kwargs
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
-        self.metrics = metrics
-
-        self.optim = optim
-        self.optim_kwargs = optim_kwargs
-
         self.callbacks = callbacks
-        self.callback_kwargs = callback_kwargs
-        self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
+        self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
+        self.lr = lr
+        self.criterion_kwargs = criterion_kwargs
 
-        self.optimizer = self.optim
-        self.optimizer_kwargs = self.optim_kwargs
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
 
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"Length of `filter_sizes` {len(self.filter_sizes)} must match "
+                f"the number of convolutional layers determined by the length of tuple "
+                f"`kernel_sizes` {len(self.kernel_sizes)}."
+            )
 
         super().__init__(
-            num_epochs=self.n_epochs,
+            num_epochs=self.num_epochs,
             batch_size=self.batch_size,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
@@ -219,6 +278,54 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             )
 
         super().__post_init__()
+
+    def _resolve_optimizer(self):
+        """Resolve the effective optimizer and optimizer_kwargs for training.
+
+        The parameters ``optimizer`` and ``optimizer_kwargs`` and the
+        deprecated aliases ``optim`` and ``optim_kwargs`` are stored verbatim
+        as required by the sktime estimator contract; the deprecated aliases
+        (resolved at construction into the private copies ``self._optim`` and
+        ``self._optim_kwargs``) and the historical MCDCNN defaults (SGD with
+        momentum=0.9 and weight_decay=0.0005 when no optimizer is given) are
+        resolved here, at fit time.
+        """
+        # todo 1.5.0: use self.optimizer and self.optimizer_kwargs directly.
+        optimizer = self._optim
+        optimizer_kwargs = self._optim_kwargs
+        if optimizer is None:
+            optimizer = "SGD"
+            if optimizer_kwargs is None:
+                optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        return optimizer, optimizer_kwargs
+
+    def _fit(self, X, y):
+        """Fit the estimator, resolving the deprecated ``n_epochs`` alias.
+
+        ``num_epochs`` and its deprecated alias ``n_epochs`` are stored
+        verbatim as required by the sktime estimator contract; the value
+        resolved at construction (``self._num_epochs``) is used for training.
+        """
+        # todo 1.5.0: remove this override and use self.num_epochs directly.
+        num_epochs_verbatim = self.num_epochs
+        self.num_epochs = self._num_epochs
+        try:
+            return super()._fit(X, y)
+        finally:
+            self.num_epochs = num_epochs_verbatim
+
+    def _instantiate_optimizer(self):
+        """Instantiate the optimizer, resolving deprecated aliases and defaults."""
+        orig_optimizer, orig_optimizer_kwargs = (
+            self.optimizer,
+            self.optimizer_kwargs,
+        )
+        self.optimizer, self.optimizer_kwargs = self._resolve_optimizer()
+        try:
+            return super()._instantiate_optimizer()
+        finally:
+            self.optimizer = orig_optimizer
+            self.optimizer_kwargs = orig_optimizer_kwargs
 
     def _build_network(self, X):
         """Build the MCDCNN network with output layer for regression.
@@ -266,11 +373,11 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
-            "n_epochs": 1,
+            "num_epochs": 1,
             "random_state": 0,
         }  # default params with 1 epoch
         params2 = {
-            "n_epochs": 1,
+            "num_epochs": 1,
             "batch_size": 16,
             "kernel_sizes": (5,),
             "pool_size": 2,
@@ -281,7 +388,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "random_state": 0,
         }
         params3 = {
-            "n_epochs": 2,
+            "num_epochs": 2,
             "batch_size": 2,
             "kernel_sizes": (7, 7),
             "pool_size": 2,
@@ -291,8 +398,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "pool_padding": "same",
             "activation_hidden": "ReLU",
             "use_bias": False,
-            "optim": "Adam",
-            "optim_kwargs": {"weight_decay": 0.001},
+            "optimizer": "Adam",
+            "optimizer_kwargs": {"weight_decay": 0.001},
             "lr": 0.01,
             "random_state": 0,
         }  # override optimizer
