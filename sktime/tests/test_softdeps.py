@@ -129,6 +129,20 @@ def test_module_softdeps(module):
         ) from e
 
 
+@pytest.mark.parametrize("module", modules)
+def test_module_all(module):
+    """Test that ``__all__`` of sktime modules lists names of module attributes.
+
+    ``from module import *`` requires all entries of ``__all__`` to be strings
+    which are names of attributes of the module, see bug #11410.
+    """
+    imported_module = import_module(module)
+
+    for name in getattr(imported_module, "__all__", []):
+        assert isinstance(name, str)
+        assert hasattr(imported_module, name)
+
+
 def test_moirai_forecaster_import_is_lazy_for_forecasting_imports(monkeypatch):
     """Test MOIRAI does not import vendored forecast when importing forecasters."""
     import sys

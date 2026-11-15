@@ -48,3 +48,34 @@ def test_distr_evaluate(normal, metric, multivariate):
     assert isinstance(res, pd.DataFrame)
     assert (res.columns == expected_cols).all()
     assert res.shape == (1, len(expected_cols))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_squared_distr_loss_uses_pdf(monkeypatch):
+    """SquaredDistrLoss must be -2 * pdf(y) + ||pdf||^2, not -2 * log_pdf(y)."""
+    import numpy as np
+
+    from sktime.performance_metrics.forecasting.probabilistic import (
+        SquaredDistrLoss,
+    )
+
+    mu, sigma = 0.0, 2.0
+    y_pred = Normal(
+        mu=[[mu]], sigma=[[sigma]], index=pd.Index([0]), columns=pd.Index(["a"])
+    )
+    y_true = pd.DataFrame([[1.0]], index=[0], columns=["a"])
+
+    # use the exact L2 norm of the normal pdf, to avoid Monte Carlo noise
+    pdfnorm = 1 / (2 * sigma * np.sqrt(np.pi))
+    monkeypatch.setattr(
+        Normal,
+        "pdfnorm",
+        lambda self, a=2: pd.DataFrame(pdfnorm, index=self.index, columns=self.columns),
+    )
+
+    expected = -2 * y_pred.pdf(y_true).iloc[0, 0] + pdfnorm
+    res = SquaredDistrLoss().evaluate_by_index(y_true, y_pred)
+    assert np.allclose(res.to_numpy(), expected)
