@@ -86,7 +86,8 @@ reformats files untouched by the PR, and the diff is then rejected as unrelated.
 
 ## 5. Smoke test
 
-Run a small test the way `AGENTS.md` describes, so change detection doesn't skip it:
+Run a small test with the flags in "Running tests" below, so change detection doesn't skip
+it:
 
 ```bash
 python -m pytest sktime/forecasting/tests/test_naive.py --only_changed_modules False \
@@ -119,6 +120,44 @@ make clean html      # full rebuild
 - The published site is built from a separate repo, `sktime/sktime-webpage-docs`. A local
   build only checks that the pages render.
 
+## Running tests
+
+The other sktime skills point here.
+
+`setup.cfg` turns on change detection and matrix sub-sampling (the options are described in
+the root `conftest.py`), and `run_test_for_class` skips `tests:vm` estimators in a normal run.
+So a plain `pytest` often runs nothing. Use:
+
+```bash
+python -m pytest <test file> --only_changed_modules False --matrixdesign False -n0 -rs
+# if the estimator has "tests:vm": True, which is what the CI VM job runs, add
+--only_vm_estimators True
+```
+
+Read the summary line. "0 selected", or everything skipped, means nothing was tested. The
+`-rs` output says why: `False_requires_vm` means the VM flag is missing,
+`False_required_deps_missing` means a dependency isn't installed. Report a skipped test as
+not run, never as passed.
+
+For one estimator, `check_estimator` is the direct route:
+
+```bash
+python -c "
+from sktime.utils.estimator_checks import check_estimator
+from sktime.<path> import MyEstimator
+results = check_estimator(MyEstimator)
+failed = {k: v for k, v in results.items() if v != 'PASSED'}
+print(len(results), 'run,', len(failed), 'failed')
+print(failed)
+"
+```
+
+Narrow a failure with `tests_to_run="test_name"` or
+`fixtures_to_run="test_name[MyEstimator-0]"`, then add `raise_exceptions=True` for the
+traceback.
+
+Lint with `pre-commit run --files <changed files>`.
+
 ## 7. Report
 
 Tell the user:
@@ -136,7 +175,7 @@ Tell the user:
 |---|---|
 | `ModuleNotFoundError` for a third-party package | A soft dependency isn't installed. Install the one the estimator needs, not `all_extras` |
 | `import sktime` loads from site-packages | Another sktime install, or the wrong venv is active |
-| Tests show "0 selected" or all skipped | Missing flags, see "Running tests" in `AGENTS.md` |
+| Tests show "0 selected" or all skipped | Missing flags, see "Running tests" above |
 | Resolver fails on install | Python version too new for a dependency; recreate the venv on an older one |
 | Docs build fails on notebooks | `pandoc` missing |
 | A commit is blocked by pre-commit | The hooks fixed files; review, `git add` and commit again |

@@ -84,8 +84,8 @@ Then check:
 - **Scope.** No other open PR does this (step 2). Changes unrelated to the stated purpose,
   including formatting churn in untouched code, go in a separate PR. No local scripts,
   scratch notebooks, lockfiles, editor settings or generated output in the diff.
-- **AI disclosure.** The template's hidden last comment asks for the header in "Pull
-  requests" in `AGENTS.md`. If the PR description or an issue was written by an LLM,
+- **AI disclosure.** The template's hidden last comment asks LLMs to begin any PR
+  description or issue they write with `LLM generated content, by (your model name)`. If the PR description or an issue was written by an LLM,
   including one you draft here, that header goes first. Contributors easily miss hidden
   comments, so point it out when it's absent from text that looks generated. A human who
   wrote the text themselves doesn't need it.
@@ -112,9 +112,9 @@ Then check:
 
   `python -m pytest` matters here, because it imports `sktime` from the worktree rather than
   the editable install.
-- **Dependencies.** Soft dependencies follow "Soft dependencies" in `AGENTS.md`. New core
-  dependencies need agreement from core developers. Version bounds are justified, and lower
-  bounds were actually tried.
+- **Dependencies.** Soft dependencies follow step 4 of `../sktime-add-estimator/SKILL.md`.
+  New core dependencies need agreement from core developers. Version bounds are justified,
+  and lower bounds were actually tried.
 - **Code.** No checks that repeat the base class, no dead branches, no defensive shape
   conditionals where inner mtypes guarantee the input. No debug prints or commented-out code.
   Comments explain non-obvious reasons. Standard private signatures are kept, even if CodeQL
@@ -126,7 +126,7 @@ Then check:
 Depending on the change type, also apply:
 
 - **New estimator:** steps 3 to 6 of `../sktime-add-estimator/SKILL.md`, and the scitype's
-  entry in its "Review findings by scitype" section.
+  section in `../sktime-add-estimator/references/review-findings.md`.
 - **Foundation model:** apply
   `../sktime-add-foundation-model/references/adapter-checklist.md`, and
   `../sktime-add-foundation-model/references/vendoring.md` if it vendors code.
@@ -143,9 +143,10 @@ Give every rubric item one status:
 
 Never mark something OK because it looks fine. If you didn't run or read it, it's Not verified.
 
-Run what you can cheaply: `pre-commit run --files <changed files>` if available, and the tests
-for changed code, using the commands in "Running tests" in `AGENTS.md`. Don't install dependencies or download
-weights. Mark those items Not verified.
+Run what you can cheaply: `pre-commit run --files <changed files>` if available, and the
+tests for changed code, using the commands in "Running tests" in
+`../sktime-dev-setup/SKILL.md`. Don't install dependencies or download weights. Mark those
+items Not verified.
 
 ## 5. Report
 

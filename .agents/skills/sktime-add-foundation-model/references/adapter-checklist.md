@@ -40,7 +40,7 @@ _tags = {
 ```
 
 The general rules for `authors`, `maintainers` and the soft dependency tags are in
-`sktime-add-estimator` step 4 and "Soft dependencies" in `AGENTS.md`. For FMs also:
+`sktime-add-estimator` step 4. For FMs also:
 
 - Check capability tags against real behaviour. Test them, don't assume.
 - Verify the upstream authors' GitHub handles, e.g. against upstream's commit authors.
@@ -116,8 +116,8 @@ The general rules for `authors`, `maintainers` and the soft dependency tags are 
 
 ## State and update
 
-The general rules are under "Forecasters" in "Review findings by scitype" in
-`../../sktime-add-estimator/SKILL.md`: don't read `self._y` or `self._X`,
+The general rules are under "Forecasters" in
+`../../sktime-add-estimator/references/review-findings.md`: don't read `self._y` or `self._X`,
 keep your own context (e.g. `self._cur_y`, `self._cur_X`), and implement `_update` with
 `update_data`. Then set `"capability:update": True`. For FMs also:
 
@@ -138,8 +138,9 @@ Bugs here produce plausible numbers, so check each with real output (#11347 was 
 
 ## Probabilistic output
 
-- Implement `_predict_proba` as well as `_predict_quantiles` (see the forecaster review findings), e.g.
-  with `HistogramQPD` from `skpro.distributions`, with `tails="mass"`, as in `timesfm3.py`.
+- Implement `_predict_proba` as well as `_predict_quantiles` (see the forecaster review
+  findings), e.g. with `HistogramQPD` from `skpro.distributions`, with `tails="mass"`, as in
+  `timesfm3.py`.
 - `predict`, `predict_quantiles` and `predict_proba` must agree if possible (#10566, #10533).
   Add a test. If they can't, e.g. because only approximations are available, document this
   in the class docstring.

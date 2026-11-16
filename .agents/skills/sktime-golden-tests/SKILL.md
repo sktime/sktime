@@ -133,8 +133,8 @@ follow the shape of `test_ttm.py`:
 - **Gate** the module or the test with `run_test_for_class(<Estimator>)`, not
   `_check_soft_dependencies` or `_check_estimator_deps`. Reviewers ask for this, though older
   files still use the others.
-- **Add the `tests:specific` tag** to the estimator (see "Soft dependencies" in `AGENTS.md`),
-  or CI never runs the file.
+- **Add the `tests:specific` tag** to the estimator (see step 4 of
+  `../sktime-add-estimator/SKILL.md`), or CI never runs the file.
 - **Run the whole estimator,** through `fit` and `predict`, with the same data and parameters
   as the generator, and `device="cpu"`. Don't mock internal components. Set
   `license_accepted=True` if the estimator requires it.
@@ -155,7 +155,7 @@ RNG state.
 
 ## 6. Prove that the test runs and detects a mismatch
 
-Run it with the commands in "Running tests" in `AGENTS.md`. Missing
+Run it with the commands in "Running tests" in `../sktime-dev-setup/SKILL.md`. Missing
 `--only_vm_estimators True` is the usual reason a golden test looks as if it passes. The
 summary line must say `passed`, not `skipped`.
 

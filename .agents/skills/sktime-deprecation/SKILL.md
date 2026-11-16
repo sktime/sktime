@@ -76,7 +76,7 @@ body. Name the replacement, or say there is none. Put the todo above the definit
 ## 4. Verify
 
 - Run the tests for the changed object, with the commands in "Running tests" in
-  `AGENTS.md`.
+  `../sktime-dev-setup/SKILL.md`.
 - Confirm the warning text once by actually triggering it, and read it as a user would. Can
   they fix their code from the message alone?
 - Trial the todo actions if they're not trivial. The guide asks that the result doesn't

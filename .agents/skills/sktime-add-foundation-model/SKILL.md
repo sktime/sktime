@@ -26,8 +26,8 @@ specific pattern they're cited for, not a whole file to copy.
 
 ### 1. Check for existing work
 
-Run the duplicate check in "Before starting new work" in `AGENTS.md`, with the model's name,
-and grep `sktime/libs` too. Read the linked issue if there is one, since it often lists the
+Run the duplicate check in step 1 of `../sktime-add-estimator/SKILL.md`, with the model's
+name, and grep `sktime/libs` too. Read the linked issue if there is one, since it often lists the
 expected model API.
 
 ### 2. Inspect upstream, without running it
@@ -110,14 +110,14 @@ comment or an open bug.
 
 ### 8. Verify
 
-Create a separate environment with the model's dependencies, and run everything for real.
-Keep the environment on disk rather than in `/tmp`, which is often a tmpfs held in RAM, since a
-torch install takes several GB. Check there's enough free memory for the model too, and tell
-the user if the checkpoint is too large for their machine.
+Create a separate environment with sktime and the model's dependencies, and run everything
+for real. Put it on disk and check memory first, as in step 2 of
+`../sktime-golden-tests/SKILL.md`.
 
 Run `check_estimator`, `sktime/forecasting/tests/test_<model>.py` and pre-commit with the
-commands in "Running tests" in `AGENTS.md`. The forecaster has `tests:vm`, so the test file
-needs `--only_vm_estimators True`, or the golden tests are skipped.
+commands in "Running tests" in `../sktime-dev-setup/SKILL.md`. The forecaster has
+`tests:vm`, so the test file needs `--only_vm_estimators True`, or the golden tests are
+skipped.
 
 In a second environment **without** torch or transformers, check isolation. This
 is what the `test-nosoftdeps` CI job checks:
