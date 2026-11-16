@@ -1,6 +1,6 @@
 ---
 name: sktime-add-estimator
-description: Add a new estimator to sktime, end to end, for contributors. Covers choosing the scitype and extension template, tags, get_test_params, docstrings, the API reference entry, and check_estimator. Use this whenever someone wants to add, implement, port, wrap or interface a forecaster, transformer, classifier, regressor, clusterer, detector, metric, splitter, aligner, distance, kernel or parameter estimator in sktime, even if they only name the algorithm or paper and never say "estimator". For pretrained time series foundation models, use sktime-add-foundation-model instead.
+description: Add a new estimator to sktime, end to end, for contributors, or write an sktime compatible estimator in a third party extension package or a local, closed codebase. Covers choosing the scitype and extension template, tags, get_test_params, docstrings, the API reference entry, and check_estimator. Use this whenever someone wants to add, implement, port, wrap or interface a forecaster, transformer, classifier, regressor, clusterer, detector, metric, splitter, aligner, distance, kernel or parameter estimator in sktime, even if they only name the algorithm or paper and never say "estimator". For pretrained time series foundation models, use sktime-add-foundation-model instead.
 ---
 
 # Adding an estimator to sktime
@@ -8,6 +8,10 @@ description: Add a new estimator to sktime, end to end, for contributors. Covers
 The person using this is often a first-time sktime contributor. Do the work, but
 explain the sktime-specific decisions as you make them, so they can defend the PR in
 review. Don't commit, push or open a PR unless they ask.
+
+**If the estimator lives outside sktime,** in a third party extension package or a local,
+closed codebase, see [Outside sktime](#outside-sktime) first. Most of this skill still
+applies, but the steps specific to sktime's repo don't.
 
 The sources for this work are in the repo. Read them rather than working from memory:
 
@@ -153,6 +157,25 @@ which disables every test for the estimator.
 Tell the user what you added, the verification output, and anything not verified. Then
 suggest running `sktime-pr-check` before opening the PR. New contributors also need to add
 themselves to `.all-contributorsrc`, which that skill covers.
+
+## Outside sktime
+
+For an estimator in a third party extension package (open or closed) or a local codebase,
+follow the steps above with these changes:
+
+- **Skip** the duplicate check, the API reference entry, `.all-contributorsrc` and
+  `sktime-pr-check`. These apply only to PRs to sktime. "Adding an sktime compatible
+  estimator to sktime" in the guide lists what sktime itself adds on top.
+- **Placement** follows the user's package, not an sktime neighbour. Still copy the
+  extension template, and still inherit from the sktime base class.
+- **Soft dependencies:** the `python_dependencies` tag still works, but whether a package is
+  a hard dependency of the user's own package is their call. The `tests:*` CI tags have no
+  effect outside sktime's CI.
+- **Testing:** use "Testing within a third party extension package" in the guide:
+  `check_estimator`, or `parametrize_with_checks` in a pytest suite. `AGENTS.md`'s pytest
+  flags are for sktime's repo only.
+- **`authors` and `maintainers`** may hold the user's own handles or names, since the
+  GitHub handle rule is for sktime's credit system.
 
 ## Review findings by scitype
 
