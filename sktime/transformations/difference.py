@@ -94,12 +94,34 @@ def _diff_to_seq(X: pd.Series | pd.DataFrame, lags: np.array):
     return ret
 
 
-def _shift(ix, periods):
-    """Shift pandas index by periods."""
+def _shift(ix, periods, step=1):
+    """Shift pandas index by periods.
+
+    Parameters
+    ----------
+    ix : pd.Index
+    periods : int, number of time points to shift by
+    step : int, default=1
+        spacing between consecutive labels, only used for integer-like indices
+    """
     if isinstance(ix, (pd.DatetimeIndex, pd.PeriodIndex, pd.TimedeltaIndex)):
         return ix.shift(periods)
     else:
-        return ix + periods
+        return ix + periods * step
+
+
+def _index_step(ix):
+    """Return spacing between consecutive labels of a regular integer index.
+
+    Returns 1 for all other indices, including irregular integer indices.
+    """
+    if isinstance(ix, pd.RangeIndex):
+        return ix.step
+    if len(ix) > 1 and pd.api.types.is_integer_dtype(ix):
+        steps = np.diff(ix.to_numpy())
+        if (steps == steps[0]).all():
+            return int(steps[0])
+    return 1
 
 
 def _inverse_diff(X, lags, X_diff_seq=None):
@@ -146,7 +168,9 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         X_diff_orig = X_diff_seq[len(lags)]
         # Shift the differenced time series index by the last lag
         # to match the original time series index
-        X_ix_shift = _shift(X.index, -lag_last)
+        # spacing of the index seen in fit, e.g., 2 for an index 0, 2, 4, ...
+        step = _index_step(X_diff_orig.index)
+        X_ix_shift = _shift(X.index, -lag_last, step)
         # Get the original time series values for the intersecting
         # indices between the shifted index and the original index
         X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
@@ -156,7 +180,7 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         # series (intersection). These are the indices for which no valid differenced
         # values exist.
         mask = X_diff_orig.index.difference(
-            _shift(X_diff_orig.index, sum(lags) + lag_last)
+            _shift(X_diff_orig.index, sum(lags) + lag_last, step)
         ).intersection(X.index)
         X_ = X.copy()
         X_.loc[mask] = np.nan
