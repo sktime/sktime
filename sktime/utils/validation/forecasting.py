@@ -446,7 +446,11 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
         # and to ensure maximal decoupling from registry
         from sktime.registry import resolve_alias
 
-        return resolve_alias(scoring)
+        scoring = resolve_alias(scoring)
+        # a metric class name without brackets, e.g., "MeanAbsoluteError",
+        # resolves to the class, not an instance, so we instantiate it
+        if isinstance(scoring, type) and issubclass(scoring, BaseMetric):
+            scoring = scoring()
 
     # check case (1) and case (2)
     # note: BaseMetric descendants are callable, so this is the same as
