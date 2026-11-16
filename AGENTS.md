@@ -60,7 +60,16 @@ Lint with `pre-commit run --files <changed files>`.
 Follow "Isolating soft dependencies to estimators" in
 `docs/source/developer_guide/dependencies.rst`: imports inside methods or `__post_init__`,
 the `python_dependencies` tag, `"tests:vm": True`, and tests gated with
-`run_test_for_class`. The guide leaves out three things:
+`run_test_for_class`. The guide also covers the two utilities in `sktime.utils.dependencies`:
+
+- **`_safe_import("pkg.mod.Name")`** for a name that has to exist when the module is
+  imported, such as a base class (`nn.Module`) or a decorator. It returns a mock if the
+  package is missing. Not as the parent of a `dataclass`. Prefer a method level import
+  where one works.
+- **`_check_soft_dependencies`** outside an estimator, e.g. in a utility function or to gate
+  a test or a code block. Inside an estimator the `python_dependencies` tag does this.
+
+The guide leaves out three things:
 
 - **`"tests:specific": ["sktime.<path>.tests.test_<name>"]`** names the estimator's own test
   module. Without it the VM job logs "No object specific tests found", never runs the file,
