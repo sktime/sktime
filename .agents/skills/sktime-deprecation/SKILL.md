@@ -6,8 +6,8 @@ description: Handle deprecation and breaking changes in sktime. Covers renaming 
 # sktime deprecation
 
 The policy and the recipes are in `docs/source/developer_guide/deprecation.rst`. Read it
-first. This skill adds what the guide leaves out, and the places where recent code has moved
-on from the guide's examples. Where they disagree, follow the skill.
+first. This skill only adds what the guide leaves out. If the guide looks wrong or out of
+date, tell the user and propose fixing the guide, rather than working around it here.
 
 Work out which situation applies:
 
@@ -44,19 +44,10 @@ a different version, that's their call, but state that it shortens the notice pe
 ## 3. Apply the recipe
 
 Follow the guide's recipe for the change, under "Special deprecations", and copy its worked
-example from "Examples to illustrate recipes" where there is one. Then apply these
-corrections, since the examples are older than current practice:
-
-- **`warn` without `obj=`.** Use `warn` from `sktime.utils.warnings` with
-  `DeprecationWarning`, and leave out `obj=self`, which the guide's examples still pass.
-  With it, a user's `warnings="off"` config silences the warning, and the docstring of `warn`
-  says deprecation warnings must always be raised. Recent code such as
-  `sktime/transformations/rocket/_multirocket.py` omits it.
-- **Lowercase markers:** `# todo 1.4.0: ...`, not the guide's `TODO (release ...)`, so the
-  audit below finds them. Put one at each edit site.
-- **`super().__init__()`** comes after the parameters are stored, before the warning block.
-- **For a rename, both parameters are written to `self`** during the change period, and the
-  docstring describes only the new name.
+example from "Examples to illustrate recipes" where there is one, including its `warn` call
+and the `TODO <version>:` marker at each edit site. The examples are plain classes: in an
+sktime estimator, call `super().__init__()` after the parameters are written to `self`, and
+before the deprecation logic.
 
 The PR also needs these, which the guide doesn't list for the developer:
 
@@ -94,9 +85,8 @@ body. Name the replacement, or say there is none. Put the todo above the definit
 
 ## Audit
 
-List every version marker in the repo. The guide's spelling and the code's spelling differ,
-and older markers such as `TODO (release 0.42.0)` are easy to miss, so match both, ignoring
-case. `sktime/libs` is left out because its todos belong to the vendored upstream code:
+List every version marker in the repo. Search ignoring case, as release managers do, and
+match the older `TODO (release 0.42.0)` form too, which some code still uses. `sktime/libs` is left out because its todos belong to the vendored upstream code:
 
 ```bash
 grep -rnEi "todo[ :(]*(release |remove in )?v?[0-9]+\.[0-9]+(\.[0-9]+)?" sktime \
