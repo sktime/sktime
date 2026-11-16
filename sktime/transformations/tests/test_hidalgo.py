@@ -1,6 +1,7 @@
 """Test for hidalgo segmentation."""
 
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.utils.validation import check_random_state
 
@@ -302,3 +303,84 @@ def test_gibbs():
     actual = sampling[[6, 8],]
 
     assert np.allclose(actual, expected)
+
+
+def _make_df(n_rows, start, seed):
+    """Make a DataFrame with DatetimeIndex, two random columns."""
+    rng = np.random.default_rng(seed)
+    return pd.DataFrame(
+        rng.normal(size=(n_rows, 2)),
+        index=pd.date_range(start, periods=n_rows, freq="D"),
+    )
+
+
+_PARAMS = {"K": 2, "n_iter": 10, "burn_in": 0.5, "sampling_rate": 2, "seed": 1}
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transform_preserves_time_index():
+    """Test that fit_transform returns labels with the index of the input."""
+    X1 = _make_df(60, "2001-01-01", seed=1)
+
+    out = Hidalgo(**_PARAMS).fit_transform(X1)
+
+    assert isinstance(out, pd.DataFrame)
+    assert out.shape == (60, 1)
+    assert isinstance(out.index, pd.DatetimeIndex)
+    assert out.index.equals(X1.index)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transform_uses_passed_data():
+    """Test that transform on data other than the fit data returns output for it."""
+    X1 = _make_df(60, "2001-01-01", seed=1)
+    X2 = _make_df(30, "2005-01-01", seed=2)
+
+    est = Hidalgo(**_PARAMS).fit(X1)
+    out = est.transform(X2)
+
+    # output corresponds to X2 and not to the stored result of fit(X1)
+    assert out.shape == (30, 1)
+    assert out.index.equals(X2.index)
+
+    # output is the same as when fitting on X2 directly
+    expected = Hidalgo(**_PARAMS).fit_transform(X2)
+    assert np.array_equal(out.to_numpy(), expected.to_numpy())
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transform_on_fit_data_returns_fit_labels():
+    """Test that transform on the fit data returns the labels computed in fit."""
+    X1 = _make_df(60, "2001-01-01", seed=1)
+
+    est = Hidalgo(**_PARAMS).fit(X1)
+    out = est.transform(X1)
+
+    assert out.index.equals(X1.index)
+    assert np.array_equal(out.to_numpy().ravel(), est._Z)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_transform_does_not_change_fitted_state():
+    """Test that transform on other data does not overwrite the fitted labels."""
+    X1 = _make_df(60, "2001-01-01", seed=1)
+    X2 = _make_df(30, "2005-01-01", seed=2)
+
+    est = Hidalgo(**_PARAMS).fit(X1)
+    Z_before = est._Z.copy()
+    est.transform(X2)
+
+    assert np.array_equal(est._Z, Z_before)
+    assert est._Z.shape == (60,)
