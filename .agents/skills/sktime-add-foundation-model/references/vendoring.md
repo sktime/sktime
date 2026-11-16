@@ -89,22 +89,25 @@ guard it in `__init__.py` so it's only imported when the dependency exists.
 Vendored code may need exceptions in the ruff config: see `[tool.ruff.lint.per-file-ignores]`
 in `pyproject.toml`, which has entries for other vendored libraries.
 
-## Pin to the versions it works with
+## Set the version range it works with
 
 Vendored code isn't a first-class citizen of `transformers`, so it's likely to break on some
 versions, especially around `generate`, `dtype`/`torch_dtype` and `PreTrainedModel` internals.
 
+- Use a range, not an exact pin: a lower bound, plus an upper bound only where a version is
+  known to break, e.g. `transformers>=4.57,<5`.
 - Find the true lower bound by trying older versions, and put it in `python_dependencies`.
   The latest release is not a lower bound.
 - Run the **real checkpoint** at that bound. `SundialForecaster` (#11349) couldn't load a
-  checkpoint under its own pin, because the code used `dtype=` where that version wanted
+  checkpoint at its own lower bound, because the code used `dtype=` where that version wanted
   `torch_dtype=`.
 - Check that the bound doesn't exclude a Python version sktime supports. Recent
   `transformers` releases need 3.11+, while sktime supports 3.10.
 - Widening support to more versions is good only if it's cheap.
 
-If you can't vendor and have to import private upstream modules, pin the dependency and add
-a comment explaining why, since those modules can change in any release.
+If you can't vendor and have to import private upstream modules, keep the range narrow, with
+an upper bound at the next untested release, and add a comment explaining why, since those
+modules can change in any release.
 
 ## Register it
 

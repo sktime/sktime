@@ -51,12 +51,17 @@ The general rules for `authors`, `maintainers` and the soft dependency tags are 
 
 - Question each parameter. Remove ones with no real use, or that can be set some other way,
   such as an `ignore_deps` flag "for testing".
-- **`license_accepted`** depends on the weights' license. If it's non-commercial, proprietary
-  or otherwise different from sktime's, add `license_accepted=False`, which must be set to
-  use the model (see `sktime/forecasting/t0.py` and `falcon_x.py`). `get_test_params` and
-  golden tests then set it. If the license doesn't call for it, leave it out.
-- For pass-through dicts (`model_kwargs`, `forecast_kwargs`), link in the docstring to where
-  options are documented. Put the link under `References`, and cite it with `[1]_`.
+- **`license_accepted`** depends on the weights' license. Permissive licenses such as MIT or
+  Apache 2.0 are fine without it. If a license requires attribution, signpost it clearly in
+  the class docstring, and put the notice in the `__init__.py` of the vendored package, as
+  `sktime/libs/kronos/__init__.py` does. If the license is non-commercial, proprietary or
+  otherwise restrictive, add `license_accepted=False`, which must be set to use the model
+  (see `sktime/forecasting/t0.py` and `falcon_x.py`). `get_test_params` and golden tests then
+  set it.
+- For pass-through dicts (`model_kwargs`, `forecast_kwargs`), document the options in the
+  docstring itself: the keys that are actually passed through, with what they do. Since
+  upstream can change them, also link to the authoritative upstream documentation, under
+  `References`, cited with `[1]_`.
 - Add `deterministic=False` if inference samples. With `True`, seed right before the call, as
   in `transformers.set_seed(42)`.
 - **Fixing an upstream bug:** agree it with the user first. The pattern accepted for
@@ -116,6 +121,8 @@ The general rules are under "Forecasters" in "Review findings by scitype" in
 keep your own context (e.g. `self._cur_y`, `self._cur_X`), and implement `_update` with
 `update_data`. Then set `"capability:update": True`. For FMs also:
 
+- `_update` only extends the stored context and moves the cutoff. Don't reload the model or
+  fit a new instance there.
 - In `_update`, raise an error if `X` was passed to `_fit` but not `_update`, or the other
   way round. Otherwise `_cur_X` drifts out of line with `_cur_y`.
 
@@ -133,9 +140,14 @@ Bugs here produce plausible numbers, so check each with real output (#11347 was 
 
 - Implement `_predict_proba` as well as `_predict_quantiles` (see the forecaster review findings), e.g.
   with `HistogramQPD` from `skpro.distributions`, with `tails="mass"`, as in `timesfm3.py`.
-- `predict`, `predict_quantiles` and `predict_proba` must agree (#10566, #10533). Add a test.
+- `predict`, `predict_quantiles` and `predict_proba` must agree if possible (#10566, #10533).
+  Add a test. If they can't, e.g. because only approximations are available, document this
+  in the class docstring.
+- The point forecast from `predict` is the predictive mean. It usually, but not always,
+  equals the median `predict_quantiles(alpha=0.5)`. Use the model's mean output if it has one.
+  If only quantiles are available and `predict` returns the median, say so in the docstring.
 - Use the model's own level list (`model.quantile_levels`, `config`) over a hardcoded grid
-  or index, including the median index for the point forecast.
+  or index.
 - **Clamp `alpha` outside the native grid** to the outer quantiles rather than raising. This is
   consistent with `tails="mass"`, and otherwise `predict_interval(coverage=0.99)` raises
   on a 0.01-0.99 grid. Some older forecasters raise here. Don't copy them.

@@ -6,7 +6,9 @@ description: Integrate a pretrained time series foundation model into sktime as 
 # Adding a foundation model to sktime
 
 A foundation model (FM) forecaster is a thin adapter around pretrained weights. `fit`
-loads the model and stores context. `predict` runs inference. Most of the work, and most
+loads the model and stores context. `predict` runs inference. `update` only updates the
+stored context: it must not reload, refit or build another model instance, which the
+default `update` would do by refitting. Most of the work, and most
 of the review feedback, is outside the forward pass: licensing, dependency isolation,
 loading and state.
 
