@@ -361,6 +361,12 @@ class GlobalARIMA(BaseForecaster):
             with _warnings.catch_warnings():
                 _warnings.filterwarnings("ignore", category=EstimationWarning)
                 _warnings.filterwarnings("ignore", category=RuntimeWarning)
+                # statsmodels before 0.15 issues its notice of falling back to
+                # zero starting values as a plain UserWarning
+                for notice in ("Non-stationary starting", "Non-invertible starting"):
+                    _warnings.filterwarnings(
+                        "ignore", message=notice, category=UserWarning
+                    )
                 sp = np.asarray(mod.start_params, dtype=float)
             if sp.size >= p + q and np.all(np.isfinite(sp[: p + q])):
                 starts.append(sp[: p + q])

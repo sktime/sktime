@@ -748,6 +748,44 @@ def test_tags_declare_the_capabilities_that_are_implemented():
 
 
 # ----------------------------------------------------------------------
+# statsmodels versions
+# ----------------------------------------------------------------------
+
+
+def test_statsmodels_start_value_notices_are_not_passed_on():
+    """statsmodels' fallback to zero starting values must not reach the user.
+
+    The estimator builds its own starting point, so the notice is noise. Before
+    statsmodels 0.15 it is a plain UserWarning rather than an EstimationWarning,
+    which is simulated here so the test does not depend on the installed version.
+    """
+    import warnings
+
+    from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+    class _OlderStatsmodels(SARIMAX):
+        @property
+        def start_params(self):
+            for notice in (
+                "Non-stationary starting autoregressive parameters found.",
+                "Non-invertible starting MA parameters found.",
+            ):
+                warnings.warn(
+                    notice + " Using zeros as starting parameters.", UserWarning
+                )
+            return np.zeros(2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mod = _OlderStatsmodels(
+            _arma(60, seed=31), order=(1, 0, 1), trend="n", concentrate_scale=True
+        )
+
+    start = GlobalARIMA(order=(1, 0, 1))._start_params([mod], 1, 1)
+    np.testing.assert_array_equal(start, np.zeros(2))
+
+
+# ----------------------------------------------------------------------
 # full estimator contract
 # ----------------------------------------------------------------------
 
