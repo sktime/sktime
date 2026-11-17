@@ -3,7 +3,6 @@
 from copy import deepcopy
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.base import BaseClassifier
 from sktime.split import temporal_train_test_split
