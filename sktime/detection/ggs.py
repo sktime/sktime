@@ -41,6 +41,7 @@ import numpy.typing as npt
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
+from sktime.detection._formatters import format_segments
 from sktime.detection.base import BaseDetector
 
 logger = logging.getLogger(__name__)
@@ -404,17 +405,25 @@ class GreedyGaussianSegmentation(BaseDetector):
     random_state : int or np.random.RandomState, default=None
         Either random seed or an instance of ``np.random.RandomState``
 
-    Attributes
-    ----------
-    change_points_: array_like, default=[]
-        Locations of change points as integer indexes.
-
     References
     ----------
     .. [1] Hallac, D., Nystrup, P. & Boyd, S.,
        "Greedy Gaussian segmentation of multivariate time series.",
        Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.detection.ggs import GreedyGaussianSegmentation
+    >>> X = pd.DataFrame({"a": np.r_[np.zeros(10), 10 * np.ones(10), np.zeros(10)]})
+    >>> ggs = GreedyGaussianSegmentation(k_max=2, lamb=1.0, random_state=0)
+    >>> ggs.fit_predict(X)
+          ilocs
+    0   [0, 10)
+    1  [10, 20)
+    2  [20, 30)
     """
 
     _tags = {
@@ -428,17 +437,6 @@ class GreedyGaussianSegmentation(BaseDetector):
         "learning_type": "unsupervised",
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        # test skip flags
-        # ---------------
-        "tests:skip_by_name": [
-            "test_predict_points",
-            "test_predict_segments",
-            "test_output_type",
-            "test_transform_output_type",
-            "test_inheritance",
-            "test_create_test_instance",
-            "test_class_has_doctest_example",
-        ],
     }
 
     def __init__(
@@ -478,19 +476,20 @@ class GreedyGaussianSegmentation(BaseDetector):
         # Perform initialization and prepare the model
         return self
 
-    def _predict(self, X) -> npt.ArrayLike:
+    def _predict(self, X):
         """Perform segmentation.
 
         Parameters
         ----------
-        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
-            1D array of time series values, or 2D array with index along the first
-            dimension and columns representing features of the time series.
+        X: pd.Series or pd.DataFrame
+            Time series to segment, with time along the first dimension and
+            columns representing features of the time series.
 
         Returns
         -------
-        y_pred : array_like
-            1D array of segment labels indexed by segment.
+        y_pred : pd.DataFrame with column "ilocs"
+            Segments as left-closed ``pd.Interval`` of ``iloc`` indices of ``X``,
+            one row per segment, in order of appearance.
         """
         if isinstance(X, pd.Series):
             X = X.values[:, np.newaxis]
@@ -510,29 +509,13 @@ class GreedyGaussianSegmentation(BaseDetector):
             random_state=self.random_state,
         )
         adaptee.initialize_intermediates()
-        change_points_ = adaptee.find_change_points(X)
+        change_points_ = np.asarray(adaptee.find_change_points(X), dtype=int)
 
-        # Assign labels based on detected change points
-        labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(zip(change_points_[:-1], change_points_[1:])):
-            labels[start:stop] = i
-        return labels
-
-    def fit_predict(self, X) -> npt.ArrayLike:
-        """Perform segmentation.
-
-        Parameters
-        ----------
-        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
-            1D array of time series values, or 2D array with index along the first
-            dimension and columns representing features of the time series.
-
-        Returns
-        -------
-        y_pred : array_like
-            1D array of segment labels indexed by segment
-        """
-        return self.fit(X, None).predict(X)
+        # change points include the start, 0, and the end of the series, which
+        # the GGS algorithm represents as len(X) + 1
+        starts = change_points_[:-1]
+        ends = np.minimum(change_points_[1:], X.shape[0])
+        return format_segments(starts, ends)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
