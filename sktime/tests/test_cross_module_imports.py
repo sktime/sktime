@@ -29,6 +29,7 @@ TYPE_MODULES = frozenset(
         "clustering",
         "detection",
         "forecasting",
+        "libs",
         "param_est",
         "regression",
         "transformations",
