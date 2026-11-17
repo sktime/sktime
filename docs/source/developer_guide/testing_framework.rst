@@ -12,6 +12,12 @@ This page gives an overview over the tests, and introductions on how to add test
 Test module architecture
 ------------------------
 
+.. note::
+
+   **Running tests locally:**
+
+   Because ``sktime`` contains hundreds of estimators and extensive parameterization matrices, developers should **avoid running the full test suite locally** (e.g., bare ``pytest`` or ``pytest ./sktime``). Doing so can exhaust system RAM and cause local machines to freeze. Instead, always target specific modules, test files, or estimators (e.g. ``pytest sktime/classification/`` or ``pytest -k "MyEstimator"``). See :ref:`full test suite runs <full_test_suite_runs>` in the continuous integration guide.
+
 ``sktime`` testing happens on three layers, roughly corresponding to the inheritance layers of estimators.
 
 * "package level": testing interface compliance with the ``BaseObject`` and ``BaseEstimator`` specifications, in ``tests/test_all_estimators.py``
