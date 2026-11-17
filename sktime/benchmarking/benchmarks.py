@@ -4,7 +4,7 @@ import logging
 import platform
 import warnings
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -840,7 +840,7 @@ class BaseBenchmark:
         """Build metadata from the tasks and estimators registered here."""
         return BenchmarkMetadata(
             schema_version=1,
-            timestamp_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            timestamp_utc=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             sktime_version=SKTIME_VERSION,
             python_version=platform.python_version(),
             tasks=[
