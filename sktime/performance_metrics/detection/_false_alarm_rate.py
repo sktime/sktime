@@ -151,7 +151,9 @@ class FalseAlarmRate(BaseDetectionMetric):
             return np.nan
 
         duration = index[-1] - index[0]
-        if _is_time_index(index):
+        if isinstance(index, pd.PeriodIndex):
+            duration = duration.n
+        elif _is_time_index(index):
             duration = duration / pd.Timedelta(1, unit=self.time_unit)
 
         # a repeated index value can still give no span, and no rate
