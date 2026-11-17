@@ -187,6 +187,8 @@ KNOWN_EXCEPTIONS = frozenset(
         ("param_est/plugin/_transformer.py", "param_est", "transformations"),
         ("param_est/tests/test_plugin.py", "param_est", "forecasting"),
         ("param_est/tests/test_plugin.py", "param_est", "transformations"),
+        ("networks/convtran/_positional_encoding.py", "networks", "libs"),
+        ("networks/mvts_transformer/_positional_encoding.py", "networks", "libs"),
     }
 )
 
