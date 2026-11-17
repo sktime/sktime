@@ -18,9 +18,6 @@ DataLoader = _safe_import("torch.utils.data.DataLoader")
 Dataset = _safe_import("torch.utils.data.Dataset")
 empty_cache = _safe_import("torch.cuda.empty_cache")
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from sktime.libs.momentfm import MOMENTPipeline
-
 
 def _momentfm_cache_key(
     pretrained_model_name_or_path, n_channels, num_class, dropout, device
@@ -105,6 +102,8 @@ class _CachedMomentFMPipeline:
         MOMENTPipeline
             The initialised pipeline, ready for fine-tuning.
         """
+        from sktime.libs.momentfm import MOMENTPipeline
+
         if self._pipeline is None:
             self._pipeline = MOMENTPipeline.from_pretrained(
                 self.pretrained_model_name_or_path,
