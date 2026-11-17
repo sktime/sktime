@@ -41,6 +41,7 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
+    MeanSquaredError,
     MeanSquaredPercentageError,
     MedianSquaredPercentageError,
 )
@@ -674,3 +675,62 @@ def test_evaluate_hierarchical_unequal_X_y():
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_evaluate_scorers_with_same_name():
+    """Test that scorers with the same name each get a result column.
+
+    Tests failure case in bug report #8052, where the score of all but the
+    last scorer with the same name was lost.
+    """
+    y = load_airline()[:24]
+    forecaster = NaiveForecaster(strategy="mean", sp=3)
+    cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
+    rmse = MeanSquaredError(square_root=True)
+    mse = MeanSquaredError()
+
+    out = evaluate(forecaster, cv, y, scoring=[rmse, mse], error_score="raise")
+    out_rmse = evaluate(forecaster, cv, y, scoring=rmse, error_score="raise")
+    out_mse = evaluate(forecaster, cv, y, scoring=mse, error_score="raise")
+
+    _assert_array_almost_equal(
+        out["test_MeanSquaredError"], out_rmse["test_MeanSquaredError"]
+    )
+    _assert_array_almost_equal(
+        out["test_MeanSquaredError_2"], out_mse["test_MeanSquaredError"]
+    )
+    _check_evaluate_output(out, cv, y, [rmse, mse], False, False)
+
+    # the scorers passed by the user are not renamed
+    assert rmse.name == "MeanSquaredError"
+    assert mse.name == "MeanSquaredError"
+
+
+def test_check_scores_unique_names():
+    """Test that _check_scores renames only metrics whose result columns clash."""
+    names = [m.name for m in _check_scores([MeanSquaredError()])["pred"]]
+    assert names == ["MeanSquaredError"]
+
+    scoring = [MeanSquaredError(), MeanAbsoluteError(), MeanSquaredError()]
+    names = [m.name for m in _check_scores(scoring)["pred"]]
+    assert names == ["MeanSquaredError", "MeanAbsoluteError", "MeanSquaredError_2"]
+
+    # a suffixed name that is already taken is skipped
+    taken = MeanSquaredError()
+    taken.name = "MeanSquaredError_2"
+    scoring = [MeanSquaredError(), taken, MeanSquaredError()]
+    names = [m.name for m in _check_scores(scoring)["pred"]]
+    assert names == ["MeanSquaredError", "MeanSquaredError_2", "MeanSquaredError_3"]
+
+    # probabilistic metrics with different alpha already get distinct columns
+    scoring = [PinballLoss(alpha=0.1), PinballLoss(alpha=0.9)]
+    names = [m.name for m in _check_scores(scoring)["pred_quantiles"]]
+    assert names == ["PinballLoss", "PinballLoss"]
+
+    scoring = [PinballLoss(alpha=0.5), PinballLoss(alpha=0.5)]
+    names = [m.name for m in _check_scores(scoring)["pred_quantiles"]]
+    assert names == ["PinballLoss", "PinballLoss_2"]
