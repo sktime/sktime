@@ -10,7 +10,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.base import BaseMetric
 from sktime.split.base._base_splitter import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 
@@ -110,7 +109,7 @@ class TaskObject:
 
     data: Callable | tuple
     cv_splitter: BaseSplitter
-    scorers: list[BaseMetric]
+    scorers: list
     strategy: str = "refit"
     cv_X = None
     cv_global: BaseSplitter | None = None
