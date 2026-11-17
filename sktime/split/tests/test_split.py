@@ -144,3 +144,33 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
     np.testing.assert_array_equal(test_windows[0], np.array([0, 2]))
     np.testing.assert_array_equal(train_windows[0], np.array([3, 4, 5]))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ExpandingWindowSplitter, SlidingWindowSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "splitter",
+    [
+        ExpandingWindowSplitter(initial_window=10, fh=[1, 2], step_length=3),
+        SlidingWindowSplitter(window_length=8, fh=[1], step_length=2),
+    ],
+)
+def test_window_splitter_get_n_splits_multiindex(splitter):
+    """get_n_splits on a MultiIndex counts the splits of one instance, see #6194.
+
+    The base class passes the index of a Panel or Hierarchical series to ``_split``,
+    so composite splitters such as ``Repeat`` call ``get_n_splits`` with a
+    ``pd.MultiIndex``; this must agree with the number of splits generated.
+    """
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 2), min_timepoints=20, max_timepoints=20
+    )
+
+    n_from_index = splitter.get_n_splits(y.index)
+    assert n_from_index == splitter.get_n_splits(y)
+    assert n_from_index == len(list(splitter.split(y)))
+    assert n_from_index == len(list(splitter.split(y.index)))
