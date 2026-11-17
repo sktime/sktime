@@ -13,7 +13,7 @@ from sktime.benchmarking.detection import (
     _replay_live,
 )
 from sktime.detection.base import BaseDetector
-from sktime.detection.dummy import DummyRateAnomalies, DummyTimeFreqAnomalies
+from sktime.detection.dummy import DummyPretrainedAnomalies
 from sktime.performance_metrics.detection import (
     EventTPR,
     FalseAlarmRate,
@@ -121,13 +121,17 @@ def test_pretrain_stats_match_the_pretrain_panel():
     X, y = _make_panel(), _make_events()
 
     for instance, X_pretrain, y_pretrain, X_live, _ in _leave_one_series_out(X, y):
-        detector = DummyRateAnomalies().pretrain(X_pretrain, y_pretrain)
+        detector = DummyPretrainedAnomalies(strategy="rate").pretrain(
+            X_pretrain, y_pretrain
+        )
 
         assert detector.n_pretrain_timepoints_ == len(X) - len(X_live)
         assert detector.n_pretrain_timepoints_ == len(X_pretrain)
         assert detector.n_pretrain_events_ == len(NAMES) - 1
 
-        other = DummyTimeFreqAnomalies().pretrain(X_pretrain, y_pretrain)
+        other = DummyPretrainedAnomalies(strategy="timefreq").pretrain(
+            X_pretrain, y_pretrain
+        )
 
         # the curve is as long as the longest series that was pretrained on
         other_lengths = [n for name, n in zip(NAMES, LENGTHS) if name != instance]
@@ -140,7 +144,7 @@ def test_run_validation_pretrains_one_fold_per_series():
     benchmark.add_task((_make_panel(), _make_events()), task_id="toy")
     task = benchmark.tasks.entities["toy"]
 
-    folds = benchmark._run_validation(task, DummyRateAnomalies())
+    folds = benchmark._run_validation(task, DummyPretrainedAnomalies(strategy="rate"))
 
     assert list(folds) == list(range(len(NAMES)))
     # the task has no scorers, so no fold has scores
@@ -156,7 +160,9 @@ def test_pretrained_then_fitted_detector_raises():
     task = benchmark.tasks.entities["toy"]
 
     # fitted, so not in state pretrained, but its clone carries pretrained state
-    fitted = DummyRateAnomalies().pretrain(X, y).fit(_make_series(10))
+    fitted = (
+        DummyPretrainedAnomalies(strategy="rate").pretrain(X, y).fit(_make_series(10))
+    )
     assert fitted.state == "fitted"
     assert fitted.clone().state == "pretrained"
 
@@ -392,7 +398,9 @@ def test_run_validation_pretrains_on_the_held_out_panel():
     benchmark.add_task((X, y), task_id="held_out")
     task = benchmark.tasks.entities["held_out"]
 
-    folds = benchmark._run_validation(task, DummyTimeFreqAnomalies(random_state=0))
+    folds = benchmark._run_validation(
+        task, DummyPretrainedAnomalies(strategy="timefreq", random_state=0)
+    )
 
     # the fold of c pretrains on a and b, which carry no events at all
     assert len(folds[2].predictions) == 0
@@ -406,7 +414,7 @@ def test_run_validation_pretrains_on_the_held_out_panel():
     control_task = control.tasks.entities["control"]
 
     control_folds = control._run_validation(
-        control_task, DummyTimeFreqAnomalies(random_state=0)
+        control_task, DummyPretrainedAnomalies(strategy="timefreq", random_state=0)
     )
 
     assert list(control_folds[2].predictions["ilocs"]) == [7]
@@ -515,11 +523,11 @@ def test_pretrained_detector_is_not_pretrained_again(monkeypatch):
     # pretrained on a panel of its own: 5 events in 20 points, so rate 0.25
     X_own = _panel_with_lengths([10, 10])
     y_own = _events_at([("a", 1), ("a", 3), ("a", 5), ("b", 2), ("b", 4)])
-    detector = DummyRateAnomalies().pretrain(X_own, y_own)
+    detector = DummyPretrainedAnomalies(strategy="rate").pretrain(X_own, y_own)
 
     pretrained_on = []
     rate_at_fit = []
-    pretrain, fit = DummyRateAnomalies.pretrain, DummyRateAnomalies.fit
+    pretrain, fit = DummyPretrainedAnomalies.pretrain, DummyPretrainedAnomalies.fit
 
     def pretrain_spy(self, X, y=None):
         pretrained_on.append(sorted(set(X.index.get_level_values(0))))
@@ -529,8 +537,8 @@ def test_pretrained_detector_is_not_pretrained_again(monkeypatch):
         rate_at_fit.append(self.pretrain_event_rate_)
         return fit(self, X, y)
 
-    monkeypatch.setattr(DummyRateAnomalies, "pretrain", pretrain_spy)
-    monkeypatch.setattr(DummyRateAnomalies, "fit", fit_spy)
+    monkeypatch.setattr(DummyPretrainedAnomalies, "pretrain", pretrain_spy)
+    monkeypatch.setattr(DummyPretrainedAnomalies, "fit", fit_spy)
 
     benchmark = DetectionBenchmark()
     benchmark.add_task((X, y), task_id="toy")
@@ -561,19 +569,19 @@ def test_new_detector_is_still_pretrained(monkeypatch):
     X, y = _make_panel(), _make_events()
 
     pretrained_on = []
-    pretrain = DummyRateAnomalies.pretrain
+    pretrain = DummyPretrainedAnomalies.pretrain
 
     def pretrain_spy(self, X, y=None):
         pretrained_on.append(sorted(set(X.index.get_level_values(0))))
         return pretrain(self, X, y)
 
-    monkeypatch.setattr(DummyRateAnomalies, "pretrain", pretrain_spy)
+    monkeypatch.setattr(DummyPretrainedAnomalies, "pretrain", pretrain_spy)
 
     benchmark = DetectionBenchmark()
     benchmark.add_task((X, y), task_id="toy")
     task = benchmark.tasks.entities["toy"]
 
-    detector = DummyRateAnomalies()
+    detector = DummyPretrainedAnomalies(strategy="rate")
     benchmark._run_validation(task, detector)
 
     # one pretrain per fold, each on the series other than the live one
