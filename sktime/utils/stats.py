@@ -17,6 +17,36 @@ __all__ = [
 
 # forked from sklearn.utils to ensure compatibility with newer sklearn versions
 def _weighted_percentile(array, sample_weight, percentile=50):
+    """Compute weighted percentile, averaging the lower and upper percentile.
+
+    With equal weights, this coincides with ``np.median`` for ``percentile=50``,
+    also for an even number of values. If `array` is a 2D array, the
+    `percentile` is computed along the axis 0.
+
+    Parameters
+    ----------
+    array : 1D or 2D array
+        Values to take the weighted percentile of.
+
+    sample_weight: 1D or 2D array-like
+        Weights for each value in `array`. Must be same shape as `array` or
+        of shape `(array.shape[0],)`.
+
+    percentile: int or float, default=50
+        Percentile to compute. Must be value between 0 and 100.
+
+    Returns
+    -------
+    percentile : int if `array` 1D, ndarray if `array` 2D
+        Weighted percentile.
+    """
+    array = np.asarray(array)
+    lower = _lower_weighted_percentile(array, sample_weight, percentile)
+    upper = -_lower_weighted_percentile(-array, sample_weight, 100 - percentile)
+    return (lower + upper) / 2
+
+
+def _lower_weighted_percentile(array, sample_weight, percentile=50):
     """Compute lower weighted percentile.
 
     Computes lower weighted percentile. If `array` is a 2D array, the
