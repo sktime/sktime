@@ -414,12 +414,20 @@ def test_manual_selection_millisecond_of_second():
     )
     assert_frame_equal(yt, expected)
 
+    # Offsets in microseconds: truncation below 1 ms, mid-range, and end of second.
+    microseconds = [0, 1, 999, 1000, 123456, 999999]
+    expected_ms = [0, 0, 0, 1, 123, 999]
     y_frac = pd.DataFrame(
-        data={"y": [1.0]},
-        index=pd.DatetimeIndex(["2020-01-01 00:00:00.123456"]),
+        data={"y": [1.0] * len(microseconds)},
+        index=pd.DatetimeIndex(
+            [
+                pd.Timestamp("2020-01-01") + pd.Timedelta(microseconds=us)
+                for us in microseconds
+            ]
+        ),
     )
     yt_frac = transformer.fit_transform(y_frac)
-    assert yt_frac["millisecond_of_second"].iloc[0] == 123
+    assert yt_frac["millisecond_of_second"].tolist() == expected_ms
 
 
 @pytest.mark.skipif(
