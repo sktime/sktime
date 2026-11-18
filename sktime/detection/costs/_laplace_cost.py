@@ -11,6 +11,10 @@ from sktime.detection._utils import (
     VarType,
     check_mean,
     check_non_negative_parameter,
+    col_cumsum,
+    group_intervals_by_length,
+    iter_interval_windows,
+    use_grouped_evaluation,
 )
 from sktime.detection.costs._base import BaseCost
 
@@ -23,33 +27,51 @@ def _laplace_log_likelihood(centered_X, scales):
 
 def _laplace_cost_mle_params(starts, ends, X):
     """Evaluate the Laplace cost with MLE parameters."""
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
     n_intervals = len(starts)
     n_columns = X.shape[1]
     costs = np.zeros((n_intervals, n_columns))
 
-    for i in range(n_intervals):
-        start, end = starts[i], ends[i]
-        segment = X[start:end]
-        mle_locations = np.median(segment, axis=0)
-        centered_X = segment - mle_locations[np.newaxis, :]
-        mle_scales = np.mean(np.abs(centered_X), axis=0)
-        costs[i, :] = -2.0 * _laplace_log_likelihood(centered_X, mle_scales)
+    groups = group_intervals_by_length(starts, ends)
+    if not use_grouped_evaluation(groups, n_intervals):
+        for i in range(n_intervals):
+            start, end = starts[i], ends[i]
+            segment = X[start:end]
+            mle_locations = np.median(segment, axis=0)
+            centered_X = segment - mle_locations[np.newaxis, :]
+            mle_scales = np.mean(np.abs(centered_X), axis=0)
+            costs[i, :] = -2.0 * _laplace_log_likelihood(centered_X, mle_scales)
+        return costs
+
+    # intervals of equal length are evaluated at once, as stacked windows
+    for idx, windows in iter_interval_windows(groups, starts, ends, X):
+        # windows: (n_group, length, n_columns)
+        n_samples = windows.shape[1]
+        mle_locations = np.median(windows, axis=1, keepdims=True)
+        abs_dev = np.abs(windows - mle_locations)
+        mle_scales = np.mean(abs_dev, axis=1)
+        log_likelihood = (
+            -n_samples * np.log(2 * mle_scales) - np.sum(abs_dev, axis=1) / mle_scales
+        )
+        costs[idx] = -2.0 * log_likelihood
 
     return costs
 
 
 def _laplace_cost_fixed_params(starts, ends, X, locations, scales):
     """Evaluate the Laplace cost with fixed parameters."""
-    n_intervals = len(starts)
-    n_columns = X.shape[1]
-    costs = np.zeros((n_intervals, n_columns))
-
-    for i in range(n_intervals):
-        start, end = starts[i], ends[i]
-        centered_X = X[start:end] - locations[np.newaxis, :]
-        costs[i, :] = -2.0 * _laplace_log_likelihood(centered_X, scales)
-
-    return costs
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
+    # cumulative sums of the absolute deviations, so that the sum over an
+    # interval is a difference of two rows
+    abs_dev_sums = col_cumsum(np.abs(X - locations[None, :]), init_zero=True)
+    abs_dev = abs_dev_sums[ends] - abs_dev_sums[starts]
+    n_samples = (ends - starts)[:, None]
+    log_likelihood = (
+        -n_samples * np.log(2 * scales)[None, :] - abs_dev / scales[None, :]
+    )
+    return -2.0 * log_likelihood
 
 
 class LaplaceCost(BaseCost):
