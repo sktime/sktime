@@ -153,17 +153,20 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
 
             * pd.Series if self.multioutput="uniform_average" or array-like;
               index is equal to index of y_true;
-              entry at index i is metric at time i, averaged over variables.
+              entry at index i is the jackknife pseudo-value at time i,
+              averaged over variables.
             * pd.DataFrame if self.multioutput="raw_values";
               index and columns equal to those of y_true;
-              i,j-th entry is metric at time i, at variable j.
+              i,j-th entry is the jackknife pseudo-value at time i,
+              at variable j.
         """
         multioutput = self.multioutput
 
-        errors = y_true - y_pred
-        # convert to float first, as _check_reg_targets does for evaluate,
-        # otherwise squaring integer errors can overflow (or wrap negative)
-        errors = errors.astype("float64")
+        # cast the operands to float before subtracting, as _check_reg_targets
+        # does for evaluate: subtracting in an integer dtype can itself
+        # overflow (or wrap negative) before squaring, e.g. errors near
+        # +-1e19 in int64, and squaring integer errors can overflow too
+        errors = y_true.astype("float64") - y_pred.astype("float64")
         # zero errors are replaced by EPS, as in geometric_mean_squared_error,
         # so that the logarithms below are finite and consistent with evaluate
         errors = errors.mask(errors == 0.0, EPS)

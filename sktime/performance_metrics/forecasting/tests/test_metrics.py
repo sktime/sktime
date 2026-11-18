@@ -127,9 +127,11 @@ def test_gmse_evaluate_by_index_edge_cases():
 
     Covers the behaviours the closed form must share with the jackknife
     definition via ``evaluate``: n=1 raises, n=2, integer dtype input
-    (squaring must not overflow), squared errors that underflow to zero
+    (squaring must not overflow, and the subtraction itself must not
+    overflow int64), squared errors that underflow to zero
     or overflow to infinity when squaring, NaN input propagating to the
-    whole column instead of being silently dropped, custom multioutput
+    whole column instead of being silently dropped, NaN in one column
+    only leaving the other column unaffected, custom multioutput
     weights, and the output types and indices.
     """
     from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
@@ -171,6 +173,16 @@ def test_gmse_evaluate_by_index_edge_cases():
     expected = jackknife_definition(metric, y_true_int, y_pred_int)
     assert np.allclose(by_index.values, expected)
 
+    # integer dtype where the difference itself overflows int64: the
+    # subtraction must happen in float64, as evaluate does via
+    # _check_reg_targets, or the wrapped difference corrupts the result
+    y_true_big = np.array([5_000_000_000_000_000_000, 1], dtype="int64")
+    y_pred_big = np.array([-5_000_000_000_000_000_000, 0], dtype="int64")
+    by_index = metric.evaluate_by_index(y_true_big, y_pred_big)
+    assert np.isfinite(by_index.values).all()
+    expected = jackknife_definition(metric, y_true_big, y_pred_big)
+    assert np.allclose(by_index.values, expected)
+
     # squared error underflows to zero: evaluate is 0, pseudo-values are
     # -1 and 0 by the definition (the point itself, and the clean point)
     y_true = np.array([1e-200, 1.0])
@@ -192,6 +204,21 @@ def test_gmse_evaluate_by_index_edge_cases():
         np.array([1.0, 2.0, 3.0]), np.array([0.0, np.nan, 1.0])
     )
     assert by_index.isna().all()
+
+    # NaN in one column only: propagation is per column, the clean column
+    # is unaffected under raw_values and equals its single-column result
+    y_true_mc = pd.DataFrame(
+        {"a": [3.0, -0.5, 2.0, 7.0], "b": [3.0, -0.5, 2.0, 7.0]}
+    )
+    y_pred_mc = pd.DataFrame(
+        {"a": [2.5, 0.0, 2.0, 8.0], "b": [2.5, np.nan, 2.0, 8.0]}
+    )
+    metric_raw_mc = GeometricMeanSquaredError(multioutput="raw_values")
+    by_index_mc = metric_raw_mc.evaluate_by_index(y_true_mc, y_pred_mc)
+    assert by_index_mc["b"].isna().all()
+    assert np.isfinite(by_index_mc["a"].values).all()
+    by_index_a = metric.evaluate_by_index(y_true_mc["a"], y_pred_mc["a"])
+    assert np.allclose(by_index_mc["a"].values, by_index_a.values)
 
     # multivariate: output types, index and columns; per-variable values
     y_true = pd.DataFrame([[1.0, 2.0], [2.0, 4.0]], columns=["a", "b"])
