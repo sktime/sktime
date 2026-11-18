@@ -19,6 +19,19 @@ __all__ = ["WindowSegmenter"]
 
 
 def _overlapping_window(window_size, step_size, X):
+    """Create overlapping windows of X, as a 3D numpy array for sktime clusterers.
+
+    Parameters
+    ----------
+    window_size : int
+    step_size : int
+    X : pd.DataFrame
+
+    Returns
+    -------
+    np.ndarray of shape (n_segments, n_features, window_size)
+        the windows of ``X``, the last one zero-padded to ``window_size``
+    """
     X_size = len(X)
     n_features = X.shape[1]
 
@@ -35,7 +48,23 @@ def _overlapping_window(window_size, step_size, X):
 
         sub_seg.append(segment)
 
-    return np.array(sub_seg).reshape(len(sub_seg), n_features, window_size)
+    return _segments_to_numpy3d(sub_seg)
+
+
+def _segments_to_numpy3d(sub_seg):
+    """Stack segments of shape (window_size, n_features) to a numpy3D array.
+
+    Parameters
+    ----------
+    sub_seg : list of np.ndarray or pd.DataFrame, each of shape
+        (window_size, n_features)
+
+    Returns
+    -------
+    np.ndarray of shape (n_segments, n_features, window_size)
+    """
+    segments = np.stack([np.asarray(seg, dtype=float) for seg in sub_seg])
+    return segments.transpose(0, 2, 1)
 
 
 def _window_timeseries(window_size, X):
@@ -63,7 +92,7 @@ def _window_timeseries(window_size, X):
         pad = np.zeros((pad_length, n_features))
         sub_seg[-1] = np.concatenate([sub_seg[-1], pad], axis=0)
 
-    return np.array(sub_seg).reshape(len(sub_seg), n_features, window_size)
+    return _segments_to_numpy3d(sub_seg)
 
 
 def _window(window_size, X):
@@ -179,15 +208,12 @@ class WindowSegmenter(BaseDetector):
     >>> result
         ilocs  cluster
     0  [0, 4)        1
-    1  [4, 7)        0
+    1  [4, 8)        0
     """
 
     _tags = {
         "task": "segmentation",
         "learning_type": "unsupervised",
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
     }
 
     def __init__(
@@ -199,7 +225,6 @@ class WindowSegmenter(BaseDetector):
         return_segments=True,
     ):
         self.clusterer = clusterer
-        self._clusterer_ = clusterer
         self.window_size = window_size
         self._window_size = window_size
         self.overlap = overlap
@@ -247,47 +272,45 @@ class WindowSegmenter(BaseDetector):
             exact format depends on detection type
         """
         if isinstance(X, pd.Series):
-            X = X.to_frame(X)
+            X = X.to_frame()
 
-        self._clusterer_ = clone(self._clusterer)
-        self.n_features, self.n_timepoints = X.shape
+        clusterer = clone(self._clusterer)
         if self.overlap:
             win_x = _overlapping_window(self._window_size, self.step_size, X)
-            labels = self._clusterer_.predict(win_x)
-            flabel = _overlap_final_label(labels, self._window_size, self.step_size, X)
-            if self.return_segments:
-                flabel = pd.Series(flabel, index=X.index)
-            else:
-                aggr_labels = _aggregate_labels(flabel)
-                return pd.Series(aggr_labels, index=X.index)
+            if is_sklearn_clusterer(clusterer):
+                # sklearn clusterers expect 2D input, one flattened window per row
+                win_x = win_x.transpose(0, 2, 1).reshape(len(win_x), -1)
+            clusterer.fit(win_x)
+            labels = clusterer.predict(win_x)
+            # labels of all windows covering a time point, aggregated by majority
+            point_labels = _overlap_final_label(
+                labels, self._window_size, self.step_size, X
+            )
+            flabel = pd.Series(_aggregate_labels(point_labels), index=X.index)
         else:
-            if is_sklearn_clusterer(self._clusterer_):
+            if is_sklearn_clusterer(clusterer):
                 win_x = _window(self._window_size, X)
                 sub = _flattenSegments(win_x)
-                self._clusterer_.fit(sub)
-                labels = self._clusterer_.predict(sub)
+                clusterer.fit(sub)
+                labels = clusterer.predict(sub)
             else:
                 win_x = _window_timeseries(self._window_size, X)
-                self._clusterer_.fit(win_x)
-                labels = self._clusterer_.predict(win_x)
+                clusterer.fit(win_x)
+                labels = clusterer.predict(win_x)
             flabel = _finalLabels(labels, self._window_size, X)
             flabel = pd.Series(flabel.flatten(), index=X.index)
-        current_label = flabel[0]
 
-        start_idx = 0
-        intervals = []
-        labels_out = []
+        if not self.return_segments:
+            return flabel
 
-        for i, (idx, label) in enumerate(zip(X.index, flabel)):
-            if label != current_label or i == len(flabel) - 1:
-                intervals.append(pd.Interval(start_idx, i, closed="left"))
-                labels_out.append(current_label)
-                start_idx = i
-                current_label = label
-
-        if start_idx != len(X) - 1:
-            intervals.append(pd.Interval(start_idx, len(X) - 1, closed="left"))
-            labels_out.append(current_label)
+        # segments are maximal runs of equal labels, as half-open iloc intervals
+        label_values = np.asarray(flabel)
+        starts = np.flatnonzero(np.r_[True, label_values[1:] != label_values[:-1]])
+        ends = np.r_[starts[1:], len(label_values)]
+        intervals = [
+            pd.Interval(int(s), int(e), closed="left") for s, e in zip(starts, ends)
+        ]
+        labels_out = label_values[starts]
 
         result = pd.DataFrame({"cluster": labels_out}, index=intervals)
         return result
