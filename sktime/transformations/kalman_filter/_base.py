@@ -136,10 +136,10 @@ class BaseKalmanFilter:
     References
     ----------
     .. [1] Greg Welch and Gary Bishop, "An Introduction to the Kalman Filter", 2006
-           https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
+           https://web.archive.org/web/20210122230246/https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
     .. [2] R.H.Shumway and D.S.Stoffer "An Approach to time
            Series Smoothing and Forecasting Using the EM Algorithm", 1982
-           https://www.stat.pitt.edu/stoffer/dss_files/em.pdf
+           https://doi.org/10.1111/j.1467-9892.1982.tb00349.x
     """
 
     _tags = {
