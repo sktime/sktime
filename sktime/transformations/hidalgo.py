@@ -4,7 +4,7 @@ __author__ = ["KatieBuc"]
 __all__ = ["Hidalgo"]
 
 
-from functools import reduce
+from functools import lru_cache, reduce
 
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -196,7 +196,8 @@ class Hidalgo(BaseTransformer):
         if f is None:
             f = np.ones(2)
 
-        N_in = sum([Z[Iin[q * i + j]] == Z[i] for j in range(q) for i in range(N)])
+        # number of neighbour pairs (i, j) with the same manifold label
+        N_in = int(np.sum(Z[np.reshape(Iin, (N, q))] == Z[:, None]))
 
         f1 = np.empty(shape=2)
         f1[0] = f[0] + N_in
@@ -314,7 +315,7 @@ class Hidalgo(BaseTransformer):
         use_Potts = self.use_Potts
         estimate_zeta = self.estimate_zeta
 
-        sampling = np.empty(shape=0)
+        sampling = []
         pp = (K - 1) / K
         p = np.ones(shape=K) / K
 
@@ -425,30 +426,34 @@ class Hidalgo(BaseTransformer):
             if (abs(zeta - 1) < 1e-5) or fixed_Z:
                 return Z, NN, a1, c1, V, b1
 
+            # neighbours of each point, and points that have i as neighbour
+            Iin_mat = np.reshape(Iin, (N, q))
+            log_zeta_ratio = np.log(zeta / (1 - zeta))
+
             for i in range(N):
                 stop = False
                 gg = np.empty(shape=K)
                 gmax = 0
 
+                if use_Potts:
+                    # counts of neighbours of i in each manifold, n_in,
+                    # and of points having i as neighbour in each manifold, m_in
+                    n_in = np.bincount(Z[Iin_mat[i]], minlength=K)
+                    out_nbrs = Iout[Iout_track[i] : Iout_track[i] + Iout_count[i]]
+                    out_nbrs = out_nbrs[out_nbrs > -1]
+                    m_in = np.bincount(Z[out_nbrs], minlength=K)
+
                 for k1 in range(K):
                     g = 0
                     if use_Potts:
-                        n_in = sum([Z[Iin[q * i + j]] == k1 for j in range(q)])
-
-                        m_in = sum(
-                            [
-                                Iout[Iout_track[i] + j] > -1
-                                and Z[Iout[Iout_track[i] + j]] == k1
-                                for j in range(Iout_count[i])
-                            ]
-                        )
-
-                        g = (n_in + m_in) * np.log(zeta / (1 - zeta)) - np.log(
-                            partition_function(N, NN[k1], zeta, q)
-                        )
-                        var = partition_function(
+                        pf_k = _partition_function_cached(N, NN[k1], zeta, q)
+                        pf_k_minus_1 = _partition_function_cached(
                             N, NN[k1] - 1, zeta, q
-                        ) / partition_function(N, NN[k1], zeta, q)
+                        )
+                        g = (int(n_in[k1]) + int(m_in[k1])) * log_zeta_ratio - np.log(
+                            pf_k
+                        )
+                        var = pf_k_minus_1 / pf_k
                         assert var > 0
                         g = g + np.log(var) * (NN[k1] - 1)
 
@@ -497,22 +502,25 @@ class Hidalgo(BaseTransformer):
             lik1 = lik0 + np.log(zeta / (1 - zeta)) * N_in
 
             for k1 in range(K):
-                lik1 = lik1 - (NN[k1] * np.log(partition_function(N, NN[k1], zeta, q)))
+                lik1 = lik1 - (
+                    NN[k1] * np.log(_partition_function_cached(N, NN[k1], zeta, q))
+                )
 
             return lik0, lik1
 
         for it in range(n_iter):
             d = sample_d(K, a1, b1, _rng)
-            sampling = np.append(sampling, d)
+            # p and Z are updated in place below, so copies are stored
+            sampling.append(np.array(d, dtype=float))
 
             (p, pp) = sample_p(K, p, pp, c1, _rng)
-            sampling = np.append(sampling, p[: K - 1])
-            sampling = np.append(sampling, (1 - pp))
+            sampling.append(np.array(p[: K - 1], dtype=float))
+            sampling.append(np.array([1 - pp], dtype=float))
 
             zeta = sample_zeta(
                 N, K, zeta, use_Potts, estimate_zeta, q, NN, f1, it, _rng
             )
-            sampling = np.append(sampling, zeta)
+            sampling.append(np.array([zeta], dtype=float))
 
             Z, NN, a1, c1, V, b1 = sample_Z(
                 N,
@@ -532,14 +540,14 @@ class Hidalgo(BaseTransformer):
                 q,
                 _rng,
             )
-            sampling = np.append(sampling, Z)
+            sampling.append(np.array(Z, dtype=float))
 
             N_in, f1 = self._update_zeta_prior(Z, N, Iin)
 
             lik = sample_likelihood(N, mu, p, d, Z, N_in, zeta, NN)
-            sampling = np.append(sampling, lik)
+            sampling.append(np.array(lik, dtype=float))
 
-        return sampling
+        return np.concatenate(sampling)
 
     def _fit(self, X, y=None):
         """Run the Hidalgo algorithm.
@@ -737,6 +745,18 @@ def binom(N: float, q: float):
     if N < 0:
         return 0.0
     return reduce(lambda x, y: x * y, [(N - q1) / (q1 + 1) for q1 in range(q)])
+
+
+@lru_cache(maxsize=4096)
+def _partition_function_cached(N, N1, zeta, q):
+    """Partition function for Z, cached version of ``partition_function``.
+
+    The partition function is evaluated many times with the same arguments
+    in the Gibbs sampling, as ``NN[k]`` changes by at most one per point update.
+    All arguments are scalars, so the cache key is exact and the cached value is
+    identical to the value computed by ``partition_function``.
+    """
+    return partition_function(N, N1, zeta, q)
 
 
 def partition_function(N, N1, zeta, q):
