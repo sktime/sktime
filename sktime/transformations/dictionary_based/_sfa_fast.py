@@ -121,6 +121,17 @@ class SFAFast(BaseTransformer):
     .. [1] Schäfer, Patrick, and Mikael Högqvist. "SFA: a symbolic fourier approximation
     and  index for similarity search in high dimensional datasets." Proceedings of the
     15th international conference on extending database technology. 2012.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.dictionary_based import SFAFast
+    >>> X_train, y_train = load_unit_test(split="train", return_type="numpy3D")
+    >>> X_test, _ = load_unit_test(split="test", return_type="numpy3D")
+    >>> sfa = SFAFast(word_length=4, alphabet_size=4)  # doctest: +SKIP
+    >>> sfa.fit(X_train, y_train)  # doctest: +SKIP
+    SFAFast(...)
+    >>> X_test_bag = sfa.transform(X_test)  # doctest: +SKIP
     """
 
     _tags = {
@@ -145,7 +156,6 @@ class SFAFast(BaseTransformer):
             "test_categorical_y_raises_error",
             "test_categorical_X_passes",
             "test_get_test_params_coverage",
-            "test_class_has_doctest_example",
         ],
     }
 
