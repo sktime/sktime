@@ -471,7 +471,32 @@ class _Reducer(_BaseWindowForecaster):
             y_raw.loc[common_update_idx] = y_update.loc[common_update_idx]
         # The y_raw dataframe will is updated with recursively forecast values.
 
-        if len(self.transformers_) == 1:
+        if getattr(self, "_prefit_window_summarizer_", False):
+            # The default global reducer uses only lag features. The recursive
+            # window already contains exactly the required observations, so
+            # construct those lag columns directly instead of running the full
+            # WindowSummarizer (including per-instance groupby/joblib setup).
+            target_col = self.transformers_[0]._target_cols[0]
+            if isinstance(y_raw, pd.Series):
+                values = y_raw.to_numpy()
+                n_instances = 1
+                index = y_raw.index[-1:]
+            else:
+                values = y_raw[target_col].to_numpy()
+                if isinstance(y_raw.index, pd.MultiIndex):
+                    n_instances = len(y_raw.index.droplevel(-1).unique())
+                    index = _cut_df(y_raw).index
+                else:
+                    n_instances = 1
+                    index = y_raw.index[-1:]
+
+            values = values.reshape(n_instances, -1)
+            lagged_values = values[:, :-1][:, ::-1]
+            columns = [
+                f"{target_col}_lag_{lag}" for lag in range(1, self.window_length_ + 1)
+            ]
+            X_from_y = pd.DataFrame(lagged_values, index=index, columns=columns)
+        elif len(self.transformers_) == 1:
             X_from_y = self.transformers_[0].fit_transform(y_raw)
         else:
             from sktime.transformations.compose import FeatureUnion
@@ -606,6 +631,10 @@ class _DirectReducer(_Reducer):
             from sktime.transformations.summarize import WindowSummarizer
 
             self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
+            self.transformers_[0].set_tags(**{"remember_data": False})
+            self._prefit_window_summarizer_ = True
+        else:
+            self._prefit_window_summarizer_ = False
 
         if self.window_length is None:
             trafo = self.transformers_
@@ -981,6 +1010,10 @@ class _RecursiveReducer(_Reducer):
                 }
             }
             self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
+            self.transformers_[0].set_tags(**{"remember_data": False})
+            self._prefit_window_summarizer_ = True
+        else:
+            self._prefit_window_summarizer_ = False
 
         if self.window_length is None:
             trafo = self.transformers_
