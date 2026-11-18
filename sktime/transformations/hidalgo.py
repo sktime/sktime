@@ -381,7 +381,7 @@ class Hidalgo(BaseTransformer):
                     val = (
                         (f1[0] - 1) * np.log(zeta1)
                         + (f1[1] - 1) * np.log(1 - zeta1)
-                        - h
+                        - sum(h)
                     )
 
                     if val > maxval:
@@ -393,7 +393,9 @@ class Hidalgo(BaseTransformer):
 
                     ZZ = [partition_function(N, NN[k], r1, q) for k in range(K)]
                     h = [NN[k] * np.log(ZZ[k]) for k in range(K)]
-                    val = (f1[0] - 1) * np.log(r1) + (f1[1] - 1) * np.log(1 - r1) - h
+                    val = (
+                        (f1[0] - 1) * np.log(r1) + (f1[1] - 1) * np.log(1 - r1) - sum(h)
+                    )
                     frac = np.exp(val - maxval)
 
                     if frac > r2:
