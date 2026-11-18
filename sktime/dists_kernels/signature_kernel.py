@@ -458,51 +458,45 @@ def sqize_kernel_low_rank_fast(
         a matrix R such that R*R^t is the sequential kernel matrix
         R*R^t[i,j] is sequential kernel (low-rank) between i-th and j-th sequence in K
     """
+    n_series, n_timepoints, _ = K.shape
+
+    # scaling as in sqize_kernel, where for normalize = True
+    # sums and cumsums are divided by the product of the lengths of the two series
+    # and each level by a power of 1 / (1 + theta), see below
     if normalize:
-        Ksize = K.shape[0]
-        B = np.ones([Ksize, 1, 1])
-        R = np.ones([Ksize, 1])
-
-        for _ in range(L):
-            P = np.sqrt(theta) * hadamard_low_rank_batch(K, B) / Ksize
-            B = cumsum_shift_mult(P, [1])
-
-            if rankbound < B.shape[2]:
-                # B = rankreduce_batch(B, rankbound)
-                permut = np.sort(
-                    np.random.permutation(range(B.shape[2]))[range(rankbound)]
-                )
-                B = B[:, :, permut]
-
-            R = np.concatenate((R, np.sum(B, axis=1)), axis=1) / (np.sqrt(1 + theta))
-
-        return R
-
+        level_scale = 1 / (1 + theta)
+        series_scale = np.sqrt(theta) / n_timepoints
     else:
-        Ksize = K.shape[0]
-        B = np.ones([Ksize, 1, 1])
-        R = np.ones([Ksize, 1])
+        level_scale = 1.0
+        series_scale = 1.0
 
-        for _ in range(L):
-            # todo: execute only if rank is lower than rankbound
-            #       reduce to rank
-            P = np.sqrt(theta) * hadamard_low_rank_batch(K, B)
-            B = cumsum_shift_mult(P, [1])
+    def _rank_reduce(B):
+        if rankbound < B.shape[2]:
+            # B = rankreduce_batch(B, rankbound)
+            permut = np.sort(np.random.permutation(range(B.shape[2]))[range(rankbound)])
+            B = B[:, :, permut]
+        return B
 
-            if rankbound < B.shape[2]:
-                # B = rankreduce_batch(B, rankbound)
-                permut = np.sort(
-                    np.random.permutation(range(B.shape[2]))[range(rankbound)]
-                )
-                B = B[:, :, permut]
+    # level 0 contribution
+    R = [np.sqrt(level_scale) * np.ones([n_series, 1])]
 
-            R = np.concatenate((R, np.sum(B, axis=1)), axis=1)
+    # B[s, t, :] are the low-rank factors of level m contributions
+    # of index sequences of series s ending at time point t
+    B = _rank_reduce(series_scale * K)
+    R.append(np.sum(B, axis=1))
 
-        return R
+    for _ in range(L - 1):
+        # next index strictly after the previous ones
+        P = cumsum_shift_mult(B, [1])
+        B = _rank_reduce(series_scale * hadamard_low_rank_batch(K, P))
+        R.append(np.sum(B, axis=1))
 
+    # level weights of the nested recursion in sqize_kernel:
+    # level m < L is scaled by level_scale^(m + 1), level L by level_scale^L
+    weights = [level_scale ** (m + 1) for m in range(1, L)] + [level_scale**L]
+    R = [R[0]] + [np.sqrt(w) * r for w, r in zip(weights, R[1:])]
 
-# sequential kernel - wraps all versions
-# --------------------------------------
+    return np.concatenate(R, axis=1)
 
 
 def seq_kernel(
