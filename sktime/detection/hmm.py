@@ -93,23 +93,6 @@ class HMM(BaseDetector):
         Probability over the hidden state identity of the first state. If the
         __init__ param of same name was passed it will take on that value.
         Otherwise it is set to be uniform over all hidden states.
-    num_states : int
-        The number of hidden states.  Set to be the length of the emission_funcs
-        parameter which was passed.
-    states : list
-        A list of integers from 0 to num_states-1.  Integer labels for the hidden
-        states.
-    num_obs : int
-        The length of the observations data.  Extracted from data.
-    trans_prob : 2D np.ndarray, shape = [num_observations, num_hidden_states]
-        Shape [num observations, num hidden states]. The max probability that that
-        observation is assigned to that hidden state.
-        Calculated in _calculate_trans_mat and assigned in _predict.
-    trans_id : 2D np.ndarray, shape = [num_observations, num_hidden_states]
-        Shape [num observations, num hidden states]. The state id of the state
-        proceeding the observation is assigned to that hidden state in the most
-        likely path where that occurs. Calculated in _calculate_trans_mat and
-        assigned in _predict.
 
     Examples
     --------
@@ -143,7 +126,6 @@ class HMM(BaseDetector):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_non_state_changing_method_contract"],  # see #8966
     }
 
     def __init__(
@@ -258,17 +240,20 @@ class HMM(BaseDetector):
         # likely preceding state.
         trans_id = np.zeros((num_states, num_obs), dtype=np.int32)
 
-        # use Vertibi Algorithm to fill in trans_prob and trans_id:
+        log_transition_prob_mat = np.log(transition_prob_mat)
+        log_emi_probs = np.log(emi_probs)
+
+        # use Viterbi Algorithm to fill in trans_prob and trans_id:
         for i in range(1, num_obs):
-            # adds log(transition_prob_mat) element-wise:
-            paths = np.log(transition_prob_mat)
-            # adds the probabilities for the state before columns wise:
-            paths += np.stack(
-                [trans_prob[:, i - 1] for _ in range(num_states)], axis=0
-            ).T
-            # adds the probabilities from emission row wise:
-            paths += np.stack(
-                [np.log(emi_probs[:, i]) for _ in range(num_states)], axis=0
+            # paths[j, k] is the log probability of the most likely path that
+            # is in state j at observation i - 1 and in state k at observation i:
+            # log transition probability from j to k, plus the log probability
+            # of the most likely path ending in j at i - 1 (per row),
+            # plus the log emission probability of observation i in state k
+            paths = (
+                log_transition_prob_mat
+                + trans_prob[:, i - 1][:, None]
+                + log_emi_probs[:, i][None, :]
             )
             trans_id[:, i] = np.argmax(paths, axis=0)
             trans_prob[:, i] = np.max(paths, axis=0)
@@ -392,26 +377,22 @@ class HMM(BaseDetector):
             Array of predicted class labels, same size as input.
         """
         X = X.values.flatten()
-        self.num_states = len(self.emission_funcs)
-        self.states = list(range(self.num_states))
-        self.num_obs = len(X)
+        num_states = len(self.emission_funcs)
+        states = list(range(num_states))
+        num_obs = len(X)
         emi_probs = self._make_emission_probs(self.emission_funcs, X)
         init_probs = self.initial_probs
         if self.initial_probs is None:
-            init_probs = 1.0 / self.num_states * np.ones(self.num_states)
+            init_probs = 1.0 / num_states * np.ones(num_states)
         trans_prob, trans_id = self._calculate_trans_mats(
             init_probs,
             emi_probs,
             self.transition_prob_mat,
-            self.num_obs,
-            self.num_states,
+            num_obs,
+            num_states,
         )
 
-        self.trans_prob = trans_prob
-        self.trans_id = trans_id
-        labels = self._hmm_viterbi_label(
-            self.num_obs, self.states, self.trans_prob, self.trans_id
-        )
+        labels = self._hmm_viterbi_label(num_obs, states, trans_prob, trans_id)
         y_seg = arr_to_seg(labels)
         return y_seg
 

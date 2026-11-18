@@ -3,6 +3,7 @@
 __author__ = ["miraep8"]
 
 import numpy as np
+import pandas as pd
 import pytest
 from numpy import array_equal, asarray
 from scipy.stats import norm
@@ -98,3 +99,25 @@ def test_hmm_behaves_as_expected_on_simple_input():
     labels = labels.values.flatten()
     ground_truth = asarray([0, 0, 0, 0, 1, 1, 1])
     assert array_equal(labels, ground_truth)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HMM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_hmm_predict_does_not_change_state():
+    """predict and transform should not write any attributes to self, see #8966."""
+    emi_funcs = [
+        (norm.pdf, {"loc": 0, "scale": 1}),
+        (norm.pdf, {"loc": 5, "scale": 1}),
+    ]
+    trans_mat = np.asarray([[0.9, 0.1], [0.1, 0.9]])
+    X = pd.Series(np.concatenate([np.zeros(10), 5 * np.ones(10)]))
+
+    hmm = HMM(emission_funcs=emi_funcs, transition_prob_mat=trans_mat).fit(X)
+    attributes_before = set(vars(hmm))
+
+    hmm.predict(X)
+    hmm.transform(X)
+
+    assert set(vars(hmm)) == attributes_before
