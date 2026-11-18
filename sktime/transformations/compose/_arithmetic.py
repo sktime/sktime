@@ -10,6 +10,8 @@ transformers, ensuring matching indexes and columns.
 
 __author__ = ["oresthes"]
 
+from functools import reduce
+
 import numpy as np
 import pandas as pd
 
@@ -26,6 +28,9 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
     a ``numpy.ndarray``.
 
     If ``op`` is a numpy ufunc, the operation is applied elementwise.
+    A binary ufunc such as ``np.add`` or ``np.divide`` is applied left to right
+    for more than two transformers, e.g., ``np.divide`` gives
+    ``(output1 / output2) / output3``.
 
     This transformer applies a user-supplied combination operation (such as addition,
     subtraction, multiplication, division, or any custom function) to the outputs of
@@ -74,7 +79,8 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
     Notes
     -----
     - All transformers must output DataFrames/Series with matching indexes and columns.
-    - The operation must accept as many arguments as there are transformers.
+    - The operation must accept as many arguments as there are transformers,
+      unless it is a binary numpy ufunc, see above.
     - Broadcasting is not supported; indexes and columns must match exactly.
     - This transformer is useful for combining features via arithmetic or custom logic.
     """
@@ -145,7 +151,12 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
         # Apply the operation elementwise
         # Stack into 3D array if possible, else apply operation column-wise
         arrays = [Xt.values for Xt in Xt_list]
-        result = self.op(*arrays)
+        # binary ufuncs read a third positional argument as ``out``,
+        # so for more than two outputs they are applied left to right
+        if isinstance(self.op, np.ufunc) and self.op.nin == 2 and len(arrays) > 2:
+            result = reduce(self.op, arrays)
+        else:
+            result = self.op(*arrays)
         # If result is ndarray, wrap as DataFrame
         if isinstance(result, np.ndarray):
             result = pd.DataFrame(result, index=first_index, columns=first_columns)
