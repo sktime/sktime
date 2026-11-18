@@ -16,6 +16,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
+from sktime.transformations.hierarchical.reconcile import TopdownReconciler
 from sktime.utils._testing.hierarchical import (
     _bottom_hier_datagen,
     _make_hierarchical,
@@ -26,6 +27,56 @@ from sktime.utils._testing.hierarchical import (
 METHOD_LIST = [x for x in ReconcilerForecaster.METHOD_LIST if not x.endswith("nonneg")]
 level_list = [1, 2, 3]
 flatten_list = [True, False]
+
+
+@pytest.mark.parametrize(
+    "method, window_length, first_share",
+    [
+        ("td_average_proportions", None, (1 / 4 + 9 / 12 + 4 / 20) / 3),
+        ("td_proportion_averages", None, 14 / 36),
+        ("td_average_proportions", 2, (9 / 12 + 4 / 20) / 2),
+        ("td_proportion_averages", 2, 13 / 32),
+    ],
+)
+def test_historical_topdown_reconciliation(method, window_length, first_share):
+    """Allocate the total forecast using the requested historical formula."""
+    periods = pd.period_range("2020-01", periods=4, freq="M")
+    history = pd.DataFrame(
+        {"sales": [1, 9, 4, 3, 3, 16]},
+        index=pd.MultiIndex.from_product(
+            [["A", "B"], periods[:3]], names=["store", "time"]
+        ),
+    )
+    history = Aggregator().fit_transform(history)
+    expected = pd.DataFrame(
+        {"sales": [20 * first_share, 20 * (1 - first_share), 20.0]},
+        index=pd.MultiIndex.from_product(
+            [["A", "B", "__total"], periods[3:]], names=history.index.names
+        ),
+    )
+    total_forecast = expected.loc[[("__total", periods[3])]]
+    transformer = TopdownReconciler(method, window_length=window_length).fit(history)
+    assert_frame_equal(transformer.inverse_transform(total_forecast), expected)
+
+    forecaster = ReconcilerForecaster(
+        NaiveForecaster(), method=method, window_length=window_length
+    )
+    assert_frame_equal(forecaster.fit_predict(history, fh=[1]), expected)
+
+
+@pytest.mark.parametrize("method", ["td_average_proportions", "td_proportion_averages"])
+def test_historical_topdown_zero_totals(method):
+    """Ignore an isolated zero total and reject an undefined historical share."""
+    history = pd.DataFrame(
+        {"sales": [2, 0, 6, 0]},
+        index=pd.MultiIndex.from_product([["A", "B"], [0, 1]]),
+    )
+    history = Aggregator().fit_transform(history)
+    transformer = TopdownReconciler(method).fit(history)
+    np.testing.assert_allclose(transformer.proportions_["sales"], [0.25, 0.75])
+
+    with pytest.raises(ValueError, match="historical denominator is zero"):
+        TopdownReconciler(method, window_length=1).fit(history)
 
 
 # test the reconciled predictions are actually hierarchical
