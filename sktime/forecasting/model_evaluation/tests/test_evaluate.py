@@ -41,6 +41,7 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanAbsoluteScaledError,
+    MeanSquaredError,
     MeanSquaredPercentageError,
     MedianSquaredPercentageError,
 )
@@ -674,3 +675,51 @@ def test_evaluate_hierarchical_unequal_X_y():
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("error_score", [np.nan, "raise"])
+@pytest.mark.parametrize(
+    "scoring", [MeanAbsolutePercentageError(), MeanSquaredError(), MeanAbsoluteError()]
+)
+def test_evaluate_empty_training_fold(error_score, scoring):
+    """Test that empty training folds are handled consistently via error_score.
+
+    Tests failure case in bug report #8011: with too many folds for the length
+    of the series, the first folds of ``ExpandingGreedySplitter`` have an empty
+    training window. This used to raise an obscure ``TypeError`` for some metrics,
+    and should instead be treated like a failed fit, for all metrics alike.
+    """
+    from sktime.split import ExpandingGreedySplitter
+
+    y = pd.Series(
+        np.arange(12, dtype="float64"),
+        index=pd.date_range("2000-01-01", periods=12, freq="D"),
+    )
+    fh = [1, 2, 3]
+    # 12 folds with test size 3 and step 1 leaves the first 3 folds without
+    # training data, maximum feasible number of folds is 12 - 3 = 9
+    cv = ExpandingGreedySplitter(test_size=len(fh), folds=12, step_length=1)
+    forecaster = NaiveForecaster(strategy="last")
+
+    if error_score == "raise":
+        with pytest.raises(ValueError, match="Training window .* is empty"):
+            evaluate(forecaster, cv, y, scoring=scoring, error_score=error_score)
+        return
+
+    results = evaluate(forecaster, cv, y, scoring=scoring, error_score=error_score)
+
+    assert isinstance(results, pd.DataFrame)
+    assert len(results) == 12
+
+    scores = results[f"test_{scoring.name}"]
+    # the first three folds have an empty training window and no score
+    assert scores.iloc[:3].isna().all()
+    assert results["cutoff"].iloc[:3].isna().all()
+    assert (results["len_train_window"].iloc[:3] == 0).all()
+    # all remaining folds are evaluated as usual
+    assert scores.iloc[3:].notna().all()
+    assert results["cutoff"].iloc[3:].notna().all()
