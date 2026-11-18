@@ -4428,6 +4428,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "umrndem",
+      "name": "Muhammad Umar Nadeem",
+      "avatar_url": "https://avatars.githubusercontent.com/u/70554184?v=4",
+      "profile": "https://github.com/umrndem",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ]
 }
