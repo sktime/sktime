@@ -1,779 +1,280 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Adapter for using the huggingface PatchTST for forecasting."""
+"""Native PatchTST forecaster implemented with PyTorch."""
 
-__author__ = [
-    "julian-fong",
-    "geetu040",
-    "Yuqi Nie",
-    "Nam H. Nguyen",
-    "Phanwadee Sinthong",
-    "Jayant Kalagnanam",
-]
-
+__all__ = ["PatchTSTForecaster"]
 
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.split import temporal_train_test_split
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
-Dataset = _safe_import("torch.utils.data.Dataset")
+nn = _safe_import("torch.nn")
 
-PatchTSTConfig = _safe_import("transformers.PatchTSTConfig")
-PatchTSTForPrediction = _safe_import("transformers.PatchTSTForPrediction")
-PatchTSTModel = _safe_import("transformers.PatchTSTModel")
-Trainer = _safe_import("transformers.Trainer")
-TrainingArguments = _safe_import("transformers.TrainingArguments")
+
+def _torch():
+    """Import torch only when the estimator is used."""
+    _check_soft_dependencies("torch", severity="error")
+    import torch
+
+    return torch
+
+
+class _PatchTSTNetwork(nn.Module):
+    """Shared channel-independent PatchTST backbone and forecasting head."""
+
+    def __init__(self, patch_len, stride, d_model, n_heads, dropout, horizon):
+        super().__init__()
+        self.patch_len = patch_len
+        self.stride = stride
+        self.patch_embedding = nn.Linear(patch_len, d_model)
+        layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=n_heads,
+            dim_feedforward=4 * d_model,
+            dropout=dropout,
+            batch_first=True,
+            norm_first=True,
+        )
+        self.backbone = nn.TransformerEncoder(layer, num_layers=2)
+        self.head = nn.Linear(d_model, horizon)
+
+    def forward(self, values):
+        patches = values.transpose(1, 2).unfold(-1, self.patch_len, self.stride)
+        batch, channels, n_patches, _ = patches.shape
+        tokens = self.patch_embedding(patches.reshape(-1, n_patches, self.patch_len))
+        encoded = self.backbone(tokens).mean(dim=1)
+        forecast = self.head(encoded).reshape(batch, channels, -1)
+        return forecast.transpose(1, 2)
 
 
 class PatchTSTForecaster(BaseForecaster):
-    """Interface for the PatchTST forecaster.
-
-    This forecaster interfaces the Huggingface library's PatchTST model for
-    time series forecasting. The model was originally designed by Yuqi Nie,
-    Nam H. Nguyen, Phanwadee Sinthong and Jayant Kalagnanam.
-    It utilizes a transformer model architecture and splits the
-    time series data into patches that are then processed by the model.
-    Visit [1] for more information on the model architecture and its authors.
-    For tips on how to construct your own PatchTST config, see [2].
-
-    The PatchTST forecaster can be used in three ways:
-
-    1) Full training via a new model initialized from a config or a loaded model
-    with pre-trained weights
-    2) Minimal fine-tuning with a pre-trained model and an altered config
-    3) Zero-shot forecasting with a pre-trained model
-
-    For more details, please visit the `fit_strategy` parameter
+    """PatchTST forecaster with channel-independent Transformer processing.
 
     Parameters
     ----------
-    model_path : str or PatchTSTModel, optional
-        Path to the Huggingface model to use for global forecasting. If
-        model_path is passed, the remaining model config parameters will be
-        ignored except for specific training or dataset parameters.
-        This has 3 options:
-
-        - model id to an online pretrained PatchTST Model hosted on HuggingFace
-        - A path or url to a saved configuration JSON file
-        - A path to a *directory* containing a configuration file saved
-
-        using the ``~PretrainedConfig.save_pretrained`` method
-        or the ``~PreTrainedModel.save_pretrained`` method
-
-    fit_strategy : str, values = ["full","minimal","zero-shot"], default = "full"
-        String to set the fit_strategy of the model.
-
-        - This strategy is used to create and train a new model from scratch
-        (pre-pretraining) or to update all of the weights in a pre-trained model
-        (also known as full fine-tuning). If `fit_strategy` is set to `full`,
-        requires either the `model_path` parameter or the `config`` parameter
-        to be passed in, but not both. If only `config` is passed, it will
-        initialize an new model with untrained weights with the specified config
-        arguments. If only `model_path` is passed, it will fine-tune ALL of the
-        pre-trained weights of the model.
-
-        - If `fit_strategy` is set to "minimal" requires both the `model_path`
-        and `config` parameter. We will use the `model_path` and the specified
-        `config` to compare the weight shapes of the passed pre-trained model
-        to those in the config. If there are weight size mismatches, the model
-        will reinitialize new weights to match the weight shapes inside the `config`.
-        The `y` argument will then be fit to fine-tune the model. In the case where
-        there are no newly initialized weights (i.e the config weight shapes match
-        the pretrained model weight shapes), it will behave the same as the "full"
-        strategy where only the `model_path` is passed in.
-
-        - If `fit_strategy` is set to "zero-shot", requires only the `model_path`
-        parameter. It will load the model via the `fit` function with the argument
-        `model_path` and ignore any passed `y`.
-
-    validation_split : float, optional, default = 0.2
-        Fraction of the data to use for validation.
-
-    device : str, optional (default=None)
-        Device on which to load the model, passed to the transformers
-        ``device_map``, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
-        ``"auto"`` selects an available accelerator. If ``None``, the
-        transformers default placement is used. Ignored when ``model_path`` is
-        an already initialized ``PatchTSTModel``, which keeps its own device.
-
-    config : dict, optional, default = {}
-        A config dict specifying parameters to initialize a full PatchTST
-        model. Missing parameters in the config will be automatically replaced
-        by their default values. Valid keys include:
-
-        num_input_channels : int, optional, default=1
-            The number of input channels.
-        context_length : int, optional, default=32
-            The context length of the input sequence.
-        distribution_output : str, optional, default="student_t"
-            The distribution emission head for the model when ``loss`` is
-            ``"nll"``. Could be either ``"student_t"``, ``"normal"`` or
-            ``"negative_binomial"``.
-        loss : str, optional, default="mse"
-            The loss function for the model corresponding to the
-            ``distribution_output`` head. For parametric distributions it is
-            the negative log likelihood (``"nll"``) and for point estimates it
-            is the mean squared error ``"mse"``.
-        patch_length : int, optional, default=1
-            Define the patch length of the patchification process.
-        patch_stride : int, optional, default=1
-            Define the stride of the patchification process.
-        num_hidden_layers : int, optional, default=3
-            Number of hidden layers in the Transformer decoder.
-        d_model : int, optional, default=128
-            Size of the encoder layers and the pooler layer.
-        num_attention_heads : int, optional, default=4
-            Number of attention heads for each attention layer in the
-            Transformer encoder.
-        share_embedding : bool, optional, default=True
-            Sharing the input embedding across all channels.
-        channel_attention : bool, optional, default=False
-            Activate channel attention block in the Transformer to allow
-            channels to attend each other.
-        ffn_dim : int, optional, default=512
-            Dimension of the "intermediate" (often named feed-forward) layer
-            in the Transformer encoder.
-        norm_type : str, optional, default="batchnorm"
-            Normalization at each Transformer layer. Can be ``"batchnorm"`` or
-            ``"layernorm"``.
-        norm_eps : float, optional, default=1e-05
-            A value added to the denominator for numerical stability of
-            normalization.
-        attention_dropout : float or int, optional, default=0.0
-            The dropout ratio for the attention probabilities.
-        positional_dropout : float, optional, default=0.0
-            The dropout probability in the positional embedding layer.
-        path_dropout : float, optional, default=0.0
-            The dropout path in the residual block.
-        ff_dropout : float, optional, default=0.0
-            The dropout probability used between the two layers of the
-            feed-forward networks.
-        bias : bool, optional, default=True
-            Whether to add bias in the feed-forward networks.
-        activation_function : str, optional, default="gelu"
-            The non-linear activation function (string) in the Transformer.
-            ``"gelu"`` and ``"relu"`` are supported.
-        pre_norm : bool, optional, default=True
-            Normalization is applied before self-attention if ``pre_norm`` is
-            set to ``True``. Otherwise, normalization is applied after residual
-            block.
-        positional_encoding_type : str, optional, default="sincos"
-            Positional encodings. Options ``"random"`` and ``"sincos"`` are
-            supported.
-        use_cls_token : bool, optional, default=False
-            Whether cls token is used.
-        init_std : float, optional, default=0.02
-            The standard deviation of the truncated normal weight
-            initialization distribution.
-        share_projection : bool, optional, default=True
-            Sharing the projection layer across different channels in the
-            forecast head.
-        scaling : str, bool, or None, optional, default="std"
-            Whether to scale the input targets via ``"mean"`` scaler,
-            ``"std"`` scaler or no scaler if ``None``. If ``True``, the scaler
-            is set to ``"mean"``.
-        do_mask_input : bool, optional
-            Apply masking during the pretraining.
-        mask_type : str, optional, default="random"
-            Masking type. Only ``"random"`` and ``"forecast"`` are currently
-            supported.
-        random_mask_ratio : float, optional, default=0.5
-            Masking ratio applied to mask the input data during random
-            pretraining.
-        num_forecast_mask_patches : int or list, optional, default=[2]
-            Number of patches to be masked at the end of each batch sample.
-            If it is an integer, all the samples in the batch will have the
-            same number of masked patches. If it is a list, samples in the
-            batch will be randomly masked by numbers defined in the list.
-            This argument is only used for forecast pretraining.
-        channel_consistent_masking : bool, optional, default=False
-            If channel consistent masking is ``True``, all the channels will
-            have the same masking pattern.
-        unmasked_channel_indices : list, optional
-            Indices of channels that are not masked during pretraining.
-            Values in the list are numbers between 1 and
-            ``num_input_channels``.
-        mask_value : int, optional, default=0
-            Values in the masked patches will be filled by ``mask_value``.
-        pooling_type : str, optional, default="mean"
-            Pooling of the embedding. ``"mean"``, ``"max"`` and ``None`` are
-            supported.
-        head_dropout : float, optional, default=0.0
-            The dropout probability for head.
-        prediction_length : int, optional, default=24
-            The prediction horizon that the model will output.
-        num_targets : int, optional, default=1
-            Number of targets for regression and classification tasks. For
-            classification, it is the number of classes.
-        output_range : list, optional
-            Output range for regression task. The range of output values can
-            be set to enforce the model to produce values within a range.
-        num_parallel_samples : int, optional, default=100
-            The number of samples generated in parallel for probabilistic
-            prediction.
-
-        Note: if ``prediction_length`` is passed as larger than the passed
-        ``fh`` in the ``fit`` function, the ``prediction_length`` will be used
-        to train the model. If ``prediction_length`` is passed as smaller than
-        the passed ``fh`` in the ``fit`` function, the passed ``fh`` will be
-        used to train the model.
-
-    training_args : dict, optional, default = None
-        Training arguments to use for the model. If this is passed,
-        the remaining applicable training arguments will be ignored.
-        See [3]_ for details.
-    compute_metrics : list or function, default = None
-        List of metrics or function to use during training
-    callbacks: list or function, default = None
-        List of callbacks or callback function to use during training
-
-    References
-    ----------
-    [1] A Time Series is Worth 64 Words: Long-term Forecasting with Transformers
-        Yuqi Nie, Nam H. Nguyen, Phanwadee Sinthong, Jayant Kalagnanam
-        Paper: https://arxiv.org/abs/2211.14730
-    [2] HuggingFace PatchTST Page:
-        https://huggingface.co/docs/transformers/en/model_doc/patchtst
-    [3] https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
+    patch_len : int, default=16
+        Length of each temporal patch.
+    stride : int, default=8
+        Step between consecutive patches.
+    d_model : int, default=64
+        Transformer embedding width.
+    n_heads : int, default=4
+        Number of self-attention heads.
+    dropout : float, default=0.1
+        Transformer dropout probability.
+    context_length : int, default=32
+        Number of observations used for each training example.
+    max_epochs : int, default=10
+        Number of training epochs.
+    batch_size : int, default=32
+        Mini-batch size.
+    learning_rate : float, default=1e-3
+        Adam learning rate.
+    warmup_steps : int, default=0
+        Number of linear learning-rate warmup steps.
+    random_state : int or None, default=None
+        Seed for reproducible training.
+    device : str or None, default=None
+        Torch device. Defaults to CUDA when available, otherwise CPU.
 
     Examples
     --------
-    >>> #Example with a new model initialized from config only
-    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-    >>> forecaster = PatchTSTForecaster(
-    ... config = {
-    ...     "patch_length": 1,
-    ...      "context_length": 2,
-    ...      "patch_stride": 1,
-    ...      "d_model": 64,
-    ...      "num_attention_heads": 2,
-    ...      "ffn_dim": 32,
-    ...      "head_dropout": 0.3,
-    ...    },
-    ...    training_args = {
-    ...         "output_dir":"test_output",
-    ...         "overwrite_output_dir":True,
-    ...         "learning_rate":1e-4,
-    ...         "num_train_epochs":1,
-    ...         "per_device_train_batch_size":16,
-    ...    }
-    ... ) #initialize an full model
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
-
-    >>> #Example full fine-tuning with a pre-trained model
-    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
-    >>> import pandas as pd
-    >>> dataset_path = pd.read_csv(
-    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
-    ...     ).drop(columns = ["date"]
-    ... )
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> scaler = StandardScaler()
-    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
-    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
-    >>> df = scaler.transform(dataset_path)  # doctest: +SKIP
-    >>> df.columns = dataset_path.columns # doctest: +SKIP
-    >>> forecaster = PatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast",
-    ...     fit_strategy = "full",
-    ...     training_args = {
-    ...         "output_dir":"test_output",
-    ...         "overwrite_output_dir":True,
-    ...         "learning_rate":1e-4,
-    ...         "num_train_epochs":1,
-    ...         "per_device_train_batch_size":16,
-    ...     }
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y = df, fh = list(range(1,4))) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
-
-    >>> #Example of minimal fine-tuning with a pre-trained model and an altered config
-    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
-    >>> import pandas as pd
-    >>> dataset_path = pd.read_csv(
-    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
-    ...     ).drop(columns = ["date"]
-    ... )
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> scaler = StandardScaler()
-    >>> scaler.set_output(transform="pandas") # doctest: +SKIP
-    >>> scaler = scaler.fit(dataset_path.values) # doctest: +SKIP
-    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
-    >>> df.columns = dataset_path.columns # doctest: +SKIP
-    >>> forecaster = PatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast",
-    ...     config = {
-    ...         "patch_length": 8,
-    ...         "context_length": 512,
-    ...         "patch_stride": 8,
-    ...         "d_model": 128,
-    ...         "num_attention_heads": 2,
-    ...         "ffn_dim": 512,
-    ...         "head_dropout": 0.3,
-    ...         "prediction_length": 64
-    ...     },
-    ...     fit_strategy = "minimal",
-    ...     training_args = {
-    ...         "output_dir":"test_output",
-    ...         "overwrite_output_dir":True,
-    ...         "learning_rate":1e-4,
-    ...         "num_train_epochs":1,
-    ...         "per_device_train_batch_size":16,
-    ...     }
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y = df, fh = list(range(1,63))) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
-
-    >>> #Example with a pre-trained model to do zero-shot forecasting
-    >>> from sktime.forecasting.patch_tst import PatchTSTForecaster
-    >>> import pandas as pd
-    >>> dataset_path = pd.read_csv(
-    ...     "https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/ETTh1.csv"
-    ...     ).drop(columns = ["date"]
-    ... )
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> scaler = StandardScaler()
-    >>> scaler.set_output(transform="pandas")  # doctest: +SKIP
-    >>> scaler = scaler.fit(dataset_path.values)  # doctest: +SKIP
-    >>> df = scaler.transform(dataset_path) # doctest: +SKIP
-    >>> df.columns = dataset_path.columns # doctest: +SKIP
-    >>> forecaster = PatchTSTForecaster(
-    ...     model_path="namctin/patchtst_etth1_forecast",
-    ...     fit_strategy = "zero-shot",
-    ...     training_args = {
-    ...         "output_dir":"test_output",
-    ...         "overwrite_output_dir":True,
-    ...         "learning_rate":1e-4,
-    ...         "num_train_epochs":1,
-    ...         "per_device_train_batch_size":16,
-    ...     }
-    ... ) # doctest: +SKIP
-    >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict() # doctest: +SKIP
+    >>> forecaster = PatchTSTForecaster(patch_len=4, stride=2)  # doctest: +SKIP
     """
 
     _tags = {
-        # packaging info
-        # --------------
-        "authors": [
-            "julian-fong",
-            "geetu040",
-            "Yuqi Nie",
-            "Nam H. Nguyen",
-            "Phanwadee Sinthong",
-            "Jayant Kalagnanam",
-        ],
-        "maintainers": ["julian-fong"],
-        "python_dependencies": ["transformers", "torch", "accelerate"],
-        # estimator type
-        # --------------
-        "category": ["deep_learning", "foundation_model"],
+        "authors": ["sktime developers"],
+        "python_dependencies": ["torch"],
+        "category": "deep_learning",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "X-y-must-have-same-index": True,
-        "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
-        "capability:pred_int:insample": False,
         "property:randomness": "stochastic",
-        "capability:random_state": False,
-        # Tests and CI tags
-        # -----------------
-        "tests:vm": True,
-        "tests:specific": ["sktime.forecasting.tests.test_patch_tst"],
+        "capability:random_state": True,
+        "tests:libs": ["torch"],
     }
 
     def __init__(
         self,
-        # model variables except for forecast_columns
-        model_path=None,
-        fit_strategy="full",
-        validation_split=0.2,
-        config=None,
-        training_args=None,
-        compute_metrics=None,
-        callbacks=None,
+        patch_len=16,
+        stride=8,
+        d_model=64,
+        n_heads=4,
+        dropout=0.1,
+        context_length=32,
+        max_epochs=10,
+        batch_size=32,
+        learning_rate=1e-3,
+        warmup_steps=0,
+        random_state=None,
         device=None,
     ):
-        self.model_path = model_path
-        self.fit_strategy = fit_strategy
-        # dataset and training parameters
-        self.validation_split = validation_split
-        self.config = config
-        self.training_args = training_args
-        self.compute_metrics = compute_metrics
-        self.callbacks = callbacks
+        self.patch_len = patch_len
+        self.stride = stride
+        self.d_model = d_model
+        self.n_heads = n_heads
+        self.dropout = dropout
+        self.context_length = context_length
+        self.max_epochs = max_epochs
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.warmup_steps = warmup_steps
+        self.random_state = random_state
         self.device = device
-
         super().__init__()
 
     def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
+        """Validate hyper-parameters without importing torch."""
+        if self.patch_len < 1 or self.stride < 1:
+            raise ValueError("patch_len and stride must be positive")
+        if self.patch_len > self.context_length:
+            raise ValueError("patch_len must not exceed context_length")
+        if self.d_model < 1 or self.n_heads < 1 or self.d_model % self.n_heads:
+            raise ValueError("d_model must be positive and divisible by n_heads")
+        if not 0 <= self.dropout < 1:
+            raise ValueError("dropout must be in [0, 1)")
+        if self.max_epochs < 1 or self.batch_size < 1 or self.learning_rate <= 0:
+            raise ValueError(
+                "max_epochs, batch_size, and learning_rate must be positive"
+            )
+        self._device = None
 
-        This method should be used for:
-
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-
-        IMPORTANT: no significant compute or memory use should happen in __post_init__,
-        memory and compute intensive operations should be in _fit, not __post_init__.
-        """
-        self._config = self.config if self.config else {}
-        self._training_args = self.training_args if self.training_args else {}
-
-        if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
-            raise ValueError("unexpected fit_strategy passed in argument")
-
-        model_path = self.model_path
-        if model_path is None and self.fit_strategy != "full":
-            raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
+    def _make_model(self, n_channels, prediction_length):
+        return _PatchTSTNetwork(
+            self.patch_len,
+            self.stride,
+            self.d_model,
+            self.n_heads,
+            self.dropout,
+            prediction_length,
+        )
 
     def _fit(self, y, X=None, fh=None):
-        """Fits the model.
-
-        Parameters
-        ----------
-        y : pandas DataFrame
-            pandas dataframe containing single or multivariate data
-
-        fh : Forecasting Horizon object
-            used to determine forecasting horizon for predictions
-
-        Returns
-        -------
-        self : a reference to the object
-        """
+        torch = _torch()
         self._cur_y = y
-        self._cur_X = X
-        if isinstance(self.model_path, PatchTSTModel):
-            self.model = self.model_path
-            config = self.model.config
-        else:
-            if self.model_path:
-                config = PatchTSTConfig.from_pretrained(self.model_path)
-            else:
-                config = PatchTSTConfig()
-
-            # Update config with user provided config
-            _config = config.to_dict()
-            _config.update(self._config)
-
-            # Update config with model specific parameters
-            _config["num_input_channels"] = len(y.columns)
-            if fh is not None:
-                _config["prediction_length"] = max(
-                    *fh.to_relative(self._cutoff)._values,
-                    _config["prediction_length"],
-                )
-
-            config = config.from_dict(_config)
-
-            if not self.model_path:
-                self.model = PatchTSTForPrediction(config=config)
-                if self.device not in (None, "auto"):
-                    self.model = self.model.to(self.device)
-            else:
-                # Load model with the passed config if it is given
-                load_kwargs = {}
-                if self.device is not None:
-                    load_kwargs["device_map"] = self.device
-                self.model, info = PatchTSTForPrediction.from_pretrained(
-                    self.model_path,
-                    config=config,
-                    output_loading_info=True,
-                    ignore_mismatched_sizes=True,
-                    **load_kwargs,
-                )
-
-            if self.fit_strategy == "zero-shot":
-                if len(info["mismatched_keys"]) > 0 or len(info["missing_keys"]) > 0:
-                    raise ValueError(
-                        "Fit strategy is 'zero-shot', but the model weights in the"
-                        "configuration are mismatched or missing compared to the "
-                        "pre-trained model. This happens because of a changed "
-                        "configuration."
-                    )
-                return
-
-            elif self.fit_strategy == "minimal":
-                if len(info["mismatched_keys"]) == 0 and len(info["missing_keys"]) == 0:
-                    return  # No need to fit
-
-                # Freeze all loaded parameters
-                for param in self.model.parameters():
-                    param.requires_grad = False
-
-                # Adjust requires_grad for layers with mismatched sizes
-                for key, _, _ in info["mismatched_keys"]:
-                    _model = self.model
-                    for attr_name in key.split(".")[:-1]:
-                        _model = getattr(_model, attr_name)
-                    _model.weight.requires_grad = True
-
-                # Adjust requires_grad for layers with missing keys
-                for key in info["missing_keys"]:
-                    _model = self.model
-                    for attr_name in key.split(".")[:-1]:
-                        _model = getattr(_model, attr_name)
-                    _model.weight.requires_grad = True
-
-            elif self.fit_strategy == "full":
-                for param in self.model.parameters():
-                    param.requires_grad = True
-            else:
-                raise ValueError("Unknown fit strategy")
-
-        y_train, y_test = temporal_train_test_split(
-            y, train_size=1 - self.validation_split, test_size=self.validation_split
+        if self.random_state is not None:
+            torch.manual_seed(self.random_state)
+            np.random.seed(self.random_state)
+        values = torch.as_tensor(y.to_numpy(dtype=np.float32))
+        horizon = (
+            int(max(fh.to_relative(self.cutoff)._values)) if fh is not None else 1
         )
-        train_dataset = PyTorchDataset(
-            y_train,
-            context_length=self.model.config.context_length,
-            prediction_length=self.model.config.prediction_length,
-        )
-        if self.validation_split > 0.0:
-            eval_dataset = PyTorchDataset(
-                y_test,
-                context_length=self.model.config.context_length,
-                prediction_length=self.model.config.prediction_length,
+        if len(values) < self.context_length + horizon:
+            raise ValueError(
+                "y is too short for context_length and forecasting horizon"
             )
-        else:
-            eval_dataset = None
-
-        # Get Training Configuration
-        # ``overwrite_output_dir`` was removed from ``TrainingArguments`` in
-        # transformers 5.0, so drop it when running on a version that no
-        # longer accepts it. Kept as-is for transformers<5.0.
-        training_args_dict = dict(self._training_args)
-        if not _check_soft_dependencies("transformers<5.0", severity="none"):
-            training_args_dict.pop("overwrite_output_dir", None)
-        training_args = TrainingArguments(**training_args_dict)
-        # Get the Trainer
-        trainer = Trainer(
-            model=self.model,
-            args=training_args,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            compute_metrics=self.compute_metrics,
-            callbacks=self.callbacks,
+        self._device = torch.device(
+            self.device or ("cuda" if torch.cuda.is_available() else "cpu")
         )
+        self.model_ = self._make_model(values.shape[1], horizon).to(self._device)
+        xs, ys = [], []
+        for end in range(self.context_length, len(values) - horizon + 1):
+            xs.append(values[end - self.context_length : end])
+            ys.append(values[end : end + horizon])
+        x_train = torch.stack(xs).to(self._device)
+        y_train = torch.stack(ys).to(self._device)
+        self.model_.patches_seen_ = len(xs)
+        if _check_soft_dependencies("lightning", severity="none"):
+            import lightning.pytorch as pl
+            from torch.utils.data import DataLoader, TensorDataset
 
-        # Train the model
-        trainer.train()
-        self.model = trainer.model
+            forecaster = self
 
+            class LightningPatchTST(pl.LightningModule):
+                def __init__(self, network):
+                    super().__init__()
+                    self.network = network
+
+                def training_step(self, batch, batch_idx):
+                    predictions = self.network(batch[0])
+                    return torch.nn.functional.mse_loss(predictions, batch[1])
+
+                def configure_optimizers(self):
+                    optimizer = torch.optim.Adam(
+                        self.network.parameters(), lr=forecaster.learning_rate
+                    )
+                    if not forecaster.warmup_steps:
+                        return optimizer
+                    scheduler = torch.optim.lr_scheduler.LambdaLR(
+                        optimizer,
+                        lambda step: min(1.0, (step + 1) / forecaster.warmup_steps),
+                    )
+                    return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
+            module = LightningPatchTST(self.model_)
+            trainer = pl.Trainer(
+                accelerator="auto",
+                devices=1,
+                max_epochs=self.max_epochs,
+                logger=False,
+                enable_checkpointing=False,
+                enable_progress_bar=False,
+                enable_model_summary=False,
+            )
+            trainer.fit(
+                module,
+                DataLoader(
+                    TensorDataset(x_train, y_train),
+                    batch_size=self.batch_size,
+                    shuffle=True,
+                ),
+            )
+            self.model_ = module.network
+            return self
+
+        optimizer = torch.optim.Adam(self.model_.parameters(), lr=self.learning_rate)
+        if self.warmup_steps:
+            for group in optimizer.param_groups:
+                group["lr"] = 0.0
+        step = 0
+        self.model_.train()
+        for _ in range(self.max_epochs):
+            order = torch.randperm(len(x_train), device=self._device)
+            for batch_indices in order.split(self.batch_size):
+                optimizer.zero_grad()
+                loss = torch.nn.functional.mse_loss(
+                    self.model_(x_train[batch_indices]), y_train[batch_indices]
+                )
+                loss.backward()
+                if self.warmup_steps:
+                    scale = min(1.0, (step + 1) / self.warmup_steps)
+                    for group in optimizer.param_groups:
+                        group["lr"] = self.learning_rate * scale
+                optimizer.step()
+                step += 1
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            If not passed in _fit, guaranteed to be passed here. If using a pre-trained
-            model, ensure that the prediction_length of the model matches the passed fh.
-        y : sktime time series object, required
-            single or multivariate data to compute forecasts on.
-
-        Returns
-        -------
-        y_pred : sktime time series object
-            pandas DataFrame
-        """
-        y = self._cur_y
-        if fh is None:
-            fh = self.fh_
-        else:
-            fh = fh.to_relative(self.cutoff)
-        y_columns = y.columns
-        y_index_names = list(y.index.names)
-        _y = np.expand_dims(y.values, axis=0)
-
-        _y = torch.tensor(_y).float().to(self.model.device)
-
-        if _y.shape[1] > self.model.config.context_length:
-            _y = _y[:, -self.model.config.context_length :, :]
-
-        # in the case where the context_length of the pre-trained model is larger
-        # than the context_length of the model
-        self.model.eval()
-        y_pred = self.model(_y).prediction_outputs
-        pred = y_pred.detach().cpu().numpy()
-
-        if isinstance(y.index, pd.MultiIndex):
-            ins = np.array(list(np.unique(y.index.droplevel(-1)).repeat(pred.shape[1])))
-            ins = [ins[..., i] for i in range(ins.shape[-1])] if ins.ndim > 1 else [ins]
-
-            idx = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1), freq=self.fh.freq)
-                .to_absolute(self._cutoff)
-                ._values.tolist()
-                * pred.shape[0]
-            )
-            index = pd.MultiIndex.from_arrays(
-                ins + [idx],
-                names=y.index.names,
-            )
-        else:
-            index = (
-                ForecastingHorizon(range(1, pred.shape[1] + 1))
-                .to_absolute(self._cutoff)
-                ._values
-            )
-
-        df_pred = pd.DataFrame(
-            # batch_size * num_timestams, n_cols
-            pred.reshape(-1, pred.shape[-1]),
-            index=index,
-            columns=y_columns,
-        )
-
-        absolute_horizons = fh.to_absolute_index(self.cutoff)
-        dateindex = df_pred.index.get_level_values(-1).map(
-            lambda x: x in absolute_horizons
-        )
-        df_pred = df_pred.loc[dateindex]
-        df_pred.index.names = y_index_names
-        return df_pred
+        torch = _torch()
+        values = torch.as_tensor(self._cur_y.to_numpy(dtype=np.float32))
+        context = values[-self.context_length :].unsqueeze(0).to(self._device)
+        self.model_.eval()
+        with torch.no_grad():
+            all_predictions = self.model_(context)[0].cpu().numpy()
+        relative = fh.to_relative(self.cutoff)._values.astype(int)
+        prediction = all_predictions[relative - 1]
+        index = fh.to_absolute(self.cutoff).to_pandas()
+        return pd.DataFrame(prediction, index=index, columns=self._cur_y.columns)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-        params_set = []
-        params1 = {
-            "device": "cpu",
-            "config": {
-                "patch_length": 2,
-                "context_length": 4,
-                "patch_stride": 2,
-                "d_model": 32,
-                "num_attention_heads": 1,
-                "ffn_dim": 16,
-                "head_dropout": 0.3,
-                "prediction_length": 2,
-            },
-            "training_args": {
-                "output_dir": "test_output",
-                "overwrite_output_dir": True,
-                "learning_rate": 1e-4,
-                "num_train_epochs": 1,
-                "per_device_train_batch_size": 16,
-                "use_cpu": True,
-            },
-            "validation_split": 0.0,
+        """Return two small configurations for estimator checks."""
+        params = {
+            "patch_len": 2,
+            "stride": 1,
+            "d_model": 8,
+            "n_heads": 2,
+            "dropout": 0.0,
+            "context_length": 8,
+            "max_epochs": 1,
+            "batch_size": 4,
         }
-        params_set.append(params1)
-        params2 = {
-            "device": "cpu",
-            "config": {
-                "patch_length": 1,
-                "context_length": 2,
-                "patch_stride": 1,
-                "d_model": 64,
-                "num_attention_heads": 2,
-                "ffn_dim": 32,
-                "head_dropout": 0.3,
-                "prediction_length": 2,
-            },
-            "training_args": {
-                "output_dir": "test_output",
-                "overwrite_output_dir": True,
-                "learning_rate": 1e-4,
-                "num_train_epochs": 1,
-                "per_device_train_batch_size": 16,
-                "use_cpu": True,
-            },
-            "validation_split": 0.0,
-        }
-        params_set.append(params2)
-
-        return params_set
-
-
-# copied from the PytorchDataset module from hf_transformers_forecaster.py
-class PyTorchDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
-
-    def __init__(self, y, context_length, prediction_length):
-        """
-        Initialize the dataset.
-
-        Parameters
-        ----------
-        y : ndarray
-            The time series data, shape (n_sequences, n_timestamps, n_dims)
-        context_length : int
-            The length of the past values
-        prediction_length : int
-            The length of the future values
-        """
-        self.context_length = context_length
-        self.prediction_length = prediction_length
-
-        self.y = np.expand_dims(y.values, axis=0)
-
-        self.n_sequences, self.n_timestamps, _ = self.y.shape
-        self.single_length = (
-            self.n_timestamps - self.context_length - self.prediction_length + 1
-        )
-
-    def __len__(self):
-        """Return the length of the dataset."""
-        # Calculate the number of samples that can be created from each sequence
-        return self.single_length * self.n_sequences
-
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import tensor
-
-        m = i % self.single_length
-        n = i // self.single_length
-
-        past_values = self.y[n, m : m + self.context_length, :]
-        future_values = self.y[
-            n,
-            m + self.context_length : m + self.context_length + self.prediction_length,
-            :,
-        ]
-
-        return {
-            "past_values": tensor(past_values).float(),
-            "future_values": tensor(future_values).float(),
-        }
+        return [params, {**params, "patch_len": 4, "stride": 2}]
