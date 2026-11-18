@@ -101,6 +101,8 @@ def _weighted_geometric_mean(y, weights=None, axis=None):
     if weights.ndim == 1:
         if axis == 0:
             check_consistent_length(y, weights)
+            # broadcast row weights across the remaining axes, e.g., columns
+            weights = weights.reshape((-1,) + (1,) * (y.ndim - 1))
         elif axis == 1:
             if y.shape[1] != len(weights):
                 raise ValueError(

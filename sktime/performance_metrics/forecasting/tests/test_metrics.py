@@ -78,7 +78,8 @@ def test_gmse_function():
         gmse(
             np.array([1, 2, 3]), np.array([6, 5, 4]), horizon_weight=np.array([7, 8, 9])
         ),
-        6.185891035775025,
+        # exp((7 * log(25) + 8 * log(9) + 9 * log(1)) / 24)
+        5.318796067803135,
     )
 
 
@@ -271,6 +272,53 @@ def test_median_metrics_horizon_weight_array_like(metric_name, multioutput):
     # horizon_weight of wrong length must still raise
     with pytest.raises(ValueError):
         metric(y_true, y_pred, horizon_weight=[1.0, 2.0], **kwargs)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_name",
+    [
+        "geometric_mean_absolute_error",
+        "geometric_mean_squared_error",
+        "geometric_mean_relative_absolute_error",
+        "geometric_mean_relative_squared_error",
+    ],
+)
+def test_geometric_metrics_horizon_weight_multivariate(metric_name):
+    """Check geometric mean metrics with horizon_weight on multivariate data.
+
+    Weighted multivariate result must equal the per-column univariate results.
+    """
+    from sktime.performance_metrics import forecasting
+
+    metric = getattr(forecasting, metric_name)
+
+    rng = np.random.default_rng(42)
+    y_true = rng.uniform(1, 10, size=(6, 2))
+    y_pred = y_true + rng.normal(0, 1, size=(6, 2))
+    y_bench = y_true + rng.normal(0, 2, size=(6, 2))
+    weights = np.array([1.0, 2.0, 3.0, 1.0, 2.0, 3.0])
+
+    result = metric(
+        y_true,
+        y_pred,
+        y_pred_benchmark=y_bench,
+        horizon_weight=weights,
+        multioutput="raw_values",
+    )
+    expected = [
+        metric(
+            y_true[:, i],
+            y_pred[:, i],
+            y_pred_benchmark=y_bench[:, i],
+            horizon_weight=weights,
+        )
+        for i in range(2)
+    ]
+    assert np.allclose(result, expected)
 
 
 @pytest.mark.skipif(
