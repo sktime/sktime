@@ -5,7 +5,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* Python versions 3.10, 3.11, 3.12, 3.13, and 3.14.
+* Python versions 3.11, 3.12, 3.13, 3.14, and 3.15.
 * Operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 
 See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.
@@ -220,4 +220,4 @@ in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
 References
 ----------
 
-The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.
+The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/development_setup.html>`_.
