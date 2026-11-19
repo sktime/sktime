@@ -22,6 +22,10 @@ class UCRUEADataset(BaseClassificationDataset):
     ----------
     name: str
         Name of the dataset to load.
+    download_entire_repo : bool, default=False
+        If True, download the full HuggingFace repository snapshot the first time the
+        dataset is requested. This drastically reduces API calls when iterating across
+        many datasets for benchmarking studies.
 
     Examples
     --------
@@ -48,10 +52,16 @@ class UCRUEADataset(BaseClassificationDataset):
     Dataset details: https://timeseriesclassification.com/dataset.php
     """
 
-    def __init__(self, name, return_mtype="pd-multiindex"):
+    def __init__(
+        self,
+        name,
+        return_mtype="pd-multiindex",
+        download_entire_repo=False,
+    ):
         super().__init__(return_mtype=return_mtype)
         self.name = name
         self.loader_func = load_UCR_UEA_dataset
+        self.download_entire_repo = download_entire_repo
 
         self.set_tags(name=self.name)
         self.set_tags(**DATASET_TAGS[self.name])
@@ -83,6 +93,9 @@ class UCRUEADataset(BaseClassificationDataset):
 
         if "split" in loader_func_params:
             kwargs["split"] = split
+
+        if "download_entire_repo" in loader_func_params:
+            kwargs["download_entire_repo"] = self.download_entire_repo
 
         for init_param_name, init_param_value in init_param_values.items():
             if init_param_name in loader_func_params:
