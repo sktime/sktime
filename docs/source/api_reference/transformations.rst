@@ -589,6 +589,16 @@ Binning, sampling and segmentation
 
     TimeBinAggregate
 
+.. currentmodule:: sktime.transformations.realized
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RealizedVariance
+    BipowerVariation
+    JumpVariation
+
 .. currentmodule:: sktime.transformations.interpolate
 
 .. autosummary::
