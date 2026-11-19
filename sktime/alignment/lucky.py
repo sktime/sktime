@@ -24,19 +24,22 @@ class AlignerLuckyDtw(BaseAligner):
 
     References
     ----------
-    ..[1] Stephan Spiegel, Brijnesh-Johannes Jain, and Sahin Albayrak.
+    .. [1] Stephan Spiegel, Brijnesh-Johannes Jain, and Sahin Albayrak.
         Fast time series classification under lucky time warping distance.
         Proceedings of the 29th Annual ACM Symposium on Applied Computing. 2014.
 
-    Example
-    -------
-    >>> import pandas as pd
+    Examples
+    --------
     >>> from sktime.alignment.lucky import AlignerLuckyDtw
-    >>> ts1_df = pd.DataFrame({"dim_0": [1, 2, 3, 4, 5]})
-    >>> ts2_df = pd.DataFrame({"dim_0": [2, 3, 4, 5, 6]})
+    >>> from sktime.datasets import load_airline
+    >>> # load a simple numerical series and create a panel for alignment
+    >>> y = load_airline()
+    >>> X = [y.iloc[:10].to_frame(), y.iloc[1:11].to_frame()]
+    >>> # initialize and fit the aligner
     >>> aligner = AlignerLuckyDtw(window=2)
-    >>> aligner.fit([ts1_df, ts2_df])
+    >>> aligner.fit(X)
     AlignerLuckyDtw(...)
+    >>> # get the alignment path
     >>> alignment = aligner.get_alignment()
     """
 
@@ -64,7 +67,7 @@ class AlignerLuckyDtw(BaseAligner):
     def _fit(self, X, Z=None):
         """Fit alignment given series/sequences to align.
 
-            core logic
+            Internal fit logic for lucky dynamic time warping.
 
         Parameters
         ----------
