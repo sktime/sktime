@@ -3,6 +3,13 @@
 Reference values come from continuousintelligence 0.1.1, using the pinned
 ci-proto checkpoint on CPU. The standalone upstream scripts are included below.
 Estimator interface conformance is covered by check_estimator.
+
+The checkpoint enables bfloat16 inference. CPU kernels on different runners
+can differ by roughly one bfloat16 rounding step, even on the same checkpoint.
+Use an absolute tolerance of 0.01 for the unit-scale covariate forecasts and
+one passenger for the upstream integer-rounded airline forecast. These bounds
+cover the observed CI differences (at most 0.0076 and 1, respectively), while
+still detecting the missing-calendar regression (an eight-passenger error).
 """
 
 import numpy as np
@@ -92,7 +99,7 @@ def test_ci_proto_airline_matches_source_reference(datetime_index):
     prediction = forecaster.predict(fh=fh)
 
     np.testing.assert_allclose(
-        prediction.to_numpy().ravel(), EXPECTED_AIRLINE, rtol=1e-5, atol=1e-4
+        prediction.to_numpy().ravel(), EXPECTED_AIRLINE, rtol=0, atol=1
     )
 
 
@@ -140,6 +147,6 @@ def test_ci_proto_quantiles_with_covariates_match_source_reference(
     np.testing.assert_allclose(
         quantiles.to_numpy(),
         EXPECTED_COVARIATES if update_covariates else EXPECTED_UPDATED_WITHOUT_X,
-        rtol=1e-5,
-        atol=1e-4,
+        rtol=0,
+        atol=0.01,
     )
