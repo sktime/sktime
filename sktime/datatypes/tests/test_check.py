@@ -525,3 +525,37 @@ def test_check_does_not_mutate_input(scitype, mtype, fixture_index):
             f"check_is_mtype mutated input for scitype {scitype}, mtype {mtype}, "
             f"fixture {fixture_index}"
         )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+@pytest.mark.filterwarnings("error")
+@pytest.mark.parametrize(
+    "index, expected",
+    [
+        (pandas.period_range("2020-01", periods=6, freq="M"), True),
+        (pandas.period_range("2020Q1", periods=6, freq="Q"), True),
+        (
+            pandas.PeriodIndex(["2020-01", "2020-02", "2020-04", "2020-05"], freq="M"),
+            False,
+        ),
+        (
+            pandas.PeriodIndex(["2020-01", "2020-03", "2020-04", "2020-05"], freq="M"),
+            False,
+        ),
+    ],
+)
+def test_period_index_equally_spaced(index, expected):
+    """Check equal spacing of a PeriodIndex without a pandas deprecation warning.
+
+    ``PeriodIndex.is_full`` is deprecated from pandas 3.1. The expected values are
+    the ones it returns, so the result does not depend on the pandas version.
+    """
+    y = pandas.Series(np.arange(len(index), dtype=float), index=index)
+    valid, _, metadata = check_is_mtype(
+        y, "pd.Series", return_metadata=["is_equally_spaced"]
+    )
+    assert valid
+    assert metadata["is_equally_spaced"] is expected
