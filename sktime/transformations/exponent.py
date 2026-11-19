@@ -156,7 +156,7 @@ class ExponentTransformer(BaseTransformer):
         return Xt
 
     def _get_offset(self, X):
-        if self.offset == "auto":
+        if isinstance(self.offset, str) and self.offset == "auto":
             Xmin = X.min()
             offset = -Xmin * (Xmin < 0)
         else:
