@@ -39,6 +39,36 @@ def test_scaledlogit_transform(lower, upper, output):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
+    "lower, upper, values, expected",
+    [
+        (10, 70, [-1000.0, 0.0, 1000.0], [10.0, 40.0, 70.0]),
+        (1e-20, 1e300, np.array([-710.0], dtype=np.float32), [4.476286225685e-9]),
+        (
+            np.nextafter(np.finfo(float).max, 0),
+            np.finfo(float).max,
+            [30.0],
+            [np.finfo(float).max],
+        ),
+        (-np.finfo(float).max, np.finfo(float).max, [0.0], [0.0]),
+        (1, 10**20, [0.0], [5e19]),
+    ],
+)
+def test_scaledlogit_inverse_transform_extreme_values(lower, upper, values, expected):
+    """The two-sided inverse stays finite and retains representable tail values."""
+    transformer = ScaledLogitTransformer(lower_bound=lower, upper_bound=upper)
+    transformer.fit(TEST_SERIES)
+
+    with np.errstate(over="raise", invalid="raise"):
+        result = transformer.inverse_transform(np.asarray(values))
+
+    np.testing.assert_allclose(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ScaledLogitTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
     "lower, upper, message",
     [
         (
