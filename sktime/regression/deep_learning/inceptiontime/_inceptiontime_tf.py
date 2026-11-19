@@ -71,6 +71,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         # estimator type handled by parent class
         # CI and test tags
         # ----------------
+        "tests:skip_by_name": [
+            # Fitted deepcopy loses model_; tracked in #10712, fixed by #10453.
+            "test_deepcopy_fitted_predict",
+        ],
         "tests:vm": True,
         "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
     }
