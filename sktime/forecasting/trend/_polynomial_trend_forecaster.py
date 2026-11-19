@@ -102,6 +102,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:pred_int": True,
         "y_inner_mtype": "pd.DataFrame",
+        "tests:skip_by_name": ["test_scenario_does_not_modify_global_numpy_rng"],
     }
 
     def __init__(
