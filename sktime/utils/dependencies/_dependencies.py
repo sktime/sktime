@@ -105,8 +105,9 @@ def _get_lowest_compatible_python_version(estimator):
 
     Returns
     -------
-    str
+    str, or None
         Lowest compatible Python version, e.g. "3.11".
+        None if the estimator and sktime have no Python version in common.
     """
     estimator_spec = estimator.get_class_tag("python_version")
     sktime_spec = metadata("sktime")["Requires-Python"]
@@ -131,7 +132,6 @@ def _get_lowest_compatible_python_version(estimator):
         if minor > 100:
             break
 
-    raise RuntimeError(
-        f"No compatible Python version found for "
-        f"sktime ({sktime_spec}) and estimator ({estimator_spec})."
-    )
+    # no common version - callers such as the weekly test workflows skip the
+    # estimator, and TestAllObjects.test_python_version_compatible reports it
+    return None
