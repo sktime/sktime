@@ -10,6 +10,52 @@ __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
+def _offset_to_period_freq(freq):
+    """Convert pandas offset frequency alias to a Period-compatible alias."""
+    _offset_to_period = {
+        "MS": "M",
+        "ME": "M",
+        "QS": "Q",
+        "QE": "Q",
+        "QS-OCT": "Q",
+        "YS": "Y",
+        "AS": "Y",
+        "YE": "Y",
+        "AE": "Y",
+    }
+    if freq is None:
+        return None
+    if freq in _offset_to_period:
+        return _offset_to_period[freq]
+
+    offset, separator, month = freq.partition("-")
+    if separator and offset in ("YS", "AS", "QS", "YE", "AE", "QE"):
+        months = (
+            "JAN",
+            "FEB",
+            "MAR",
+            "APR",
+            "MAY",
+            "JUN",
+            "JUL",
+            "AUG",
+            "SEP",
+            "OCT",
+            "NOV",
+            "DEC",
+        )
+        end_month = month.upper()
+        if end_month not in months:
+            return freq
+        if offset in ("YS", "AS", "QS"):
+            end_month = months[(months.index(end_month) - 1) % 12]
+
+        period_freq = "Y" if offset in ("YS", "AS", "YE", "AE") else "Q"
+        return period_freq if end_month == "DEC" else f"{period_freq}-{end_month}"
+
+    return freq
+
+
 class MOIRAIForecaster(BaseForecaster):
     """MOIRAI Forecasters.
 
@@ -788,8 +834,7 @@ class MOIRAIForecaster(BaseForecaster):
     #     return extended_df, df_y
 
     def infer_freq(self, index):
-        """
-        Infer frequency of the index.
+        """Infer frequency of the index.
 
         Parameters
         ----------
@@ -800,32 +845,13 @@ class MOIRAIForecaster(BaseForecaster):
         -----
         Uses only first 3 values of the index to infer the frequency.
         As `freq=None` is returned in case of multiindex timepoints.
-
         """
-        # Mapping from pandas DatetimeIndex freq aliases (produced by
-        # PeriodIndex.to_timestamp()) to gluonts-compatible freq strings.
-        _offset_to_period = {
-            "MS": "M",
-            "ME": "M",
-            "QS": "Q",
-            "QE": "Q",
-            "QS-OCT": "Q",
-            "YS": "Y",
-            "AS": "Y",
-            "YE": "Y",
-            "AE": "Y",
-        }
         if isinstance(index, pd.PeriodIndex):
             return index.freq
-        # Prefer the freq attribute already set on the index (e.g. by to_timestamp())
         if hasattr(index, "freq") and index.freq is not None:
-            freq_str = index.freqstr
-            return _offset_to_period.get(freq_str, freq_str)
-        # Fall back to inferring from the first 3 values
+            return _offset_to_period_freq(index.freqstr)
         freq = pd.infer_freq(index[:3]) if len(index) >= 3 else None
-        if freq is not None:
-            return _offset_to_period.get(freq, freq)
-        return freq
+        return _offset_to_period_freq(freq)
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
