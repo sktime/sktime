@@ -3,7 +3,6 @@
 from copy import deepcopy
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.base import BaseClassifier
 from sktime.split import temporal_train_test_split
@@ -17,9 +16,6 @@ OneCycleLR = _safe_import("torch.optim.lr_scheduler.OneCycleLR")
 DataLoader = _safe_import("torch.utils.data.DataLoader")
 Dataset = _safe_import("torch.utils.data.Dataset")
 empty_cache = _safe_import("torch.cuda.empty_cache")
-
-if _check_soft_dependencies("transformers", severity="none"):
-    from sktime.libs.momentfm import MOMENTPipeline
 
 
 def _momentfm_cache_key(
@@ -105,6 +101,8 @@ class _CachedMomentFMPipeline:
         MOMENTPipeline
             The initialised pipeline, ready for fine-tuning.
         """
+        from sktime.libs.momentfm import MOMENTPipeline
+
         if self._pipeline is None:
             self._pipeline = MOMENTPipeline.from_pretrained(
                 self.pretrained_model_name_or_path,
@@ -352,6 +350,8 @@ class MomentFMClassifier(BaseClassifier):
                     "`config` must be provided when "
                     "`pretrained_model_name_or_path=None`."
                 )
+            from sktime.libs.momentfm import MOMENTPipeline
+
             model = MOMENTPipeline(
                 self._config,
                 model_kwargs=self._get_model_kwargs(),
