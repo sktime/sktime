@@ -448,6 +448,52 @@ def test_get_slice_expected_result():
     assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
 
 
+def test_get_slice_zero_and_none_bounds():
+    """Tests that get_slice treats 0 as a valid bound and None as an absent one.
+
+    Regression test for bug #10966: an integer bound of 0 was treated as an
+    omitted bound (falsy check), and the numpy path performed arithmetic or
+    comparisons on None when only one bound was supplied.
+    """
+    # zero bounds and omitted bounds must all yield an empty slice here
+    assert len(get_slice(np.arange(5), start=0, end=0)) == 0
+    assert len(get_slice(np.arange(5), start=None, end=0)) == 0
+    assert len(get_slice(pd.Series(np.arange(5)), start=2, end=0)) == 0
+
+    # a start of 0 with a non-zero end is a normal slice, not an absent start
+    assert list(get_slice(np.arange(5), start=0, end=3)) == [0, 1, 2]
+    assert list(get_slice(pd.Series(np.arange(5)), start=0, end=3)) == [0, 1, 2]
+
+
+def test_get_slice_preserves_emptied_panel_instances():
+    """A bound that empties some panel instances keeps them as empty (#10966).
+
+    A list-based panel is sliced instance-by-instance, so an instance whose
+    time points all fall outside the bound is preserved as an empty instance
+    rather than silently dropped (which happens if the panel round-trips through
+    the ``pd-multiindex`` representation, which cannot hold a zero-length
+    instance). Covered for both ``df-list`` and ``nested_univ``.
+    """
+    from sktime.datatypes import convert_to
+
+    panel = [
+        pd.DataFrame({"value": [1, 2, 3]}, index=[-2, -1, 0]),
+        pd.DataFrame({"value": [4, 5, 6]}, index=[0, 1, 2]),
+    ]
+
+    result = get_slice(panel, end=0)
+    assert len(result) == 2
+    assert [len(df) for df in result] == [2, 0]
+    assert result[0]["value"].tolist() == [1, 2]
+
+    nested = convert_to(panel, "nested_univ")
+    nested_result = get_slice(nested, end=0)
+    assert len(nested_result) == 2
+    cells = [nested_result.iloc[i, 0] for i in range(len(nested_result))]
+    assert [len(cell) for cell in cells] == [2, 0]
+    assert cells[0].tolist() == [1, 2]
+
+
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
