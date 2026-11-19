@@ -108,6 +108,7 @@ class BaseDeepClassifier(BaseClassifier):
         """
         # Transpose to work correctly with keras
         X = X.transpose((0, 2, 1))
+        kwargs.setdefault("verbose", getattr(self, "verbose", False))
         probs = self.model_.predict(X, self.batch_size, **kwargs)
 
         # check if binary classification

@@ -74,6 +74,7 @@ class BaseDeepRegressor(BaseRegressor):
             array of predictions of each instance
         """
         X = X.transpose((0, 2, 1))
+        kwargs.setdefault("verbose", getattr(self, "verbose", False))
         y_pred = self.model_.predict(X, self.batch_size, **kwargs)
         y_pred = np.squeeze(y_pred, axis=-1)
         return y_pred

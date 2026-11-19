@@ -298,6 +298,7 @@ class CNTCRegressor(BaseDeepRegressor):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         X2 = self.prepare_input(X)
+        kwargs.setdefault("verbose", self.verbose)
         preds = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
         preds = np.squeeze(preds, axis=-1)
         return preds
