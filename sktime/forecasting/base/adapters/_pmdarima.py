@@ -116,13 +116,6 @@ class _PmdArimaAdapter(BaseForecaster):
             Returns series of predicted values.
         """
         fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
-        end_int = fh_abs_int[-1] + 2
-        # +2 because + 1 for "end" (python index), +1 for starting to count at 1 in fh
-
-        if X is not None:
-            X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
-            X = X.iloc[:end_int]
 
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
@@ -245,6 +238,16 @@ class _PmdArimaAdapter(BaseForecaster):
         Returns series of predicted values.
         """
         n_periods = int(fh.to_relative(self.cutoff)[-1])
+        fh_abs = fh.to_absolute(self.cutoff)
+        if X is not None:
+            # pmdarima forecasts all steps up to the last requested one.
+            X = get_slice(
+                X,
+                start=self.cutoff[0],
+                end=fh_abs[-1],
+                start_inclusive=False,
+                end_inclusive=True,
+            )
         result = self._forecaster.predict(
             n_periods=n_periods,
             X=X,
@@ -252,7 +255,6 @@ class _PmdArimaAdapter(BaseForecaster):
             alpha=DEFAULT_ALPHA,
         )
 
-        fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
         if return_pred_int:
             pred_ints = []
