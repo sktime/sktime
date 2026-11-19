@@ -177,6 +177,36 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     )
 
 
+def test_forecastingbenchmark_resume_with_return_data(tmp_path):
+    """A CSV benchmark with a PeriodIndex can reload its saved fold data."""
+    benchmark = ForecastingBenchmark(return_data=True)
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
+    y = load_airline().iloc[:5]
+    benchmark.add_task(
+        y,
+        ExpandingWindowSplitter(initial_window=3, step_length=1, fh=1),
+        [MeanSquaredPercentageError()],
+    )
+    path = tmp_path / "results.csv"
+
+    initial = benchmark.run(path)
+    resumed = benchmark.run(path)
+
+    data_columns = [
+        name
+        for name in initial.columns
+        if name.startswith(("ground_truth_", "predictions_", "train_data_"))
+    ]
+    pd.testing.assert_frame_equal(
+        resumed.drop(columns=data_columns), initial.drop(columns=data_columns)
+    )
+    for name in data_columns:
+        expected = initial[name].iloc[0]
+        if isinstance(expected, pd.Series):
+            expected = expected.to_frame()
+        pd.testing.assert_frame_equal(resumed[name].iloc[0], expected)
+
+
 @pytest.mark.xfail(reason="currently unfixed failure, see #10555")
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.benchmarking")
