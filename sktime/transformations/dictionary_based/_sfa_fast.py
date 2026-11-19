@@ -144,7 +144,6 @@ class SFAFast(BaseTransformer):
             "test_categorical_X_raises_error",
             "test_categorical_y_raises_error",
             "test_categorical_X_passes",
-            "test_get_test_params_coverage",
             "test_class_has_doctest_example",
         ],
     }
@@ -650,14 +649,25 @@ class SFAFast(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # small window size for testing
-        params = {
-            "word_length": 4,
-            "window_size": 4,
-            "return_sparse": True,
-            "return_pandas_data_series": True,
-            "feature_selection": "chi2",
-            "alphabet_size": 2,
-        }
+        params = [
+            {
+                "word_length": 4,
+                "window_size": 4,
+                "return_sparse": True,
+                "return_pandas_data_series": True,
+                "feature_selection": "chi2",
+                "alphabet_size": 2,
+            },
+            {
+                "word_length": 6,
+                "alphabet_size": 4,
+                "window_size": 8,
+                "bigrams": True,
+                "return_sparse": False,
+                "return_pandas_data_series": True,
+                "feature_selection": "none",
+            },
+        ]
         return params
 
     def set_fitted(self):
