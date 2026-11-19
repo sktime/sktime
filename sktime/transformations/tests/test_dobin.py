@@ -3,11 +3,77 @@
 __author__ = ["KatieBuc"]
 
 import numpy as np
+import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
+from sklearn.neighbors import NearestNeighbors
 from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.dobin import DOBIN
+from sktime.transformations.dobin import DOBIN, close_distance_matrix
+
+
+def _close_distance_matrix_reference(X, k, frac):
+    """Compute the original row-wise neighbor differences for comparison."""
+    X = pd.DataFrame(X)
+    nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(X)
+    _, indices = nbrs.kneighbors(X)
+    dist = pd.DataFrame(
+        [
+            ((X.iloc[i] - X.iloc[j]) ** 2).tolist()
+            for i, j in zip(np.repeat(indices[:, 0], repeats=k), indices[:, 1:].ravel())
+        ]
+    )
+    row_sums = dist.apply(sum, axis=1)
+    return dist.loc[row_sums > np.quantile(row_sums, q=frac)]
+
+
+@pytest.mark.parametrize("dtype", ["float64", "float32", "int64", "uint8"])
+@pytest.mark.parametrize("k, frac", [(1, 0), (3, 0.5), (5, 0.95), (3, 1)])
+def test_close_distance_matrix_matches_reference(dtype, k, frac):
+    """Preserve values, pair order, strict quantile filtering, and inferred dtypes."""
+    X = pd.DataFrame(
+        np.random.default_rng(11375).integers(0, 20, size=(20, 4)).astype(dtype),
+        index=pd.date_range("2020-01-01", periods=20),
+        columns=["a", "b", "c", "d"],
+    )
+    # Include duplicate observations: the first neighbor need not be the query row.
+    X.iloc[1] = X.iloc[0]
+    expected = _close_distance_matrix_reference(X, k, frac)
+    actual = close_distance_matrix(X, k, frac)
+    assert_frame_equal(actual, expected, check_exact=True)
+
+
+def test_close_distance_matrix_equal_distances():
+    """Pairs at the quantile boundary are excluded, including all-zero distances."""
+    X = np.ones((10, 3))
+    actual = close_distance_matrix(X, k=3, frac=0.5)
+    expected = _close_distance_matrix_reference(X, k=3, frac=0.5)
+    assert_frame_equal(actual, expected, check_exact=True)
+    assert actual.empty
+
+
+@pytest.mark.parametrize("case", ["random", "float32", "zero_variance", "pca"])
+def test_dobin_fit_matches_reference(monkeypatch, case):
+    """The optimized helper preserves the fitted basis and public transform."""
+    shape = (4, 6) if case == "pca" else (25, 4)
+    X = pd.DataFrame(np.random.default_rng(11375).normal(size=shape))
+    if case == "float32":
+        X = X.astype("float32")
+    elif case == "zero_variance":
+        X.iloc[:, -1] = 1.0
+
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            "sktime.transformations.dobin.close_distance_matrix",
+            _close_distance_matrix_reference,
+        )
+        reference = DOBIN(k=2, frac=0.5).fit(X)
+        expected = reference.transform(X)
+
+    estimator = DOBIN(k=2, frac=0.5).fit(X)
+    assert_frame_equal(estimator._basis, reference._basis, check_exact=True)
+    assert_frame_equal(estimator.transform(X), expected, check_exact=True)
 
 
 @pytest.mark.skipif(
