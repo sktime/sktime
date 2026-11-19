@@ -113,7 +113,7 @@ class ThetaLinesTransformer(BaseTransformer):
         theta_lines = np.zeros((X.shape[0], len(theta)))
         for i, theta_i in enumerate(theta):
             theta_lines[:, i] = _theta_transform(X, trend, theta_i)
-        if isinstance(self.theta, (float, int)):
+        if len(theta) == 1:
             return pd.Series(theta_lines.flatten(), index=X.index)
         else:
             return pd.DataFrame(theta_lines, columns=self.theta, index=X.index)
