@@ -17,6 +17,11 @@ class CosineTransformer(BaseTransformer):
 
     This is a wrapper around numpy's cosine function (see :func:`numpy.cos`).
 
+    The inverse transform is :func:`numpy.arccos`, which returns values in
+    ``[0, pi]``. The transform is therefore invertible on ``[0, pi]`` only:
+    outside it ``inverse_transform`` returns the value in ``[0, pi]`` with the
+    same cosine, so ``-1.0`` comes back as ``1.0``.
+
     See Also
     --------
     numpy.cos
@@ -48,7 +53,9 @@ class CosineTransformer(BaseTransformer):
         "fit_is_empty": True,
         "transform-returns-same-time-index": True,
         "capability:inverse_transform": True,
-        "capability:inverse_transform:range": [-pi, pi],
+        # np.arccos returns values in [0, pi], so arccos(cos(x)) == x holds there
+        # and nowhere else: on [-pi, 0) it returns -x, not x.
+        "capability:inverse_transform:range": [0, pi],
     }
 
     def _transform(self, X, y=None):
