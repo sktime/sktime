@@ -1342,6 +1342,29 @@ class capability__pretrain(_BaseTag):
     }
 
 
+class capability__zero_shot(_BaseTag):
+    """Capability: the forecaster can produce zero-shot forecasts without task training.
+
+    - String name: ``"capability:zero_shot"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The ``capability:zero_shot`` tag indicates whether a forecaster can generate
+    predictions directly from historical context series without task-specific
+    fit training (e.g., foundation models like Chronos, Moment, UniTS, TabPFN).
+    """
+
+    _tags = {
+        "tag_name": "capability:zero_shot",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can produce zero-shot forecasts without task-specific training",
+        "user_facing": True,
+    }
+
+
 class pretrain__fitted_params(_BaseTag):
     """Property: named attributes that carry pretrained state.
 
