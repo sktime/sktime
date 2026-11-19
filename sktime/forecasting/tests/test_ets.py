@@ -107,3 +107,23 @@ def test_inf_ic_false():
         and np.isinf(fitted_forecaster.bic)
         and np.isinf(fitted_forecaster.aicc)
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_autoets_predict_interval_multiplicative():
+    """Test predict_interval for multiplicative AutoETS, see #11467.
+
+    Multiplicative models use simulated intervals, which failed when the
+    seed was passed nested in simulate_kwargs.
+    """
+    y = load_airline()
+    f = AutoETS(error="mul", trend="add", seasonal="mul", sp=12, random_state=42)
+    f.fit(y)
+
+    a = f.predict_interval(fh=[1, 2, 3], coverage=0.9)
+    b = f.predict_interval(fh=[1, 2, 3], coverage=0.9)
+
+    pd.testing.assert_frame_equal(a, b)

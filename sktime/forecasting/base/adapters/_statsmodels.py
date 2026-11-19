@@ -263,14 +263,14 @@ class _StatsModelsAdapter(BaseForecaster):
                     self._fitted_forecaster.simulate
                 ).parameters
 
+                # get_prediction collects extra kwargs as **simulate_kwargs and
+                # forwards them to simulate(), so pass the seed directly, not
+                # nested. The seed is "rng" in statsmodels >= 0.15, else
+                # "random_state".
                 if "rng" in simulate_params:
-                    get_prediction_arguments["simulate_kwargs"] = {
-                        "rng": self.random_state
-                    }
+                    get_prediction_arguments["rng"] = self.random_state
                 else:
-                    get_prediction_arguments["simulate_kwargs"] = {
-                        "random_state": self.random_state
-                    }
+                    get_prediction_arguments["random_state"] = self.random_state
             elif "random_state" in get_prediction_params:
                 get_prediction_arguments["random_state"] = self.random_state
 

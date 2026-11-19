@@ -450,7 +450,8 @@ class VARMAX(_StatsModelsAdapter):
         params = [
             {"order": (1, 0)},
             {"order": (0, 1)},
-            {"order": (1, 1)},
+            # (1, 1) VARMA fits sporadically raised LinAlgError in CI, see #2997
+            {"order": (1, 0), "trend": "ct"},
         ]
 
         return params
