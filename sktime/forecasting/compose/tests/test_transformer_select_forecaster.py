@@ -225,3 +225,15 @@ def test_get_params(
     # Check that the extrapolated values from the transformer are of type string
     for category in forecaster_params.keys():
         assert type(category) is str
+
+def test_nested_forecaster_params():
+    forecaster = TransformSelectForecaster(
+        **TransformSelectForecaster.get_test_params()[0]
+    )
+    params = forecaster.get_params()
+    assert "forecasters__erratic__degree" in params
+
+    forecaster.set_params(forecasters__erratic__degree=2)
+    assert forecaster.get_params()["forecasters__erratic__degree"] == 2
+    assert forecaster.forecasters["erratic"].degree == 2
+    assert forecaster.forecasters_["erratic"].degree == 2

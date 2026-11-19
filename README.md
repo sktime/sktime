@@ -202,6 +202,34 @@ accuracy_score(y_test, y_pred)
 ```
 
 ## :wave: How to get involved
+### Accessing nested forecaster parameters
+
+`TransformSelectForecaster` supports accessing and updating parameters of forecasters stored in its `forecasters` dictionary.
+
+```python
+from sktime.forecasting.compose import TransformSelectForecaster
+
+forecaster = TransformSelectForecaster(
+    **TransformSelectForecaster.get_test_params()[0]
+)
+
+params = forecaster.get_params()
+print(params["forecasters__erratic__degree"])
+
+forecaster.set_params(forecasters__erratic__degree=2)
+
+print(forecaster.get_params()["forecasters__erratic__degree"])
+
+```
+
+Nested parameters use this format:
+
+```text
+forecasters__<forecaster_name>__<parameter_name>
+```
+
+For example, `forecasters__erratic__degree` changes the degree of the `erratic` forecaster.
+
 
 There are many ways to join the sktime community. We follow the [all-contributors](https://github.com/all-contributors/all-contributors) specification: all kinds of contributions are welcome - not just code.
 
