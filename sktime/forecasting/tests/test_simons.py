@@ -13,6 +13,13 @@ pytestmark = pytest.mark.skipif(
     reason="run test only if Simons soft dependencies are installed",
 )
 
+# Generation: Simons.from_pretrained("abel-lab/Simons-25M", device="cpu").forecast(
+# torch.as_tensor(np.sin(np.arange(200, dtype=np.float32) / 10)[None, None, :],
+# dtype=torch.float32), horizon=3)
+# input series: np.sin(np.arange(200, dtype=np.float32) / 10), horizon=3,
+# checkpoint=abel-lab/Simons-25M,
+# revision=main 0d0042f8da45140172bd36980be08654c0017d8b,
+# torch=2.11.0+cpu
 _GOLDEN_POINT = np.array([0.9178922, 0.95235765, 0.979503], dtype=np.float32)
 _GOLDEN_QUANTILES = np.array(
     [
@@ -67,6 +74,34 @@ def test_simons_golden_outputs():
         quantiles.to_numpy(), _GOLDEN_QUANTILES, rtol=1e-5, atol=1e-6
     )
 
+    import torch
+
+    from sktime.libs.simons import Simons
+
+    history = np.asarray(_make_y(), dtype=np.float32)[None, None, :]
+    raw = Simons.from_pretrained(
+        "abel-lab/Simons-25M",
+        device="cpu",
+    ).forecast(torch.as_tensor(history, dtype=torch.float32), horizon=3)
+    np.testing.assert_allclose(
+        raw.detach().cpu().numpy()[0, 0, :, 4],
+        point.to_numpy(),
+        rtol=1e-6,
+        atol=1e-7,
+    )
+    native = raw.detach().cpu().numpy()[0, 0]
+    upstream_quantiles = np.apply_along_axis(
+        lambda row: np.interp([0.1, 0.25, 0.5, 0.9], QUANTILES, row),
+        axis=-1,
+        arr=native,
+    )
+    np.testing.assert_allclose(
+        quantiles.to_numpy(),
+        upstream_quantiles,
+        rtol=1e-6,
+        atol=1e-7,
+    )
+
 
 def test_simons_update_matches_full_fit():
     """Updating with new observations uses the full context without refitting."""
@@ -98,14 +133,40 @@ def test_simons_predict_proba_matches_native_quantiles():
 
 
 def test_simons_accepts_categorical_covariates():
-    """Upstream categorical encoding is used by the adapter."""
+    """Categorical covariates with differing category sets work end to end."""
     y = _make_y()
-    x_history = pd.DataFrame({"x": ["a", "b"] * 100}, index=y.index)
-    x_future = pd.DataFrame({"x": ["b", "a"] * 5}, index=pd.RangeIndex(200, 210))
+    x_history = pd.DataFrame(
+        {"category": pd.Categorical(["a", "b"] * 100, categories=["a", "b"])},
+        index=y.index,
+    )
+    x_future = pd.DataFrame(
+        {"category": pd.Categorical(["b", "c"] * 5, categories=["b", "c"])},
+        index=pd.RangeIndex(200, 210),
+    )
     forecaster = SimonsForecaster(model_path="abel-lab/Simons-25M").fit(y, X=x_history)
 
-    covariates = forecaster._build_covariates(x_future, horizon=10)
-    assert covariates.shape == (1, 1, 210)
+    prediction = forecaster.predict(fh=[1, 5, 10], X=x_future)
+    assert prediction.shape == (3,)
+    assert prediction.index.equals(pd.Index([200, 204, 209]))
+
+
+def test_simons_accepts_18_covariates_with_constants():
+    """Constant covariates are dropped and the remaining 15 are accepted."""
+    y = _make_y()
+    x_history = pd.DataFrame(
+        {f"x{i}": np.arange(200, dtype=np.float32) + i for i in range(15)}
+        | {f"constant{i}": np.ones(200) for i in range(3)},
+        index=y.index,
+    )
+    x_future = pd.DataFrame(
+        {f"x{i}": np.arange(200, 210, dtype=np.float32) + i for i in range(15)}
+        | {f"constant{i}": np.ones(10) for i in range(3)},
+        index=pd.RangeIndex(200, 210),
+    )
+    forecaster = SimonsForecaster(model_path="abel-lab/Simons-25M").fit(y, X=x_history)
+
+    prediction = forecaster.predict(fh=[1, 5, 10], X=x_future)
+    assert prediction.shape == (3,)
 
 
 def test_simons_alpha_interpolation_and_clamping():

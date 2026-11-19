@@ -1,6 +1,6 @@
 # Copyright 2026 Abel AI Lab.
 # Source: https://github.com/Abel-ai-lab/Simons
-# Apache-2.0; vendored from Abel-ai-lab/Simons at commit 8e338e915d26c8960713889ef12ab1cf5c08d591.
+# Apache-2.0; vendored from Abel-ai-lab/Simons at commit 0d0042f8da45140172bd36980be08654c0017d8b.
 # Model weights are not bundled; see the Simons model license.
 # ruff: noqa
 
@@ -555,7 +555,7 @@ class Simons(nn.Module):
     def from_pretrained(cls, name_or_path, device="cpu", revision=None) -> "Simons":
         """Load config.json and model.safetensors from a local folder or Hub repo, in eval mode.
         `revision` selects a Hub branch, tag or commit; `device` sets the model device."""
-        load_file = _safe_import("safetensors.torch.load_file")
+        from safetensors.torch import load_file
 
         path = Path(name_or_path).expanduser()
         if not path.is_dir():
@@ -568,7 +568,7 @@ class Simons(nn.Module):
                     f"{name_or_path} is not a model folder (config.json and "
                     "model.safetensors)"
                 )
-            snapshot_download = _safe_import("huggingface_hub.snapshot_download")
+            from huggingface_hub import snapshot_download
 
             path = Path(
                 snapshot_download(
@@ -582,7 +582,7 @@ class Simons(nn.Module):
         return model.to(device).eval()
 
     def save_pretrained(self, path):
-        save_file = _safe_import("safetensors.torch.save_file")
+        from safetensors.torch import save_file
 
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)

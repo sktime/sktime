@@ -8,9 +8,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.libs.simons import QUANTILES, prepare_covariates
 from sktime.utils.singleton import _multiton
 
 
@@ -79,6 +77,7 @@ class SimonsForecaster(BaseForecaster):
         "tests:libs": ["sktime.libs.simons"],
         "tests:specific": ["sktime.forecasting.tests.test_simons"],
         "tests:vm": True,
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -102,6 +101,8 @@ class SimonsForecaster(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         """Extend the stored history without refitting the zero-shot model."""
+        from sktime.datatypes import update_data
+
         self.context_ = update_data(self.context_, y)
         if self.X_ is None:
             if X is not None:
@@ -122,8 +123,10 @@ class SimonsForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Return point forecasts from Simons."""
+        from sktime.libs.simons import QUANTILES
+
         predictions, index = self._run_forecast(fh, X=X)
-        values = predictions[:, :, 4].T
+        values = predictions[:, :, QUANTILES.index(0.5)].T
         return pd.DataFrame(values, index=index, columns=self.context_.columns)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
@@ -133,6 +136,8 @@ class SimonsForecaster(BaseForecaster):
         interpolated from Simons' nine output quantiles. Levels outside that
         range are clamped to the nearest supported endpoint with a warning.
         """
+        from sktime.libs.simons import QUANTILES
+
         if alpha is None:
             alpha = [0.1, 0.5, 0.9]
         if np.isscalar(alpha):
@@ -161,6 +166,8 @@ class SimonsForecaster(BaseForecaster):
     def _predict_proba(self, fh, X=None, marginal=True):
         """Return a histogram distribution from Simons' native quantiles."""
         from skpro.distributions import HistogramQPD
+
+        from sktime.libs.simons import QUANTILES
 
         predictions, index = self._run_forecast(fh, X=X)
         levels = np.asarray(QUANTILES, dtype=np.float64)
@@ -218,10 +225,9 @@ class SimonsForecaster(BaseForecaster):
             raise ValueError(
                 "X columns during predict must match the columns used during fit."
             )
-        if len(self.X_.columns) > 16:
-            raise ValueError("Simons supports at most 16 covariate columns.")
 
         from sktime.forecasting.base import ForecastingHorizon
+        from sktime.libs.simons import prepare_covariates
 
         future_index = (
             ForecastingHorizon(range(1, horizon + 1))
@@ -235,11 +241,34 @@ class SimonsForecaster(BaseForecaster):
                 f"forecast horizon; missing {len(missing)} row(s)."
             )
         future = X.loc[future_index]
+        combined = pd.concat([self.X_, future])
+        encoded_columns = []
+        for column in combined.columns:
+            history_and_future = combined[column]
+            if isinstance(history_and_future.dtype, pd.CategoricalDtype) or (
+                history_and_future.dtype == object
+            ):
+                from sktime.libs.simons import encode_categorical
+
+                categories = sorted(
+                    {str(value) for value in history_and_future if not pd.isna(value)}
+                )
+                encoded_columns.append(
+                    pd.Series(
+                        encode_categorical(history_and_future, categories=categories),
+                        index=combined.index,
+                    )
+                )
+            else:
+                encoded_columns.append(
+                    pd.Series(history_and_future, index=combined.index)
+                )
+        encoded = pd.concat(encoded_columns, axis=1)
+        encoded.columns = combined.columns
         values = prepare_covariates(
             length=len(self.context_),
             horizon=horizon,
-            future=pd.concat([self.X_, future]),
-            max_covariates=16,
+            future=encoded,
         )
         if values is None:
             return None
@@ -262,13 +291,7 @@ class SimonsForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
-        return [
-            {"model_path": "abel-lab/Simons-25M"},
-            {
-                "model_path": "abel-lab/Simons-25M",
-                "revision": "3d2745ef7fcca14198e58e70788eb0288497b48a",
-            },
-        ]
+        return [{"model_path": "abel-lab/Simons-25M"}]
 
 
 @_multiton

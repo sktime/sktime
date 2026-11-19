@@ -1,6 +1,6 @@
 # Copyright 2026 Abel AI Lab.
 # Source: https://github.com/Abel-ai-lab/Simons
-# Apache-2.0; vendored from Abel-ai-lab/Simons at commit 8e338e915d26c8960713889ef12ab1cf5c08d591.
+# Apache-2.0; vendored from Abel-ai-lab/Simons at commit 0d0042f8da45140172bd36980be08654c0017d8b.
 # Model weights are not bundled; see the Simons model license.
 # ruff: noqa
 

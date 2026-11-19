@@ -1,6 +1,6 @@
 # Copyright 2026 Abel AI Lab.
 # Source: https://github.com/Abel-ai-lab/Simons
-# Apache-2.0; vendored from Abel-ai-lab/Simons at commit 8e338e915d26c8960713889ef12ab1cf5c08d591.
+# Apache-2.0; vendored from Abel-ai-lab/Simons at commit 0d0042f8da45140172bd36980be08654c0017d8b.
 # Model weights are not bundled; see the Simons model license.
 # ruff: noqa
 
@@ -221,6 +221,12 @@ def views_forecast(
     first = min(horizon, pred)
     observed = torch.isfinite(x)
     nonneg = observed.any(-1) & torch.where(observed, x >= 0, True).all(-1)  # [B,V]
+    if covariates is not None:
+        # With covariates, a row with at most one nonzero value gets no square-root views:
+        # normalized, [0,...,0,v] and [0,...,0,sqrt(v)] look the same, so squaring the
+        # square-root forecast back would square its relative growth.
+        given = torch.isfinite(covariates).flatten(1).any(-1)[:, None]  # [B,1]
+        nonneg = nonneg & ~(given & ((observed & (x != 0)).sum(-1) <= 1))
 
     def run(values, steps, ids=series_ids, cov=None):
         if cov is not None:
