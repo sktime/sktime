@@ -152,7 +152,7 @@ class FalseAlarmRate(BaseDetectionMetric):
 
         duration = index[-1] - index[0]
         if isinstance(index, pd.PeriodIndex):
-            duration = duration.n
+            duration = duration.n / getattr(index.freq, "n", 1)
         elif _is_time_index(index):
             duration = duration / pd.Timedelta(1, unit=self.time_unit)
 

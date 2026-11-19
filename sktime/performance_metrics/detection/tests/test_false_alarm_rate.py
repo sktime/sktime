@@ -135,10 +135,11 @@ def test_false_alarm_rate_requires_X():
 @SKIP_IF_UNCHANGED
 def test_false_alarm_rate_period_index():
     """With a PeriodIndex, the duration is measured in period steps."""
-    index = pd.period_range("2020-01-01", periods=9, freq="D")
-    X = pd.DataFrame({"foo": range(9)}, index=index)  # span 8 periods
-    y_true = _events([5])
-    y_pred = _events([1, 4])  # alarm at 1 is false alarm (window [-2, 0] is [3, 5])
+    for freq in ["D", "2D", "3h", "M"]:
+        index = pd.period_range("2020-01-01", periods=9, freq=freq)
+        X = pd.DataFrame({"foo": range(9)}, index=index)  # span 8 periods
+        y_true = _events([5])
+        y_pred = _events([1, 4])  # alarm at 1 is false alarm (window [-2, 0] is [3, 5])
 
-    score = FalseAlarmRate(min_offset=-2)(y_true, y_pred, X)
-    assert score == 1 / 8
+        score = FalseAlarmRate(min_offset=-2)(y_true, y_pred, X)
+        assert score == 1 / 8
