@@ -118,14 +118,28 @@ class CutoffSplitter(BaseSplitter):
     relative to the end of the training window.
     It will contain as many indices
     as there are forecasting horizons provided to the ``fh`` argument.
-    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test window will
-    consist of the indices :math:`(k_n+h_1,\ldots, k_n+h_H)`.
+    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test window
+    for the cutoff :math:`k_i` will consist of the indices
+    :math:`(k_i+h_1,\ldots,k_i+h_H)`.
 
     The number of splits returned by ``.get_n_splits``
     is then trivially equal to :math:`n`.
 
     The sorted array of cutoffs returned by ``.get_cutoffs`` is then equal to
     :math:`(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
+
+    For example for ``cutoffs = [3, 5]``, ``window_length = 3`` and
+    ``fh = [2, 4]``, here is a representation of the folds::
+
+    |---------------------|
+    | - * * * - x - x - - |
+    | - - - * * * - x - x |
+
+    ``*`` = training fold.
+
+    ``x`` = test fold.
+
+    ``-`` = not used in this fold.
 
     Parameters
     ----------
