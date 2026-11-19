@@ -11,6 +11,9 @@ from sktime.performance_metrics.detection._mean_detection_offset import (
 )
 from sktime.performance_metrics.detection._randindex import RandIndex
 from sktime.performance_metrics.detection._ts_auprc import TimeSeriesAUPRC
+from sktime.performance_metrics.detection._advance_warning import (
+    NormalizedAdvanceWarningScore,
+)
 
 __all__ = [
     "DirectedChamfer",
