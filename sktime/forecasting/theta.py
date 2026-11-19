@@ -136,6 +136,9 @@ class ThetaForecaster(ExponentialSmoothing):
 
         super().__init__(initial_level=initial_level, sp=sp)
 
+        if deseasonalize_model in ["mul", "multiplicative"]:
+            self.set_tags(**{"capability:supports-negative-data": False})
+
     def _fit(self, y, X, fh):
         """Fit to training data.
 
