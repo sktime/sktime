@@ -1,40 +1,16 @@
 """Machine type converters for Table scitype.
 
-Exports conversion and mtype dictionary for Table scitype:
-
-convert_dict: dict indexed by triples of str
-  1st element = convert from - str
-  2nd element = convert to - str
-  3rd element = considered as this scitype - str
-elements are conversion functions of machine type (1st) -> 2nd
-
-Function signature of all elements
-convert_dict[(from_type, to_type, as_scitype)]
-
-Parameters
-----------
-obj : from_type - object to convert
-store : dictionary - reference of storage for lossy conversions, default=None (no store)
-
-Returns
--------
-converted_obj : to_type - object obj converted to to_type
-
-Raises
-------
-ValueError and TypeError, if requested conversion is not possible
-                            (depending on conversion logic)
+Conversions are implemented as ``BaseConverter`` classes, one class per
+conversion, and collected by ``generate_convert_dict`` in ``datatypes._convert``.
 """
 
 __author__ = ["fkiraly", "shlok191"]
-
-__all__ = ["convert_dict"]
 
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.datatypes._convert_utils._convert import _extend_conversions
+from sktime.datatypes._base import BaseConverter
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_TABLE = [
@@ -51,16 +27,298 @@ MTYPE_LIST_TABLE = [
 # methods to convert one machine type to another machine type
 ##############################################################
 
-convert_dict = dict()
+
+##############################################################
+# converter classes, one class per conversion
+##############################################################
+
+
+class TableIdentity(BaseConverter):
+    """All Table scitype conversions of an mtype to itself."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": None,
+        "mtype_to": None,
+        "multiple_conversions": True,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    @classmethod
+    def get_conversions(cls):
+        """Get all conversions.
+
+        Returns
+        -------
+        list of tuples (str, str)
+            List of all conversions in this class.
+        """
+        excluded = []
+        return [(tp, tp) for tp in MTYPE_LIST_TABLE if tp not in excluded]
+
+    def _convert(self, obj, store=None):
+        return convert_identity(obj, store=store)
+
+
+class TableNumpy1DToNumpy2D(BaseConverter):
+    """Conversion: numpy1D -> numpy2D, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy1D",
+        "mtype_to": "numpy2D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_1D_to_2D_numpy_as_Table(obj, store=store)
+
+
+class TableNumpy2DToNumpy1D(BaseConverter):
+    """Conversion: numpy2D -> numpy1D, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy2D",
+        "mtype_to": "numpy1D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_2D_to_1D_numpy_as_Table(obj, store=store)
+
+
+class TablePdDataFrameToNumpy2D(BaseConverter):
+    """Conversion: pd_DataFrame_Table -> numpy2D, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "numpy2D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_df_to_2Dnp_as_Table(obj, store=store)
+
+
+class TablePdDataFrameToNumpy1D(BaseConverter):
+    """Conversion: pd_DataFrame_Table -> numpy1D, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "numpy1D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_df_to_1Dnp_as_Table(obj, store=store)
+
+
+class TableNumpy2DToPdDataFrame(BaseConverter):
+    """Conversion: numpy2D -> pd_DataFrame_Table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy2D",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_2Dnp_to_df_as_Table(obj, store=store)
+
+
+class TableNumpy1DToPdDataFrame(BaseConverter):
+    """Conversion: numpy1D -> pd_DataFrame_Table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy1D",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_1Dnp_to_df_as_Table(obj, store=store)
+
+
+class TablePdSeriesToPdDataFrame(BaseConverter):
+    """Conversion: pd_Series_Table -> pd_DataFrame_Table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_Series_Table",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_s_to_df_as_table(obj, store=store)
+
+
+class TablePdDataFrameToPdSeries(BaseConverter):
+    """Conversion: pd_DataFrame_Table -> pd_Series_Table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "pd_Series_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_df_to_s_as_table(obj, store=store)
+
+
+class TableListOfDictToPdDataFrame(BaseConverter):
+    """Conversion: list_of_dict -> pd_DataFrame_Table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "list_of_dict",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_list_of_dict_to_df_as_table(obj, store=store)
+
+
+class TablePdDataFrameToListOfDict(BaseConverter):
+    """Conversion: pd_DataFrame_Table -> list_of_dict, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "list_of_dict",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_df_to_list_of_dict_as_table(obj, store=store)
+
+
+class TablePdDataFrameToPolarsEager(BaseConverter):
+    """Conversion: pd_DataFrame_Table -> polars_eager_table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "polars_eager_table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_pandas_to_polars_eager(obj, store=store)
+
+
+class TablePdDataFrameToPolarsLazy(BaseConverter):
+    """Conversion: pd_DataFrame_Table -> polars_lazy_table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "polars_lazy_table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_pandas_to_polars_lazy(obj, store=store)
+
+
+class TablePolarsEagerToPdDataFrame(BaseConverter):
+    """Conversion: polars_eager_table -> pd_DataFrame_Table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "polars_eager_table",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_polars_to_pandas(obj, store=store)
+
+
+class TablePolarsLazyToPdDataFrame(BaseConverter):
+    """Conversion: polars_lazy_table -> pd_DataFrame_Table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "polars_lazy_table",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_polars_to_pandas(obj, store=store)
+
+
+class TablePolarsLazyToPolarsEager(BaseConverter):
+    """Conversion: polars_lazy_table -> polars_eager_table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "polars_lazy_table",
+        "mtype_to": "polars_eager_table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_polars_lazy_to_eager(obj, store=store)
+
+
+class TablePolarsEagerToPolarsLazy(BaseConverter):
+    """Conversion: polars_eager_table -> polars_lazy_table, of Table scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "polars_eager_table",
+        "mtype_to": "polars_lazy_table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": ["polars", "pyarrow"],
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_polars_eager_to_lazy(obj, store=store)
 
 
 def convert_identity(obj, store=None):
     return obj
-
-
-# assign identity function to type conversion to self
-for tp in MTYPE_LIST_TABLE:
-    convert_dict[(tp, tp, "Table")] = convert_identity
 
 
 def convert_1D_to_2D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
@@ -75,9 +333,6 @@ def convert_1D_to_2D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
     return res
 
 
-convert_dict[("numpy1D", "numpy2D", "Table")] = convert_1D_to_2D_numpy_as_Table
-
-
 def convert_2D_to_1D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
     if not isinstance(obj, np.ndarray):
         raise TypeError("input must be a np.ndarray")
@@ -90,9 +345,6 @@ def convert_2D_to_1D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
     return res
 
 
-convert_dict[("numpy2D", "numpy1D", "Table")] = convert_2D_to_1D_numpy_as_Table
-
-
 def convert_df_to_2Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input must be a pd.DataFrame")
@@ -103,14 +355,8 @@ def convert_df_to_2Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
     return obj.to_numpy()
 
 
-convert_dict[("pd_DataFrame_Table", "numpy2D", "Table")] = convert_df_to_2Dnp_as_Table
-
-
 def convert_df_to_1Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
     return convert_df_to_2Dnp_as_Table(obj=obj, store=store).flatten()
-
-
-convert_dict[("pd_DataFrame_Table", "numpy1D", "Table")] = convert_df_to_1Dnp_as_Table
 
 
 def convert_2Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
@@ -132,9 +378,6 @@ def convert_2Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("numpy2D", "pd_DataFrame_Table", "Table")] = convert_2Dnp_to_df_as_Table
-
-
 def convert_1Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
     if not isinstance(obj, np.ndarray) and len(obj.shape) != 1:
         raise TypeError("input must be a 1D np.ndarray")
@@ -153,9 +396,6 @@ def convert_1Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("numpy1D", "pd_DataFrame_Table", "Table")] = convert_1Dnp_to_df_as_Table
-
-
 def convert_s_to_df_as_table(obj: pd.Series, store=None) -> pd.DataFrame:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
@@ -172,11 +412,6 @@ def convert_s_to_df_as_table(obj: pd.Series, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("pd_Series_Table", "pd_DataFrame_Table", "Table")] = (
-    convert_s_to_df_as_table
-)
-
-
 def convert_df_to_s_as_table(obj: pd.DataFrame, store=None) -> pd.Series:
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
@@ -191,11 +426,6 @@ def convert_df_to_s_as_table(obj: pd.DataFrame, store=None) -> pd.Series:
     y.name = None
 
     return y
-
-
-convert_dict[("pd_DataFrame_Table", "pd_Series_Table", "Table")] = (
-    convert_df_to_s_as_table
-)
 
 
 def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
@@ -217,11 +447,6 @@ def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("list_of_dict", "pd_DataFrame_Table", "Table")] = (
-    convert_list_of_dict_to_df_as_table
-)
-
-
 def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
@@ -232,19 +457,6 @@ def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
         store["index"] = obj.index
 
     return ret_dict
-
-
-convert_dict[("pd_DataFrame_Table", "list_of_dict", "Table")] = (
-    convert_df_to_list_of_dict_as_table
-)
-
-
-_extend_conversions(
-    "pd_Series_Table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
-)
-_extend_conversions(
-    "list_of_dict", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
-)
 
 
 if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
@@ -282,31 +494,3 @@ if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
             raise TypeError("input is not a pl.LazyFrame")
 
         return obj.collect()
-
-    convert_dict[("pd_DataFrame_Table", "polars_eager_table", "Table")] = (
-        convert_pandas_to_polars_eager
-    )
-    convert_dict[("pd_DataFrame_Table", "polars_lazy_table", "Table")] = (
-        convert_pandas_to_polars_lazy
-    )
-
-    convert_dict[("polars_eager_table", "pd_DataFrame_Table", "Table")] = (
-        convert_polars_to_pandas
-    )
-    convert_dict[("polars_lazy_table", "pd_DataFrame_Table", "Table")] = (
-        convert_polars_to_pandas
-    )
-
-    convert_dict[("polars_lazy_table", "polars_eager_table", "Table")] = (
-        convert_polars_lazy_to_eager
-    )
-    convert_dict[("polars_eager_table", "polars_lazy_table", "Table")] = (
-        convert_polars_eager_to_lazy
-    )
-
-    _extend_conversions(
-        "polars_eager_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
-    )
-    _extend_conversions(
-        "polars_lazy_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
-    )

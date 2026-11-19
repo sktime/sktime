@@ -50,9 +50,50 @@ class _ConverterConcat(BaseConverter):
     def _check_conversion(self, mtype_from, mtype_to):
         """Skip the check, conversions of this class are given by its components."""
 
+    def _get_key(self):
+        """Get unique dictionary key corresponding to self, from the components."""
+        mtype_from = self.converter_first._get_key()[0]
+        _, mtype_to, scitype = self.converter_second._get_key()
+        return (mtype_from, mtype_to, scitype)
+
     def _convert(self, obj, store=None):
         obj = self.converter_first(obj, store=store)
         return self.converter_second(obj, store=store)
+
+
+class _ConverterNoDatatypeCls(BaseConverter):
+    """Base for converters from or to mtypes without a checkable datatype class.
+
+    ``BaseConverter._get_key`` takes mtype names and scitype from the
+    datatype classes of ``mtype_from`` and ``mtype_to``, as in ``skpro``.
+    Some mtypes have no such class, e.g., ``pl.LazyFrame``, or have one that is
+    skipped in checks, e.g., ``pd-long`` and ``pd-wide``.
+
+    For these, the mtype name is the string tag, and the scitype is taken from
+    the datatype class of the other mtype, or from the mtype register.
+    Can be removed once all mtypes have a datatype class in the check registry.
+    """
+
+    def _get_key(self):
+        """Get unique dictionary key corresponding to self."""
+        cls_from, cls_to = self._get_cls_from_to()
+
+        mtype_from = self.get_tag("mtype_from")
+        mtype_to = self.get_tag("mtype_to")
+        if cls_from is not None:
+            mtype_from = cls_from.get_class_tag("name")
+        if cls_to is not None:
+            mtype_to = cls_to.get_class_tag("name")
+
+        if cls_to is not None:
+            scitype = cls_to.get_class_tag("scitype")
+        elif cls_from is not None:
+            scitype = cls_from.get_class_tag("scitype")
+        else:
+            from sktime.datatypes._registry import mtype_to_scitype
+
+            scitype = mtype_to_scitype(mtype_to)
+        return (mtype_from, mtype_to, scitype)
 
 
 def _extend_conversions(mtype, anchor_mtype, convert_dict, mtype_universe=None):
