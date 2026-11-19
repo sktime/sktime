@@ -979,10 +979,10 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
         self.check_is_fitted()
 
         if hasattr(self, "_is_vectorized") and self._is_vectorized:
-            raise NotImplementedError(
-                "automated vectorization for predict_proba is not implemented"
-            )
-
+            if not marginal:
+                raise NotImplementedError(
+                    "vectorized predict_proba currently supports marginal=True only"
+                )
         # predict_proba requires skpro to provide the distribution object returns
         # "silent" exception for user convenience is Normal distribution,
         # which has a minimal implementation living in sktime
@@ -1007,6 +1007,14 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
 
         # check and convert X
         X_inner, _ = self._check_X(X=X)
+
+        if hasattr(self, "_is_vectorized") and self._is_vectorized:
+            return self._vectorize(
+                "predict_proba",
+                fh=fh,
+                X=X_inner,
+                marginal=marginal,
+            )
 
         # pass to inner _predict_proba
         try:  # try/except for handling notification about missing skpro softdep
@@ -2222,6 +2230,7 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
             "predict_quantiles",
             "predict_interval",
             "predict_var",
+            "predict_proba",
         ]
 
         # X is row-vectorized; pop it so it is not also exploded as args.
@@ -2277,6 +2286,147 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
                 backend_params=backend_params,
                 **kwargs,
             )
+            if methodname == "predict_proba":
+                import numpy as np
+
+                items = list(self._y_schema.items())
+
+                if len(items) != len(y_preds):
+                    raise RuntimeError(
+                        "The number of vectorized distributions does not match "
+                        "the number of vectorized data instances."
+                    )
+
+                distributions = y_preds
+                group_names = [item[0] for item in items]
+
+                first = distributions[0]
+                dist_type = type(first)
+
+                if not all(type(dist) is dist_type for dist in distributions):
+                    raise NotImplementedError(
+                        "Vectorized predict_proba requires all instances "
+                        "to return the same distribution type."
+                    )
+
+                is_column_vectorized = any(
+                    item[1] is not None for item in items
+                )
+
+                if is_column_vectorized:
+                    if not all(item[0] is None for item in items):
+                        raise NotImplementedError(
+                            "Mixed row-wise and column-wise distribution "
+                            "reconstruction is not supported."
+                        )
+
+                    if not all(item[1] is not None for item in items):
+                        raise NotImplementedError(
+                            "Inconsistent column-wise distribution results."
+                        )
+
+                    combined_params = {}
+                    first_params = first.get_params(deep=False)
+
+                    for param_name, first_value in first_params.items():
+                        if param_name in ("index", "columns"):
+                            continue
+
+                        values = [
+                            dist.get_params(deep=False)[param_name]
+                            for dist in distributions
+                        ]
+
+                        if isinstance(first_value, pd.DataFrame):
+                            combined_params[param_name] = pd.concat(
+                                values,
+                                axis=1,
+                            )
+                        else:
+                            raise NotImplementedError(
+                                f"Unsupported column-wise distribution parameter: "
+                                f"{param_name}"
+                            )
+
+                    combined_columns = pd.Index(
+                        [item[1] for item in items],
+                        name=first.columns.name,
+                    )
+
+                    return dist_type(
+                        index=first.index,
+                        columns=combined_columns,
+                        **combined_params,
+                    )
+
+                index_names = self._y_schema.X_mi_index_names
+
+                combined_index = pd.MultiIndex.from_tuples(
+                    [
+                        (
+                            *(group_name if isinstance(group_name, tuple)
+                            else (group_name,)),
+                            time,
+                        )
+                        for group_name, dist in zip(group_names, distributions)
+                        for time in dist.index
+                    ],
+                    names=index_names,
+                )
+
+                first_params = first.get_params(deep=False)
+                combined_params = {}
+
+                for param_name, first_value in first_params.items():
+                    if param_name in ("index", "columns"):
+                        continue
+
+                    values = [
+                        dist.get_params(deep=False)[param_name]
+                        for dist in distributions
+                    ]
+
+                    if isinstance(first_value, pd.DataFrame):
+                        if not all(isinstance(value, pd.DataFrame) for value in values):
+                            raise NotImplementedError(
+                                f"Inconsistent distribution parameter: {param_name}"
+                            )
+                        combined_params[param_name] = pd.concat(
+                            values,
+                            keys=group_names,
+                            names=index_names[:-1],
+                        )
+
+                    elif isinstance(first_value, pd.Series):
+                        if not all(isinstance(value, pd.Series) for value in values):
+                            raise NotImplementedError(
+                                f"Inconsistent distribution parameter: {param_name}"
+                            )
+                        combined_params[param_name] = pd.concat(
+                            values,
+                            keys=group_names,
+                            names=index_names[:-1],
+                        )
+
+                    elif isinstance(first_value, np.ndarray):
+                        if not all(isinstance(value, np.ndarray) for value in values):
+                            raise NotImplementedError(
+                                f"Inconsistent distribution parameter: {param_name}"
+                            )
+                        combined_params[param_name] = np.concatenate(values, axis=0)
+
+                    else:
+                        if not all(value == first_value for value in values):
+                            raise NotImplementedError(
+                                f"Cannot combine differing parameter: {param_name}"
+                            )
+                        combined_params[param_name] = first_value
+
+                return dist_type(
+                    index=combined_index,
+                    columns=first.columns,
+                    **combined_params,
+                )
 
             # if we vectorize over columns,
             #   we need to replace top column level with variable names - part 1
