@@ -236,6 +236,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     --------
     >>> from sktime.classification.dictionary_based import ContractableBOSS
     >>> from sktime.classification.interval_based import CanonicalIntervalForest
+    >>> from sktime.classification.compose import ColumnEnsembleClassifier
     >>> from sktime.datasets import load_basic_motions
     >>> X_train, y_train = load_basic_motions(split="train") # doctest: +SKIP
     >>> X_test, y_test = load_basic_motions(split="test") # doctest: +SKIP
