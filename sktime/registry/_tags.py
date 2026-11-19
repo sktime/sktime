@@ -3901,6 +3901,38 @@ class task_type(_BaseTag):
     }
 
 
+class named_object_parameters(_BaseTag):
+    """Attribute holding the named component estimators of a meta-estimator.
+
+    This attribute supplies the component names used by scikit-base for
+    nested parameter access and replacement.
+    """
+
+    _tags = {
+        "tag_name": "named_object_parameters",
+        "parent_type": "estimator",
+        "tag_type": "str",
+        "short_descr": "attribute holding named component estimators",
+        "user_facing": False,
+    }
+
+
+class fitted_named_object_parameters(_BaseTag):
+    """Attribute holding the named fitted components of a meta-estimator.
+
+    This attribute supplies the component names used by scikit-base when
+    collecting fitted parameters.
+    """
+
+    _tags = {
+        "tag_name": "fitted_named_object_parameters",
+        "parent_type": "estimator",
+        "tag_type": "str",
+        "short_descr": "attribute holding named fitted component estimators",
+        "user_facing": False,
+    }
+
+
 class visual_block_kind(_BaseTag):
     """How to display html representation of a meta-estimator in a jupyter notebook.
 

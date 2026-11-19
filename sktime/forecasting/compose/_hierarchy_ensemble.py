@@ -160,8 +160,6 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
     BY_LIST = ["level", "node"]
 
-    _steps_attr = "_forecasters"
-
     def __init__(
         self, forecasters, by="level", default=None, backend=None, backend_params=None
     ):

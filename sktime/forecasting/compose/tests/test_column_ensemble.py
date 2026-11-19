@@ -14,6 +14,21 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
 
+def test_replace_named_forecaster_resets_fitted_ensemble():
+    """Replacing a component resets the ensemble and keeps its column assignment."""
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    ensemble = ColumnEnsembleForecaster(
+        [("first", NaiveForecaster(), "a"), ("second", NaiveForecaster(), "b")]
+    ).fit(y, fh=1)
+
+    assert isinstance(ensemble.get_fitted_params()["first"], NaiveForecaster)
+    replacement = NaiveForecaster(strategy="mean")
+    assert ensemble.set_params(first=replacement) is ensemble
+    assert not ensemble.is_fitted
+    assert ensemble.forecasters[0] == ("first", replacement, "a")
+    assert ensemble.get_params()["first__strategy"] == "mean"
+
+
 @pytest.mark.skipif(
     not run_test_for_class(ColumnEnsembleForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",

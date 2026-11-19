@@ -9,155 +9,25 @@ from inspect import isclass
 
 import numpy as np
 import pandas as pd
+from skbase.base import BaseMetaEstimatorMixin
+from skbase.utils import make_strings_unique
 
 from sktime.base import BaseEstimator
 from sktime.base._base import _safe_clone
 from sktime.utils._estimator_html_repr import _VisualBlock
 
 
-class _HeterogenousMetaEstimator:
+class _HeterogenousMetaEstimator(BaseMetaEstimatorMixin):
     """Handles parameter management for estimators composed of named estimators.
 
     Partly adapted from sklearn utils.metaestimator.py.
     """
 
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_steps"
-    # if the estimator is fittable, _HeterogenousMetaEstimator also
-    # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_fitted_attr = "steps_"
-
-    _tags = {"visual_block_kind": "serial"}
-
-    def get_params(self, deep=True):
-        """Get parameters of estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained sub-objects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        steps = self._steps_attr
-        return self._get_params(steps, deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        steps_attr = self._steps_attr
-        self._set_params(steps_attr, **kwargs)
-        return self
-
-    def _get_fitted_params(self):
-        """Get fitted parameters.
-
-        private _get_fitted_params, called from get_fitted_params
-
-        State required:
-            Requires state to be "fitted".
-
-        Returns
-        -------
-        fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
-        """
-        fitted_params = self._get_fitted_params_default()
-
-        steps = self._steps_fitted_attr
-        steps_params = self._get_params(steps, fitted=True)
-
-        fitted_params.update(steps_params)
-
-        return fitted_params
-
-    def is_composite(self):
-        """Check if the object is composite.
-
-        A composite object is an object which contains objects, as parameters.
-        Called on an instance, since this may differ by instance.
-
-        Returns
-        -------
-        composite: bool, whether self contains a parameter which is BaseObject
-        """
-        # children of this class are always composite
-        return True
-
-    def _get_params(self, attr, deep=True, fitted=False):
-        if fitted:
-            private_method = "_get_fitted_params"
-            public_method = "get_fitted_params"
-            deepkw = {}
-        else:
-            private_method = "get_params"
-            public_method = "get_params"
-            deepkw = {"deep": deep}
-
-        out = getattr(super(), private_method)(**deepkw)
-        if deep and hasattr(self, attr):
-            estimators = getattr(self, attr)
-            estimators = [(x[0], x[1]) for x in estimators]
-            estimator_dict = {name: estimator for name, estimator in estimators}
-            out.update(estimator_dict)
-            for name, estimator in estimators:
-                # checks estimator has the method we want to call
-                cond1 = hasattr(estimator, public_method)
-                # checks estimator is fitted if calling get_fitted_params
-                is_fitted = hasattr(estimator, "is_fitted") and estimator.is_fitted
-                # if we call get_params and not get_fitted_params, this is True
-                cond2 = not fitted or is_fitted
-                # check both conditions together
-                if cond1 and cond2:
-                    for key, value in getattr(estimator, public_method)(
-                        **deepkw
-                    ).items():
-                        out[f"{name}__{key}"] = value
-        return out
-
-    def _set_params(self, attr, **params):
-        # Ensure strict ordering of parameter setting:
-        # 1. All steps
-        if attr in params:
-            setattr(self, attr, params.pop(attr))
-        # 2. Step replacement
-        items = getattr(self, attr)
-        names = []
-        if items and isinstance(items, (list, tuple)):
-            names = list(zip(*items))[0]
-        for name in list(params.keys()):
-            if "__" not in name and name in names:
-                self._replace_estimator(attr, name, params.pop(name))
-        # 3. Step parameters and other initialisation arguments
-        super().set_params(**params)
-        return self
-
-    def _replace_estimator(self, attr, name, new_val):
-        # assumes `name` is a valid estimator name
-        new_estimators = list(getattr(self, attr))
-        for i, est_tpl in enumerate(new_estimators):
-            estimator_name = est_tpl[0]
-            if estimator_name == name:
-                new_tpl = list(est_tpl)
-                new_tpl[1] = new_val
-                new_estimators[i] = tuple(new_tpl)
-                break
-        setattr(self, attr, new_estimators)
+    _tags = {
+        "named_object_parameters": "_steps",
+        "fitted_named_object_parameters": "steps_",
+        "visual_block_kind": "serial",
+    }
 
     def _check_names(self, names):
         if len(set(names)) != len(names):
@@ -382,11 +252,11 @@ class _HeterogenousMetaEstimator:
         -------
         names : list of str, unique entries, of equal length as estimators
             names for estimators in estimators
-            if make_unique=True, made unique using _make_strings_unique
+            if make_unique=True, made unique using scikit-base's make_strings_unique
         """
         names = [self._coerce_estimator_tuple(x)[0] for x in estimators]
         if make_unique:
-            names = self._make_strings_unique(names)
+            names = make_strings_unique(names)
         return names
 
     def _get_estimator_tuples(self, estimators, clone_ests=False):
@@ -410,66 +280,6 @@ class _HeterogenousMetaEstimator:
         unique_names = self._get_estimator_names(estimators, make_unique=True)
         est_tuples = list(zip(unique_names, ests))
         return est_tuples
-
-    def _make_strings_unique(self, strlist):
-        """Make a list or tuple of strings unique by appending _int of occurrence.
-
-        Parameters
-        ----------
-        strlist : nested list/tuple structure with string elements
-
-        Returns
-        -------
-        uniquestr : nested list/tuple structure with string elements
-            has same bracketing as `strlist`
-            string elements, if not unique, are replaced by unique strings
-                if any duplicates, _integer of occurrence is appended to non-uniques
-                e.g., "abc", "abc", "bcd" becomes "abc_1", "abc_2", "bcd"
-                in case of clashes, process is repeated until it terminates
-                e.g., "abc", "abc", "abc_1" becomes "abc_0", "abc_1_0", "abc_1_1"
-        """
-        # recursions to guarantee that strlist is flat list of strings
-        ##############################################################
-
-        # if strlist is not flat, flatten and apply, then unflatten
-        if not is_flat(strlist):
-            flat_strlist = flatten(strlist)
-            unique_flat_strlist = self._make_strings_unique(flat_strlist)
-            uniquestr = unflatten(unique_flat_strlist, strlist)
-            return uniquestr
-
-        # now we can assume that strlist is flat
-
-        # if strlist is a tuple, convert to list, apply this function, then convert back
-        if isinstance(strlist, tuple):
-            uniquestr = self._make_strings_unique(list(strlist))
-            uniquestr = tuple(strlist)
-            return uniquestr
-
-        # end of recursions
-        ###################
-        # now we can assume that strlist is a flat list
-
-        # if already unique, just return
-        if len(set(strlist)) == len(strlist):
-            return strlist
-
-        from collections import Counter
-
-        strcount = Counter(strlist)
-
-        # if any duplicates, we append _integer of occurrence to non-uniques
-        nowcount = Counter()
-        uniquestr = strlist
-        for i, x in enumerate(uniquestr):
-            if strcount[x] > 1:
-                nowcount.update([x])
-                uniquestr[i] = x + "_" + str(nowcount[x])
-
-        # repeat until all are unique
-        #   the algorithm recurses, but will always terminate
-        #   because potential clashes are lexicographically increasing
-        return self._make_strings_unique(uniquestr)
 
     def _dunder_concat(
         self,
@@ -547,7 +357,7 @@ class _HeterogenousMetaEstimator:
         self_attr = getattr(self, attr_name)
 
         # from that, obtain ests, and original names (may be non-unique)
-        # we avoid _make_strings_unique call too early to avoid blow-up of string
+        # Make names unique after concatenation to avoid repeated suffixes.
         ests_s = tuple(self._get_estimator_list(self_attr))
         names_s = tuple(self._get_estimator_names(self_attr))
         if isinstance(other, composite_class):
@@ -584,158 +394,8 @@ class _HeterogenousMetaEstimator:
         composite_params.update(step_param)
         return composite_class(**composite_params)
 
-    def _anytagis(self, tag_name, value, estimators):
-        """Return whether any estimator in list has tag `tag_name` of value `value`.
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag to check
-        value : value of the tag to check for
-        estimators : list of (str, estimator) pairs to query for the tag/value
-
-        Return
-        ------
-        bool : True iff at least one estimator in the list has value in tag tag_name
-        """
-        tagis = [est.get_tag(tag_name, value) == value for _, est in estimators]
-        return any(tagis)
-
-    def _anytagis_then_set(self, tag_name, value, value_if_not, estimators):
-        """Set self's `tag_name` tag to `value` if any estimator on the list has it.
-
-        Writes to self:
-        sets the tag `tag_name` to `value` if `_anytagis(tag_name, value)` is True
-            otherwise sets the tag `tag_name` to `value_if_not`
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag
-        value : value to check and to set tag to if one of the tag values is `value`
-        value_if_not : value to set in self if none of the tag values is `value`
-        estimators : list of (str, estimator) pairs to query for the tag/value
-        """
-        if self._anytagis(tag_name=tag_name, value=value, estimators=estimators):
-            self.set_tags(**{tag_name: value})
-        else:
-            self.set_tags(**{tag_name: value_if_not})
-
-    def _anytag_notnone_val(self, tag_name, estimators):
-        """Return first non-'None' value of tag `tag_name` in estimator list.
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag
-        estimators : list of (str, estimator) pairs to query for the tag/value
-
-        Return
-        ------
-        tag_val : first non-'None' value of tag `tag_name` in estimator list.
-        """
-        for _, est in estimators:
-            tag_val = est.get_tag(tag_name)
-            if tag_val != "None":
-                return tag_val
-        return tag_val
-
-    def _anytag_notnone_set(self, tag_name, estimators):
-        """Set self's `tag_name` tag to first non-'None' value in estimator list.
-
-        Writes to self:
-        tag with name tag_name, sets to _anytag_notnone_val(tag_name, estimators)
-
-        Parameters
-        ----------
-        tag_name : str, name of the tag
-        estimators : list of (str, estimator) pairs to query for the tag/value
-        """
-        tag_val = self._anytag_notnone_val(tag_name=tag_name, estimators=estimators)
-        if tag_val != "None":
-            self.set_tags(**{tag_name: tag_val})
-
-    def _tagchain_is_linked(
-        self,
-        left_tag_name,
-        mid_tag_name,
-        estimators,
-        left_tag_val=True,
-        mid_tag_val=True,
-    ):
-        """Check whether all tags left of the first mid_tag/val are left_tag/val.
-
-        Useful to check, for instance, whether all instances of estimators
-            left of the first missing value imputer can deal with missing values.
-
-        Parameters
-        ----------
-        left_tag_name : str, name of the left tag
-        mid_tag_name : str, name of the middle tag
-        estimators : list of (str, estimator) pairs to query for the tag/value
-        left_tag_val : value of the left tag, optional, default=True
-        mid_tag_val : value of the middle tag, optional, default=True
-
-        Returns
-        -------
-        chain_is_linked : bool,
-            True iff all "left" tag instances `left_tag_name` have value `left_tag_val`
-            a "left" tag instance is an instance in estimators which is earlier
-            than the first occurrence of `mid_tag_name` with value `mid_tag_val`
-        chain_is_complete : bool,
-            True iff chain_is_linked is True, and
-                there is an occurrence of `mid_tag_name` with value `mid_tag_val`
-        """
-        for _, est in estimators:
-            if est.get_tag(mid_tag_name) == mid_tag_val:
-                return True, True
-            if not est.get_tag(left_tag_name) == left_tag_val:
-                return False, False
-        return True, False
-
-    def _tagchain_is_linked_set(
-        self,
-        left_tag_name,
-        mid_tag_name,
-        estimators,
-        left_tag_val=True,
-        mid_tag_val=True,
-        left_tag_val_not=False,
-        mid_tag_val_not=False,
-    ):
-        """Check if _tagchain_is_linked, then set self left_tag_name and mid_tag_name.
-
-        Writes to self:
-        tag with name left_tag_name, sets to left_tag_val if _tag_chain_is_linked[0]
-            otherwise sets to left_tag_val_not
-        tag with name mid_tag_name, sets to mid_tag_val if _tag_chain_is_linked[1]
-            otherwise sets to mid_tag_val_not
-
-        Parameters
-        ----------
-        left_tag_name : str, name of the left tag
-        mid_tag_name : str, name of the middle tag
-        estimators : list of (str, estimator) pairs to query for the tag/value
-        left_tag_val : value of the left tag, optional, default=True
-        mid_tag_val : value of the middle tag, optional, default=True
-        left_tag_val_not : value to set if not linked, optional, default=False
-        mid_tag_val_not : value to set if not linked, optional, default=False
-        """
-        linked, complete = self._tagchain_is_linked(
-            left_tag_name=left_tag_name,
-            mid_tag_name=mid_tag_name,
-            estimators=estimators,
-            left_tag_val=left_tag_val,
-            mid_tag_val=mid_tag_val,
-        )
-        if linked:
-            self.set_tags(**{left_tag_name: left_tag_val})
-        else:
-            self.set_tags(**{left_tag_name: left_tag_val_not})
-        if complete:
-            self.set_tags(**{mid_tag_name: mid_tag_val})
-        else:
-            self.set_tags(**{mid_tag_name: mid_tag_val_not})
-
     def _sk_visual_block_(self):
-        steps = getattr(self, self._steps_attr)
+        steps = getattr(self, self.get_class_tag("named_object_parameters"))
 
         names, estimators = zip(*steps)
 
@@ -901,7 +561,8 @@ class _ColumnEstimator:
 
         y_preds = []
         keys = []
-        for _, est, index in getattr(self, self._steps_fitted_attr):
+        fitted_attr = self.get_class_tag("fitted_named_object_parameters")
+        for _, est, index in getattr(self, fitted_attr):
             y_preds += [getattr(est, methodname)(**kwargs)]
             keys += [index]
 

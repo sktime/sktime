@@ -55,6 +55,8 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
     """
 
     _tags = {
+        "named_object_parameters": "_regressors",
+        "fitted_named_object_parameters": "regressors_",
         "authors": ["ksharma6"],
         "capability:multioutput": True,
         "capability:multivariate": True,
@@ -74,17 +76,6 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
     #     all non-overridden methods to those of same name in self.regressor_
     #     see further details in _DelegatedRegressor docstring
     _delegate_name = "regressor_"
-
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_regressors"
-    # if the estimator is fittable, _HeterogenousMetaEstimator also
-    # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_fitted_attr = "regressors_"
 
     def __init__(
         self,
