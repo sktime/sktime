@@ -18,6 +18,8 @@ class CIProtoForecaster(BaseForecaster):
     during fit are past covariates; columns supplied at fit and predict time are
     known future covariates. Future covariates must cover every step through the
     largest requested horizon, including unrequested intermediate steps.
+    Only numerical covariates are supported by this adapter. Regular datetime
+    and period indices supply timestamps and frequency for calendar features.
 
     Parameters
     ----------
@@ -34,10 +36,20 @@ class CIProtoForecaster(BaseForecaster):
     ``predict_proba`` interpolates between the native quantiles and clamps
     requests outside the 0.1 to 0.9 range to the nearest available quantile.
 
+    The upstream ci-proto code and model weights use an Apache-2.0-based
+    licence with additional terms in Section 10 [2]_. These include public
+    attribution and a one-time notification to Continuous Intelligence for
+    redistribution or externally available products and services. The terms
+    also cover externally released AI models developed using ci-proto code,
+    weights or outputs; purely internal use is exempt from Section 10.
+    Consult the upstream licence for the full terms.
+
     References
     ----------
     .. [1] Continuous Intelligence. ci-proto.
        https://github.com/continuousintelligence/ci
+    .. [2] ci-proto Code and Model Licence, Section 10.
+       https://github.com/continuousintelligence/ci/blob/main/LICENCE
 
     Examples
     --------
@@ -60,7 +72,9 @@ class CIProtoForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "capability:missing_values": True,
+        "capability:update": True,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
@@ -71,6 +85,8 @@ class CIProtoForecaster(BaseForecaster):
         "python_dependencies": ["continuousintelligence", "skpro>=2.14"],
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_ci_proto"],
+        # Only the CPU configuration avoids requiring accelerator hardware.
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
         "shorthands": {"ci_proto": "CIProtoForecaster()"},
     }
 
@@ -91,6 +107,21 @@ class CIProtoForecaster(BaseForecaster):
         self._load_model()
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Refresh forecast context while retaining the pretrained model weights."""
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        self._cur_X = update_data(self._cur_X, X)
+        index = self._cur_y.index
+        if isinstance(index, pd.DatetimeIndex) and self.cutoff.freq is None:
+            freq = index.freqstr
+            if freq is None and len(index) >= 3:
+                freq = pd.infer_freq(index)
+            if freq is not None:
+                self._cutoff = pd.DatetimeIndex(self.cutoff, freq=freq)
+        return self
+
     def _load_model(self):
         return _CachedCIProto(
             key=(str(self.model_path), self.revision, self.device),
@@ -103,13 +134,20 @@ class CIProtoForecaster(BaseForecaster):
         import torch
 
         steps = np.asarray(fh.to_relative(self.cutoff), dtype=int)
-        if np.any(steps < 1):
-            raise ValueError("ci-proto supports only out-of-sample horizons")
         horizon = int(steps.max())
+        full_index = (
+            ForecastingHorizon(
+                np.arange(1, horizon + 1), is_relative=True, freq=fh.freq
+            )
+            .to_absolute(self.cutoff)
+            ._values
+        )
         history = torch.as_tensor(self._cur_y.to_numpy().T, dtype=torch.float32)
         kwargs = {}
 
         if self._cur_X is not None:
+            # Updates may omit X; represent unobserved covariates as missing.
+            context_X = self._cur_X.reindex(self._cur_y.index)
             past_columns = []
             future_columns = []
             future_names = set() if X is None else set(X.columns)
@@ -121,33 +159,35 @@ class CIProtoForecaster(BaseForecaster):
                 raise ValueError("Prediction covariates must also occur in fit X")
             if past_columns:
                 kwargs["past_covariates"] = torch.as_tensor(
-                    self._cur_X[past_columns].to_numpy().T, dtype=torch.float32
+                    context_X[past_columns].to_numpy().T, dtype=torch.float32
                 )
             if future_columns:
-                expected = fh.to_absolute(self.cutoff)._values
-                if not expected.isin(X.index).all():
-                    raise ValueError("Prediction X must contain all requested horizons")
-                if len(X) < horizon or not X.index.is_monotonic_increasing:
+                if not full_index.equals(X.index[:horizon]):
                     raise ValueError(
-                        "Prediction X must cover the full forecast horizon"
+                        "Prediction X must contain every step up to the largest horizon"
                     )
-                expected_full = (
-                    ForecastingHorizon(np.arange(1, horizon + 1), is_relative=True)
-                    .to_absolute(self.cutoff)
-                    ._values
-                )
-                if not expected_full.equals(X.index[:horizon]):
-                    raise ValueError(
-                        "Prediction X must contain consecutive future steps"
-                    )
-                values = pd.concat(
-                    [self._cur_X[future_columns], X[future_columns].iloc[:horizon]]
-                )
+                future = pd.concat([context_X[future_columns], X[future_columns]])
                 kwargs["future_covariates"] = torch.as_tensor(
-                    values.to_numpy().T, dtype=torch.float32
+                    future.to_numpy().T, dtype=torch.float32
                 )
         elif X is not None:
             raise ValueError("Prediction covariates require fit-time X")
+
+        history_index = self._cur_y.index
+        if isinstance(history_index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            dates = history_index.append(full_index)
+            if isinstance(dates, pd.PeriodIndex):
+                dates = dates.to_timestamp()
+            freq = dates.freqstr
+            if freq is None and len(dates) >= 3:
+                freq = pd.infer_freq(dates)
+            if freq is None and isinstance(history_index, pd.PeriodIndex):
+                freq = history_index.freqstr
+            if freq is not None:
+                kwargs["freq"] = freq
+                kwargs["timestamps"] = torch.as_tensor(
+                    dates.as_unit("ns").asi8.copy(), dtype=torch.int64
+                )
 
         model = self._load_model()
         output = model.forecast(history, horizon=horizon, **kwargs)
@@ -165,12 +205,9 @@ class CIProtoForecaster(BaseForecaster):
             values[:, median[0], :].T, index=index, columns=self._cur_y.columns
         )
 
-    def _predict_proba(self, marginal=True, **kwargs):
+    def _predict_proba(self, fh, X, marginal=True):
         """Build marginal distributions from the native quantile forecasts."""
         from skpro.distributions import HistogramQPD
-
-        fh = kwargs["fh"]
-        X = kwargs.get("X")
 
         levels, values, index = self._forecast(fh, X)
         row_index = pd.MultiIndex.from_product([levels, index])
