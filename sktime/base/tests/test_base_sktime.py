@@ -64,3 +64,32 @@ def test_clone_nested_sklearn():
 
     # failure condition, see issue #4704: the setting of the copy also sets the orig
     assert original_model.get_params()["estimator__random_state"] == 5
+
+
+def test_fit_in_sklearn_pipeline():
+    """Tests that sktime estimators can be fitted as steps of an sklearn Pipeline.
+
+    Failure case of bug #11408, where ``scikit-learn>=1.9`` meta-estimators, e.g.,
+    ``Pipeline``, failed to fit ``sktime`` components, since ``reset`` in ``fit``
+    deleted the ``_parent_callback_ctx`` attribute they set on the components.
+    """
+    from sklearn.pipeline import Pipeline, make_pipeline
+    from sklearn.tree import DecisionTreeClassifier
+
+    from sktime.classification.dummy import DummyClassifier
+    from sktime.datasets import load_unit_test
+    from sktime.transformations.reduce import Tabularizer
+
+    X, y = load_unit_test(return_X_y=True)
+
+    transformer_pipe = make_pipeline(Tabularizer(), DecisionTreeClassifier())
+    classifier_pipe = Pipeline([("clf", DummyClassifier())])
+
+    for pipe in [transformer_pipe, classifier_pipe]:
+        pipe.fit(X, y)
+        sktime_step = pipe.steps[0][1]
+
+        assert sktime_step.is_fitted
+        assert not hasattr(sktime_step, "_parent_callback_ctx")
+
+    assert len(transformer_pipe.predict(X)) == len(y)
