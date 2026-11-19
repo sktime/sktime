@@ -590,6 +590,7 @@ See next section for foundation models.
     NeuralForecastTCN
     NeuralForecastGRU
     NeuralForecastDilatedRNN
+    NeuralForecastTiDE
 
 .. currentmodule:: sktime.forecasting.pytorchforecasting
 
