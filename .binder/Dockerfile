@@ -1,22 +1,22 @@
-# This Dockerfile is used to build sktime when launching binder.
-# Find out more at: https://mybinder.readthedocs.io/en/latest/index.html
+# Use a specific version of the base image for reproducibility
+FROM jupyter/scipy-notebook:python-3.11.6
 
-FROM  jupyter/scipy-notebook:python-3.11.6
 # Set up user to avoid running as root
 ARG NB_USER
 ARG NB_UID
-ENV USER ${NB_USER}
-ENV HOME /home/${NB_USER}
+ENV USER=${NB_USER} HOME=/home/${NB_USER}
 
-# Binder will automatically clone the repo, but we need to make sure the
-# contents of our repo are in the ${HOME} directory
-COPY . ${HOME}
-USER root
-RUN chown -R ${NB_UID} ${HOME}
+# Copy the repository contents into the home directory and adjust ownership in a single layer
+COPY --chown=${NB_UID}:${NB_UID} . ${HOME}
 
-# Switch user and directory
+# Switch to the non-root user
 USER ${USER}
 WORKDIR ${HOME}
 
-# Install extra requirements and sktime based on master branch
-RUN pip install --upgrade pip --no-cache-dir && pip install .[binder]
+# Upgrade pip and install dependencies in one RUN command to reduce layers
+RUN pip install --upgrade pip --no-cache-dir && \
+    pip install .[binder] --no-cache-dir
+
+# Clean up unnecessary files to reduce image size (optional)
+RUN find ${HOME} -type d -name __pycache__ -exec rm -rf {} +  # Remove Python cache directories
+
