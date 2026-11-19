@@ -316,3 +316,24 @@ def test_2D_score_with_standardize():
     fitted_model = model.fit(X)
     y_scores_actual = fitted_model.score_
     assert np.allclose(y_scores_actual, y_scores_expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(STRAY),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_stray_small_input():
+    """Test STRAY with input smaller than k+1.
+
+    This is a regression test for #9905.
+    """
+    # Use a small dataset where n < k+1 (default k=10)
+    X = np.array([1, 2, 1, 2, 1, 2, 100]).reshape(-1, 1)
+    stray = STRAY(k=10)
+    y = stray.fit_transform(X)
+
+    assert len(y) == len(X)
+    assert y.dtype == bool
+    # Ensure it doesn't crash and returns expected types
+    # At least the outlier 100 should be detected or at least the code finished
+    assert isinstance(y, np.ndarray)
