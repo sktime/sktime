@@ -244,12 +244,19 @@ class _Reducer(_BaseWindowForecaster):
         window_length=10,
         transformers=None,
         pooling="local",
+        input_type="numpy",
     ):
         super().__init__(window_length=window_length)
         self.transformers = transformers
         self.transformers_ = None
         self.estimator = estimator
         self.pooling = pooling
+        if input_type not in ("numpy", "pandas"):
+            raise ValueError(
+                "input_type must be one of 'numpy' or 'pandas', "
+                f"but found {input_type!r}."
+            )
+        self.input_type = input_type
         self._cv = None
 
         # it seems that the sklearn tags are not fully reliable
@@ -277,6 +284,123 @@ class _Reducer(_BaseWindowForecaster):
         self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
 
         self._est_type = _est_type
+
+    def _passes_pandas_to_estimator(self):
+        """Whether reduction matrices are passed to ``estimator`` as DataFrames."""
+        return getattr(self, "input_type", "numpy") == "pandas"
+
+    def _as_feature_name(self, name, index):
+        """Return a string feature name, or the column position when unnamed."""
+        if name is None:
+            return str(index)
+        return str(name)
+
+    def _endog_exog_names(self, y, X):
+        """Variable names for lagged ``y`` columns, then lagged ``X`` columns.
+
+        ``y`` names come from ``_y_metadata`` when ``fit`` has recorded them.
+        ``X`` names come from ``_X_metadata`` when that exists, otherwise from
+        the columns of ``X``.
+        """
+        y_names = []
+        y_metadata = getattr(self, "_y_metadata", None)
+        if isinstance(y_metadata, dict) and y_metadata.get("feature_names"):
+            y_names = list(y_metadata["feature_names"])
+        elif isinstance(y, pd.DataFrame):
+            y_names = list(y.columns)
+        elif isinstance(y, pd.Series):
+            y_names = [0 if y.name is None else y.name]
+        else:
+            y_names = [0]
+
+        x_names = []
+        if X is not None:
+            x_metadata = getattr(self, "_X_metadata", None)
+            if isinstance(x_metadata, dict) and x_metadata.get("feature_names"):
+                x_names = list(x_metadata["feature_names"])
+            elif isinstance(X, pd.DataFrame):
+                x_names = list(X.columns)
+            elif isinstance(X, pd.Series):
+                x_names = [0 if X.name is None else X.name]
+
+        return (
+            [self._as_feature_name(name, i) for i, name in enumerate(y_names)],
+            [self._as_feature_name(name, i) for i, name in enumerate(x_names)],
+        )
+
+    def _reduction_feature_names(self, n_columns, y=None, X=None):
+        """Column names for a local tabular reduction matrix.
+
+        Column order matches ``_sliding_window_transform``: variables from ``y``
+        then ``X``, and within each variable the oldest lag first. Names follow
+        the second-generation reducer, ``lag_{k}__{variable}``, where ``k = 1``
+        is the most recent observation.
+        """
+        if y is None:
+            y = getattr(self, "_cur_y", None)
+        if X is None:
+            X = getattr(self, "_cur_X", None)
+
+        y_names, x_names = self._endog_exog_names(y, X)
+        var_names = y_names + x_names
+        window = getattr(self, "window_length_", None)
+        if window is None:
+            window = self.window_length
+
+        if (
+            window is not None
+            and var_names
+            and n_columns == len(var_names) * int(window)
+        ):
+            names = []
+            for var in var_names:
+                for lag in range(int(window), 0, -1):
+                    names.append(f"lag_{lag}__{var}")
+            return names
+        return [f"x{i}" for i in range(n_columns)]
+
+    def _to_estimator_X(self, X, y=None, X_exog=None):
+        """Convert ``X`` to the configured estimator input type.
+
+        ``"numpy"`` leaves arrays, and DataFrames produced by global pooling,
+        unchanged. ``"pandas"`` turns arrays into DataFrames with lag column
+        names and stringifies columns of an existing DataFrame.
+        """
+        if not self._passes_pandas_to_estimator() or X is None:
+            return X
+        if isinstance(X, pd.DataFrame):
+            return prep_skl_df(X, copy_df=True)
+
+        values = np.asarray(X)
+        if values.ndim == 1:
+            values = values.reshape(1, -1)
+        elif values.ndim != 2:
+            return X
+        columns = self._reduction_feature_names(values.shape[1], y=y, X=X_exog)
+        return pd.DataFrame(values, columns=columns)
+
+    def _align_estimator_X(self, X, estimator):
+        """Match predict-time ``X`` to the columns seen in ``fit``."""
+        if not self._passes_pandas_to_estimator() or X is None:
+            return X
+
+        names = getattr(estimator, "feature_names_in_", None)
+        if names is None:
+            return self._to_estimator_X(X)
+
+        names = [str(name) for name in list(names)]
+        if isinstance(X, pd.DataFrame):
+            if [str(column) for column in X.columns] == names:
+                return prep_skl_df(X, copy_df=True)
+            values = np.asarray(X)
+        else:
+            values = np.asarray(X)
+
+        if values.ndim == 1:
+            values = values.reshape(1, -1)
+        if values.ndim != 2 or values.shape[1] != len(names):
+            return X
+        return pd.DataFrame(values, columns=names)
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
@@ -519,6 +643,7 @@ class _DirectReducer(_Reducer):
         transformers=None,
         pooling="local",
         windows_identical=True,
+        input_type="numpy",
     ):
         self.windows_identical = windows_identical
         super().__init__(
@@ -526,6 +651,7 @@ class _DirectReducer(_Reducer):
             window_length=window_length,
             transformers=transformers,
             pooling=pooling,
+            input_type=input_type,
         )
 
     def _transform(self, y, X=None):
@@ -650,7 +776,8 @@ class _DirectReducer(_Reducer):
                 yt_cut = yt[: -(fh_rel[i] - 1), i]
 
             # coercion to pandas for skpro proba regressors
-            if self._est_type != "regressor" and not isinstance(Xt, pd.DataFrame):
+            Xt_cut = self._to_estimator_X(Xt_cut, y, X)
+            if self._est_type != "regressor" and not isinstance(Xt_cut, pd.DataFrame):
                 Xt_cut = pd.DataFrame(Xt_cut)
             if self._est_type != "regressor" and not isinstance(yt, pd.DataFrame):
                 yt_cut = pd.DataFrame(yt_cut)
@@ -739,7 +866,9 @@ class _DirectReducer(_Reducer):
             y_preds = []
 
             for i, estimator in enumerate(self.estimators_):
-                y_pred_est = getattr(estimator, method)(X_last, **kwargs)
+                y_pred_est = getattr(estimator, method)(
+                    self._align_estimator_X(X_last, estimator), **kwargs
+                )
                 if est_type == "regressor":
                     y_pred_i = _create_fcst_df(
                         [fh_abs[i]], self._cur_y, fill=y_pred_est
@@ -780,7 +909,9 @@ class _DirectReducer(_Reducer):
 
             # Iterate over estimators/forecast horizon
             for i, estimator in enumerate(self.estimators_):
-                y_pred_est = getattr(estimator, method)(X_pred, **kwargs)
+                y_pred_est = getattr(estimator, method)(
+                    self._align_estimator_X(X_pred, estimator), **kwargs
+                )
                 if est_type == "regressor":
                     y_pred[i] = y_pred_est[0]
                 else:  # est_type == "regressor_proba"
@@ -850,6 +981,7 @@ class _MultioutputReducer(_Reducer):
 
         # Fit a multi-output estimator to the transformed data.
         self.estimator_ = clone(self.estimator)
+        Xt = self._to_estimator_X(Xt, y, X)
         self.estimator_.fit(Xt, yt)
         return self
 
@@ -895,6 +1027,7 @@ class _MultioutputReducer(_Reducer):
             X_pred = X_pred.reshape(1, -1)
 
         # Iterate over estimators/forecast horizon
+        X_pred = self._align_estimator_X(X_pred, self.estimator_)
         y_pred = self.estimator_.predict(X_pred)
         return np.asarray(y_pred).ravel()
 
@@ -1012,6 +1145,7 @@ class _RecursiveReducer(_Reducer):
             yt = yt.ravel()
 
         self.estimator_ = clone(self.estimator)
+        Xt = self._to_estimator_X(Xt, y, X)
         self.estimator_.fit(Xt, yt)
         return self
 
@@ -1073,7 +1207,9 @@ class _RecursiveReducer(_Reducer):
 
             for i in range(fh_max):
                 # Generate predictions.
-                y_pred_vector = self.estimator_.predict(X_last)
+                y_pred_vector = self.estimator_.predict(
+                    self._align_estimator_X(X_last, self.estimator_)
+                )
                 y_pred_curr = _create_fcst_df(
                     [index_range[i]], self._cur_y, fill=y_pred_vector
                 )
@@ -1126,7 +1262,9 @@ class _RecursiveReducer(_Reducer):
                     X_pred = X_pred.reshape(1, -1)
 
                 # Generate predictions.
-                y_pred[i] = self.estimator_.predict(X_pred)[0]
+                y_pred[i] = self.estimator_.predict(
+                    self._align_estimator_X(X_pred, self.estimator_)
+                )[0]
 
                 # Update last window with previous prediction.
                 last[:, 0, window_length + i] = y_pred[i]
@@ -1224,6 +1362,7 @@ class _DirRecReducer(_Reducer):
             if self._estimator_scitype == "tabular-regressor":
                 X_fit = X_fit.reshape(X_fit.shape[0], -1)
 
+            X_fit = self._to_estimator_X(X_fit, y, X)
             estimator.fit(X_fit, yt[:, i])
             self.estimators_.append(estimator)
         return self
@@ -1270,7 +1409,9 @@ class _DirRecReducer(_Reducer):
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(1, -1)
 
-            y_pred[i] = self.estimators_[i].predict(X_pred)[0]
+            y_pred[i] = self.estimators_[i].predict(
+                self._align_estimator_X(X_pred, self.estimators_[i])
+            )[0]
 
             # Update the last window with previously predicted value.
             X_full[:, :, window_length + i] = y_pred[i]
@@ -1304,9 +1445,13 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         transformers=None,
         pooling="local",
         windows_identical=True,
+        input_type="numpy",
     ):
         super(_DirectReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            input_type=input_type,
         )
         self.pooling = pooling
         self.windows_identical = windows_identical
@@ -1377,6 +1522,9 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
+    input_type : str, one of "numpy" (default) or "pandas"
+        Data type passed to ``estimator``. ``"pandas"`` passes a DataFrame so
+        scikit-learn sets ``feature_names_in_``. See ``make_reduction``.
     """
 
     _tags = {
@@ -1393,9 +1541,13 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         window_length=10,
         transformers=None,
         pooling="local",
+        input_type="numpy",
     ):
         super(_RecursiveReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            input_type=input_type,
         )
         self.pooling = pooling
 
@@ -1622,6 +1774,7 @@ def make_reduction(
     transformers=None,
     pooling="local",
     windows_identical=True,
+    input_type="numpy",
 ):
     r"""Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1744,6 +1897,18 @@ def make_reduction(
         (False: Number of windows = total observations + 1 - window_length
         - forecasting horizon). See pictionary below for more information.
 
+    input_type : str, one of "numpy" (default) or "pandas"
+        Type of the feature matrix passed to ``estimator``, analogous to
+        ``TabularToSeriesAdaptor``.
+
+        * ``"numpy"`` passes a 2D ``np.ndarray``. This is the historical behaviour.
+          Scikit-learn does not set ``feature_names_in_``.
+        * ``"pandas"`` passes a ``pd.DataFrame``. For the local sliding window,
+          columns are named ``lag_{k}__{variable}`` (``k = 1`` is the most recent
+          lag), using names from ``y`` and ``X``. This matches ``Lag`` in
+          ``RecursiveReductionForecaster``. Global pooling with ``transformers``
+          keeps the transformer column names. Predictions use the same names.
+
     Returns
     -------
     forecaster : an sktime forecaster object
@@ -1782,6 +1947,7 @@ def make_reduction(
         "transformers": transformers,
         "pooling": pooling,
         "windows_identical": windows_identical,
+        "input_type": input_type,
     }
 
     return construct_dispatch(Forecaster, dispatch_params)
