@@ -247,7 +247,7 @@ class Chronos2Forecaster(BaseForecaster):
             Quantile forecasts at the native levels ``quantiles``,
             for all steps up to the largest step in ``fh``.
         quantiles : list of float
-            Native quantile levels of the model, in increasing order.
+            Native quantile levels of the model.
         index : array-like of length prediction_length
             Absolute time index of all steps up to the largest step in ``fh``.
         pred_out : pd.Index
@@ -337,29 +337,40 @@ class Chronos2Forecaster(BaseForecaster):
         return pred_df.loc[dateindex]
 
     def _predict_proba(self, fh, X=None, marginal=True):
-        """Compute/return fully probabilistic forecasts."""
+        """Compute/return fully probabilistic forecasts.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future). Column names must be
+            a subset of X provided in fit.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro HistogramQPD
+            predictive distribution, parameterized by the native quantile grid
+            ``model_pipeline.quantiles``
+        """
         from skpro.distributions import HistogramQPD
 
-        pred_tensor, model_quantiles, index, pred_out = self._get_predict_tensor(fh, X)
+        pred_tensor, quantiles, index, pred_out = self._get_predict_tensor(fh, X)
 
-        transposed = pred_tensor.numpy().transpose(1, 2, 0)
+        # keep only the steps in fh, as in _predict
+        in_fh = np.asarray([x in pred_out for x in index])
+        index = pd.Index(index[in_fh], name=self._y_index_names[-1])
+        # (n_variates, n_quantiles, n_steps) -> (n_quantiles, n_steps, n_variates)
+        values = pred_tensor.float().numpy()[:, :, in_fh].transpose(1, 2, 0)
 
-        n_quantiles = len(model_quantiles)
-        pred_length = len(index)
-        var_names = self._get_varnames()
+        columns = self._get_varnames()
+        # rows of q_df are (quantile level, time index), see HistogramQPD docs
+        row_index = pd.MultiIndex.from_product([quantiles, index])
+        data = values.reshape(len(quantiles) * len(index), -1)
+        q_df = pd.DataFrame(data, index=row_index, columns=columns)
 
-        data = transposed.reshape(n_quantiles * pred_length, -1)
-        row_index = pd.MultiIndex.from_product([model_quantiles, index])
-
-        q_df = pd.DataFrame(data, index=row_index, columns=var_names)
-
-        dist = HistogramQPD(q_df, tails="mass", index=index, columns=var_names)
-
-        dateindex = index.map(lambda x: x in pred_out)
-        if not dateindex.all():
-            dist = dist.loc[pred_out]
-
-        return dist
+        return HistogramQPD(q_df, tails="mass", index=index, columns=columns)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
