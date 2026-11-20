@@ -69,7 +69,7 @@ class TimeMoEForecaster(BaseForecaster):
             The epsilon value for RMS normalization in the TimeMOE model.
         - rope_theta: int, default=10000
             Initialise theta for RoPE (Rotational Positional Embeddings).
-        - attention_dropout: float, default=0.1
+        - attention_dropout: float, default=0.0
             The dropout rate for attention layers in the TimeMOE model.
         - apply_aux_loss: bool, default=True
             Whether to apply auxiliary loss in the TimeMOE model.
