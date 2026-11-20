@@ -27,10 +27,12 @@ from sktime.tests.test_switch import run_test_for_class
 # loaded through ``transformers.AutoModelForCausalLM`` with
 # ``trust_remote_code=True`` and bypassing sktime entirely.
 #
-# ``TimeMoEForecaster`` has no ``revision`` parameter, so the tests below load
-# the ``main`` revision of the checkpoints, which at the time of writing are
-# the commits above; the model code itself comes from the vendored copy in
-# ``sktime.libs.timemoe``, which is functionally identical to those commits.
+# ``TimeMoEForecaster`` has no ``revision`` parameter, so the tests below
+# download the checkpoints at the commits above with ``snapshot_download`` and
+# pass the local snapshot directory as ``model_path``. The model code itself
+# comes from the vendored copy in ``sktime.libs.timemoe``. The local path also
+# keeps the cached model separate from the one ``get_test_params`` loads,
+# which ``pretrain`` in the estimator suite fine-tunes in place.
 #
 # Environment: Python 3.12.14, torch 2.14.0, transformers 4.40.1,
 # accelerate 0.28.0, numpy 1.26.4.
@@ -206,6 +208,20 @@ _RTOL_LONG_HORIZON_TAIL = 5e-4
 _LONG_HORIZON = 100
 
 
+# Hugging Face repository -> immutable commit (model code and weights)
+_REVISIONS = {
+    "Maple728/TimeMoE-50M": "446753ee48ff3726d0606a81d0092d54acee995e",
+    "Maple728/TimeMoE-200M": "794591bfeb1225fdf742cec0f4c71f20c3f3b87e",
+}
+
+
+def _pinned_snapshot(repo_id):
+    """Return the local directory of ``repo_id`` at its pinned commit."""
+    from huggingface_hub import snapshot_download
+
+    return snapshot_download(repo_id, revision=_REVISIONS[repo_id])
+
+
 pytestmark = pytest.mark.skipif(
     not run_test_for_class(TimeMoEForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -223,7 +239,9 @@ def test_timemoe_predictions_match_upstream_reference(
     # airline passengers without the last 12 months
     y_train = load_airline().iloc[:-12]
     fh = np.arange(1, horizon + 1)
-    forecaster = TimeMoEForecaster(model_path=model_path, device="cpu", seed=0)
+    forecaster = TimeMoEForecaster(
+        model_path=_pinned_snapshot(model_path), device="cpu", seed=0
+    )
 
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh=fh)
 
