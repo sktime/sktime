@@ -64,7 +64,7 @@ class Logger(BaseTransformer):
     >>> logger = Logger(logger="foo", log_methods="all", logger_backend="datalog")
     >>> # create a pipeline that logs after detrending and before forecasting
     >>> pipe = Detrender() * logger * NaiveForecaster(sp=12)
-    >>> pipe.fit(load_airline(), fh=[1, 2, 3])
+    >>> pipe.fit(load_airline(), fh=3)
     TransformedTargetForecaster(...)
     >>> # get the log
     >>> log = DataLog("foo").get_log()
