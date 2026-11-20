@@ -70,5 +70,12 @@ def test_tirex_airline_predictions_match_upstream(
     y_pred = forecaster.fit(y_train).predict(fh=fh).to_numpy()
 
     assert len(y_pred) == len(fh)
-    np.testing.assert_allclose(y_pred[:3], expected_head, rtol=1e-5, atol=1e-4)
-    np.testing.assert_allclose(y_pred[-3:], expected_tail, rtol=1e-5, atol=1e-4)
+    # TiRex's xLSTM backbone is not bitwise-reproducible across CPUs and BLAS
+    # backends, so CI runners with the same package versions give slightly
+    # different float32 outputs. Observed deviations from the reference across
+    # CI runs top out around 0.16 absolute / 3.8e-4 relative.
+    # rtol is calculated using:
+    # 6 * sqrt(sum(x ** 2 for x in diffs) / len(diffs))
+    # where diffs is the observed relative difference across the runs in CI.
+    np.testing.assert_allclose(y_pred[:3], expected_head, rtol=1.2e-3, atol=1e-4)
+    np.testing.assert_allclose(y_pred[-3:], expected_tail, rtol=1.2e-3, atol=1e-4)
