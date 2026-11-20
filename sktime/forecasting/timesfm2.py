@@ -617,17 +617,22 @@ class TimesFM2Forecaster(BaseForecaster):
                 "Requested quantiles are not all available in model config: "
                 f"requested={alpha}, available={quantiles}."
             )
-        # column 0 of full_predictions is the point forecast,
-        # quantile forecasts for config.quantiles start at column 1
-        quantiles_idx = np.array([quantiles.index(i) for i in alpha]) + 1
+        quantiles_idx = np.array([quantiles.index(i) for i in alpha])
 
         output = self._forward()
 
         preds = output.full_predictions
         preds = preds.squeeze(0)
         preds = preds[preds_idx]
-        preds = preds[:, quantiles_idx]
         preds = preds.detach().float().cpu().numpy()
+        # column 0 of full_predictions is the mean forecast,
+        # quantile forecasts for config.quantiles start at column 1
+        preds = preds[:, 1:]
+        # sort values in order of level so quantiles never cross,
+        # this keeps them consistent with predict_proba
+        order = np.argsort(quantiles, kind="stable")
+        preds[:, order] = np.sort(preds[:, order], axis=1)
+        preds = preds[:, quantiles_idx]
 
         index = fh.to_absolute(self._cutoff)._values
         name = self.context_.name if self.context_.name is not None else 0
