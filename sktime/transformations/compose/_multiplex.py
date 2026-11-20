@@ -70,7 +70,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     fh=[1,2,3])
+    ...     fh=3)
     >>> pipe = TransformedTargetForecaster(steps = [
     ...     ("multiplex", multiplexer),
     ...     ("forecaster", NaiveForecaster())
