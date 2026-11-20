@@ -100,7 +100,7 @@ from sktime.tests.test_switch import run_test_for_class
 #         with torch.no_grad():
 #             forecast = model.generate(past, max_new_tokens=horizon)[0].numpy()
 #         assert forecast.shape == (horizon,)
-#         print(name, forecast[:3].tolist(), forecast[-3:].tolist())
+#         print(name, forecast[:12].tolist(), forecast[-3:].tolist())
 
 _TIMER_REPO = "thuml/timer-base-84m"
 _TIMER_REVISION = "70077a71acce1b4c00d98332fcaabc694255d8e5"
@@ -127,31 +127,58 @@ def _load_airline_train():
     return load_airline().iloc[:-12]
 
 
-# (series loader, context_length, horizon, expected head, expected tail)
+# (series loader, context_length, fh, expected values at selected fh steps)
 _TIMER_UPSTREAM_REFERENCE_CASES = [
     pytest.param(
         _load_airline_train,
         2880,
-        12,
-        [393.205139, 401.126282, 405.195709],
-        [377.61911, 373.585754, 385.950836],
+        list(range(1, 13)),
+        {
+            1: 393.205139,
+            2: 401.126282,
+            3: 405.195709,
+            10: 377.61911,
+            11: 373.585754,
+            12: 385.950836,
+        },
         id="default",
     ),
     pytest.param(
         _load_airline_train,
         2880,
-        100,
-        [393.205139, 401.126282, 405.195709],
-        [343.705017, 345.483154, 347.02417],
+        list(range(1, 101)),
+        {
+            1: 393.205139,
+            2: 401.126282,
+            3: 405.195709,
+            98: 343.705017,
+            99: 345.483154,
+            100: 347.02417,
+        },
         id="default-two-steps",
     ),
     pytest.param(
         lambda: _seasonal_trend_series(_TIMER_SYNTHETIC_LENGTH),
         96,
-        12,
-        [246.726776, 256.788849, 262.056763],
-        [220.53685, 223.281311, 231.372559],
+        list(range(1, 13)),
+        {
+            1: 246.726776,
+            2: 256.788849,
+            3: 262.056763,
+            10: 220.53685,
+            11: 223.281311,
+            12: 231.372559,
+        },
         id="context-length-96",
+    ),
+    # sparse fh: same generation as "default" (max(fh) = 12), values picked
+    # from steps 2, 5 and 12 of that forecast
+    pytest.param(
+        _load_airline_train,
+        2880,
+        [2, 5, 12],
+        {2: 401.126282, 5: 404.540405, 12: 385.950836},
+        id="sparse-fh",
     ),
 ]
 
@@ -163,15 +190,14 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.parametrize(
-    "load_series,context_length,horizon,expected_head,expected_tail",
+    "load_series,context_length,fh,expected",
     _TIMER_UPSTREAM_REFERENCE_CASES,
 )
 def test_timer_predictions_match_upstream_reference(
-    load_series, context_length, horizon, expected_head, expected_tail
+    load_series, context_length, fh, expected
 ):
     """Timer predictions match the upstream thuml/timer-base-84m model outputs."""
     y_train = load_series()
-    fh = np.arange(1, horizon + 1)
     forecaster = TimerForecaster(
         model_name=_pinned_checkpoint(),
         context_length=context_length,
@@ -180,16 +206,13 @@ def test_timer_predictions_match_upstream_reference(
 
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh=fh)
 
-    assert len(y_pred) == horizon
+    assert len(y_pred) == len(fh)
+    assert not y_pred.isna().any()
+    steps = list(expected)
+    actual = y_pred.iloc[[fh.index(step) for step in steps]].to_numpy()
     np.testing.assert_allclose(
-        y_pred.iloc[:3].to_numpy(),
-        np.asarray(expected_head, dtype=np.float32),
-        rtol=1e-5,
-        atol=1e-4,
-    )
-    np.testing.assert_allclose(
-        y_pred.iloc[-3:].to_numpy(),
-        np.asarray(expected_tail, dtype=np.float32),
+        actual,
+        np.asarray([expected[step] for step in steps], dtype=np.float32),
         rtol=1e-5,
         atol=1e-4,
     )
