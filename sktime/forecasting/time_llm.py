@@ -31,7 +31,8 @@ class TimeLLMForecaster(BaseForecaster):
     pred_len : int, default=24
         Forecast horizon - number of time steps to predict.
     seq_len : int, default=96
-        Length of input sequence.
+        Length of input sequence. The forecast uses the last ``seq_len`` values
+        of ``y``, so ``y`` must have at least ``seq_len`` values.
     llm_model : str, default='GPT2'
         LLM model to use - can be one of ['GPT2', 'LLAMA', 'BERT'].
     llm_layers : int, default=3
@@ -143,6 +144,12 @@ class TimeLLMForecaster(BaseForecaster):
         else:
             self._pred_len = self.pred_len
 
+        if len(y) < self.seq_len:
+            raise ValueError(
+                f"TimeLLMForecaster needs at least seq_len={self.seq_len} "
+                f"observations in y, but got {len(y)}."
+            )
+
         self._enc_in = y.shape[1]
         self.model_ = self._load_model()
 
@@ -241,9 +248,9 @@ class TimeLLMForecaster(BaseForecaster):
         self.model_ = self._load_model()
         self.model_.eval()
 
-        X_tensor = (
-            torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
-        )
+        # Time-LLM is built for inputs of exactly seq_len steps
+        context = self.last_values.values[-self.seq_len :]
+        X_tensor = torch.tensor(context).reshape(1, -1, 1).to(self.device_)
         X_tensor = X_tensor.to(torch.float32)
 
         with torch.no_grad():
