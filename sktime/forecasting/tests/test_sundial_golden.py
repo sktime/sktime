@@ -25,11 +25,11 @@ from sktime.tests.test_switch import run_test_for_class
 # loaded through ``transformers.AutoModelForCausalLM`` with
 # ``trust_remote_code=True`` and bypassing sktime entirely.
 #
-# ``SundialForecaster`` has no ``revision`` parameter, so the tests below load
-# the ``main`` revision of the checkpoint, which at the time of writing is the
-# commit above; the model code itself comes from the vendored copy in
-# ``sktime.libs.sundial``, which is functionally identical to that commit for
-# float32 on CPU.
+# ``SundialForecaster`` has no ``revision`` parameter, so the tests download
+# the commit above with ``huggingface_hub.snapshot_download`` and pass the
+# local snapshot as ``model_path``. The model code itself comes from the
+# vendored copy in ``sktime.libs.sundial``, which is functionally identical to
+# that commit for float32 on CPU.
 #
 # Environment: Python 3.12.14, torch 2.14.0, transformers 4.40.1, numpy 1.26.4.
 #
@@ -107,7 +107,8 @@ from sktime.tests.test_switch import run_test_for_class
 #     if __name__ == "__main__":
 #         main()
 
-_SUNDIAL_MODEL_PATH = "thuml/sundial-base-128m"
+_SUNDIAL_REPO = "thuml/sundial-base-128m"
+_SUNDIAL_REVISION = "3212e42564493f520593e5414af4367fc4b49226"
 _SUNDIAL_RANDOM_STATE = 0
 
 
@@ -148,18 +149,26 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@pytest.fixture(scope="module")
+def sundial_checkpoint_path():
+    """Local snapshot of the checkpoint at the pinned revision."""
+    from huggingface_hub import snapshot_download
+
+    return snapshot_download(_SUNDIAL_REPO, revision=_SUNDIAL_REVISION)
+
+
 @pytest.mark.parametrize(
     "forward_kwargs,horizon,expected_head,expected_tail",
     _SUNDIAL_UPSTREAM_REFERENCE_CASES,
 )
 def test_sundial_predictions_match_upstream_reference(
-    forward_kwargs, horizon, expected_head, expected_tail
+    sundial_checkpoint_path, forward_kwargs, horizon, expected_head, expected_tail
 ):
     """Sundial predictions match the upstream thuml/sundial-base-128m outputs."""
     y_train = _load_airline_train()
     fh = np.arange(1, horizon + 1)
     forecaster = SundialForecaster(
-        model_path=_SUNDIAL_MODEL_PATH,
+        model_path=sundial_checkpoint_path,
         device="cpu",
         forward_kwargs=forward_kwargs,
         random_state=_SUNDIAL_RANDOM_STATE,
