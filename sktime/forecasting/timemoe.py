@@ -69,7 +69,7 @@ class TimeMoEForecaster(BaseForecaster):
             The epsilon value for RMS normalization in the TimeMOE model.
         - rope_theta: int, default=10000
             Initialise theta for RoPE (Rotational Positional Embeddings).
-        - attention_dropout: float, default=0.1
+        - attention_dropout: float, default=0.0
             The dropout rate for attention layers in the TimeMOE model.
         - apply_aux_loss: bool, default=True
             Whether to apply auxiliary loss in the TimeMOE model.
@@ -145,11 +145,12 @@ class TimeMoEForecaster(BaseForecaster):
 
     >>> from sktime.forecasting.timemoe import TimeMoEForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
     Fine-tuning of a pretrained checkpoint:
 
@@ -216,6 +217,7 @@ class TimeMoEForecaster(BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timemoe"],
+        "tests:specific": ["sktime.forecasting.tests.test_timemoe"],
     }
 
     def __init__(
@@ -487,21 +489,23 @@ class TimeMoEForecaster(BaseForecaster):
                     torch.tensor(_y_i, dtype=dtype).unsqueeze(0).to(self.model_.device)
                 )
 
-                attention_mask = torch.ones(
-                    input_tensor.shape[:2], dtype=torch.long, device=self.model_.device
-                )
+                # the model expects z-scored input, as in upstream usage;
+                # the guard covers constant series (std 0) and
+                # series of length one (std nan)
+                mean = input_tensor.mean(dim=-1, keepdim=True)
+                std = input_tensor.std(dim=-1, keepdim=True)
+                std = torch.nan_to_num(std, nan=0.0).clamp_min(1e-8)
+                # generate modifies its input in place, normed_tensor is not reused
+                normed_tensor = (input_tensor - mean) / std
 
                 with torch.no_grad():
-                    output = self.model_(
-                        input_tensor,
-                        attention_mask,
-                        max_horizon_length=prediction_length,
-                        use_cache=True,
-                        return_dict=True,
+                    # output shape is [1, context length + prediction_length]
+                    output = self.model_.generate(
+                        normed_tensor, max_new_tokens=prediction_length
                     )
 
-                predictions = output.logits.squeeze(0).to(torch.float).cpu().numpy()
-                final_predictions = predictions[-prediction_length:]
+                predictions = output[:, -prediction_length:] * std + mean
+                final_predictions = predictions.squeeze(0).to(torch.float).cpu().numpy()
                 final_predictions = final_predictions.reshape(
                     prediction_length, self._config["input_size"]
                 )
