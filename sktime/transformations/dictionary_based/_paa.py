@@ -27,6 +27,16 @@ class PAAlegacy(BaseTransformer):
     Parameters
     ----------
     num_intervals   : int, dimension of the transformed data (default 8)
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.dictionary_based._paa import PAAlegacy
+    >>> X = pd.DataFrame(
+    ...     {"dim_0": [pd.Series(range(20)) for _ in range(3)]}
+    ... )
+    >>> transformer = PAAlegacy(num_intervals=4)
+    >>> X_transformed = transformer.fit_transform(X)
     """
 
     _tags = {
