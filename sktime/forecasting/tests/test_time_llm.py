@@ -1,22 +1,4 @@
-"""Call-path parity tests for TimeLLMForecaster.
-
-These tests compare ``TimeLLMForecaster.predict`` to a direct
-``Model.forward`` on the vendored KimMeen/Time-LLM fork
-(``sktime.libs.time_llm.TimeLLM.Model``) in the same process.
-
-They are not a golden lock against a pinned KimMeen/Time-LLM checkout
-or a public Time-LLM forecasting checkpoint. There is no installable
-upstream package. ``TINY_RANDOM`` is an sktime-only backbone used for
-deterministic CPU coverage of patch embedding, prompting, reprogramming,
-and the projection head. ``get_test_params`` also uses ``TINY_RANDOM``
-only; it does not load GPT2 or BERT.
-
-``short_term_forecast`` and ``long_term_forecast`` share the same
-``Model.forward`` branch. Layer-count coverage is therefore a separate
-``llm_layers=2`` case, not bundled with ``task_name="short_term_forecast"``.
-"""
-
-from types import SimpleNamespace
+"""Golden-output regression tests for TimeLLMForecaster."""
 
 import numpy as np
 import pytest
@@ -25,182 +7,79 @@ from sktime.datasets import load_airline
 from sktime.forecasting.time_llm import TimeLLMForecaster
 from sktime.tests.test_switch import run_test_for_class
 
-_RTOL = 1e-5
-_ATOL = 1e-4
-
-_TINY_RANDOM_BASE = {
-    "pred_len": 12,
-    "llm_model": "TINY_RANDOM",
-    "llm_dim": 1,
-    "d_model": 8,
-    "d_ff": 1,
-    "n_heads": 1,
-    "dropout": 0.0,
-    "prompt_domain": False,
-}
-
-_TIME_LLM_PARITY_CASES = [
-    pytest.param(
-        {
-            "task_name": "long_term_forecast",
-            "llm_layers": 1,
-            "patch_len": 16,
-            "stride": 8,
-        },
-        id="tiny-random-long-l1-p16-s8",
-    ),
-    pytest.param(
-        {
-            "task_name": "long_term_forecast",
-            "llm_layers": 1,
-            "patch_len": 12,
-            "stride": 6,
-        },
-        id="tiny-random-long-l1-p12-s6",
-    ),
-    pytest.param(
-        {
-            "task_name": "long_term_forecast",
-            "llm_layers": 2,
-            "patch_len": 16,
-            "stride": 8,
-        },
-        id="tiny-random-long-l2-p16-s8",
-    ),
-]
-
-
 pytestmark = pytest.mark.skipif(
     not run_test_for_class(TimeLLMForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 
+# Reference values come from the original Time-LLM code, KimMeen/Time-LLM at
+# commit b13e881f86cd0475ce1b72c17110430663334955 (models/TimeLLM.py), called
+# directly without sktime. The generator script is in the description of
+# sktime PR #11118.
+#
+# Time-LLM has no trained forecasting checkpoint. Only the LLM backbone is
+# pretrained, the patch embedding, mapping, reprogramming and output layers are
+# randomly initialised. Both sides therefore seed torch with 0 right before the
+# model is built, then cast it to bfloat16, put it in eval mode on CPU, and feed
+# the last seq_len training values of load_airline (12-step holdout) as a
+# float32 tensor of shape (1, seq_len, 1).
+#
+# Backbones as resolved from main when generated, since the estimator has no
+# revision argument: openai-community/gpt2 @ 607a30d783dfa663caf39e06633721c8d4
+# cfcd7e, google-bert/bert-base-uncased @ 86b5e0934494bd15c9632b12f734a8a67f723594
+#
+# Generated with python 3.13, torch 2.12.1 and transformers 5.13.0. The seeded
+# weights are the same for transformers 4.40.2 to 5.13.0. transformers 4.31.0,
+# upstream's pin, draws random numbers differently while loading the backbone,
+# so it gives other weights and cannot be compared.
+_TIME_LLM_UPSTREAM_CASES = [
+    pytest.param(
+        # defaults: seq_len=96 cuts the 132 training values, sparse horizon
+        {},
+        [1, 2, 3, 6, 12],
+        [452.363464355, 263.309082031, 245.413604736, 253.209655762, 337.194458008],
+        id="gpt2-default-sparse-fh",
+    ),
+    pytest.param(
+        # BERT adds a [PAD] token, full history as context, other patching
+        {
+            "llm_model": "BERT",
+            "seq_len": 132,
+            "patch_len": 12,
+            "stride": 6,
+            "llm_layers": 2,
+        },
+        list(range(1, 13)),
+        [228.883392334, 235.937149048, 256.890930176, 214.153503418, 129.716003418],
+        id="bert-seq132-p12-s6-l2",
+    ),
+]
 
-def _airline_split():
-    y = load_airline()
-    y_train = y.iloc[:-12]
-    fh = np.arange(1, 13)
-    return y_train, fh
+# Upstream runs the model in bfloat16, which keeps about 3 significant digits.
+# The same code with torch 2.2.2 and transformers 4.40.2 gives the same weights,
+# but bfloat16 kernels round differently: over the 24 reference values the
+# relative difference to torch 2.12.1 has a root mean square of 2.1e-3 and a
+# maximum of 5.1e-3. rtol is about six times the root mean square. An adapter
+# bug changes the forecasts entirely, by far more than this.
+_RTOL = 1.3e-2
 
 
-def _encode_tensor(y_train, torch):
-    """Build the same CPU float32 encoding as ``TimeLLMForecaster._predict``."""
-    values = y_train.to_frame().values if y_train.ndim == 1 else y_train.values
-    x = torch.tensor(values).reshape(1, -1, 1).to("cpu")
-    return x.to(torch.float32)
+@pytest.mark.parametrize("params,fh,expected", _TIME_LLM_UPSTREAM_CASES)
+def test_time_llm_airline_predictions_match_upstream(params, fh, expected):
+    """TimeLLMForecaster predictions match the original Time-LLM code.
 
-
-def _head(values):
-    return np.asarray(values, dtype=np.float64).ravel()[:3]
-
-
-def _assert_head_close(actual, expected):
-    np.testing.assert_allclose(_head(actual), _head(expected), rtol=_RTOL, atol=_ATOL)
-
-
-def _source_heads(y_train, n_passes=1, **model_kwargs):
-    """Run vendored Time-LLM Model.forward, bypassing TimeLLMForecaster."""
+    Each case uses its own backbone, so parallel workers never download the same
+    unpinned Hugging Face repo at once.
+    """
     import torch
 
-    from sktime.libs.time_llm.TimeLLM import Model
-
-    cfg = SimpleNamespace(enc_in=1, **model_kwargs)
+    y_train = load_airline().iloc[:-12]
+    forecaster = TimeLLMForecaster(device="cpu", **params)
+    # weights outside the backbone are randomly initialised when built in fit
     torch.manual_seed(0)
-    model = Model(cfg).to("cpu").to(torch.bfloat16).eval()
-    x = _encode_tensor(y_train, torch)
-    heads = []
-    with torch.no_grad():
-        for _ in range(n_passes):
-            out = model.forward(x, x_mark_enc=None, x_mark_dec=None, x_dec=None)
-            heads.append(out.detach().float().cpu().numpy().ravel())
-    return heads
+    forecaster.fit(y_train, fh=fh)
+    y_pred = forecaster.predict()
 
-
-def _wrapper_head(y_train, fh, **forecaster_kwargs):
-    import torch
-
-    forecaster = TimeLLMForecaster(device="cpu", **forecaster_kwargs)
-    torch.manual_seed(0)
-    return forecaster.fit(y_train, fh=fh).predict(fh=fh).to_numpy().ravel()
-
-
-def _tiny_random_kwargs(**overrides):
-    y_train, fh = _airline_split()
-    kwargs = {
-        **_TINY_RANDOM_BASE,
-        "seq_len": len(y_train),
-        **overrides,
-    }
-    return y_train, fh, kwargs
-
-
-@pytest.mark.parametrize("forecaster_kwargs", _TIME_LLM_PARITY_CASES)
-def test_time_llm_predict_matches_vendored_model_forward(forecaster_kwargs):
-    """Wrapper predict matches same-process vendored Model.forward.
-
-    Call-path parity only: both sides use the sktime fork of Time-LLM,
-    not a pinned KimMeen/Time-LLM checkout.
-    """
-    y_train, fh, kwargs = _tiny_random_kwargs(**forecaster_kwargs)
-    source = _source_heads(y_train, n_passes=1, **kwargs)[0]
-    wrapper = _wrapper_head(y_train, fh, **kwargs)
-    _assert_head_close(wrapper, source)
-
-
-def test_time_llm_short_term_is_forward_alias_of_long_term():
-    """short_term_forecast shares Model.forward with long_term_forecast."""
-    y_train, fh, long_kwargs = _tiny_random_kwargs(
-        task_name="long_term_forecast",
-        llm_layers=1,
-        patch_len=16,
-        stride=8,
-    )
-    short_kwargs = {**long_kwargs, "task_name": "short_term_forecast"}
-
-    long_source = _source_heads(y_train, **long_kwargs)[0]
-    short_source = _source_heads(y_train, **short_kwargs)[0]
-    np.testing.assert_allclose(short_source, long_source, rtol=_RTOL, atol=_ATOL)
-
-    long_wrapper = _wrapper_head(y_train, fh, **long_kwargs)
-    short_wrapper = _wrapper_head(y_train, fh, **short_kwargs)
-    np.testing.assert_allclose(short_wrapper, long_wrapper, rtol=_RTOL, atol=_ATOL)
-    _assert_head_close(short_wrapper, short_source)
-
-
-def test_time_llm_gpt2_predict_matches_vendored_model_forward():
-    """GPT2 backbone call-path parity, skipped if forward is unstable.
-
-    GPT2 is the default Time-LLM LLM in KimMeen/Time-LLM. On CPU bfloat16
-    the SDPA path is often not self-consistent across two Model.forward
-    calls, so this test skips instead of freezing noisy literals.
-    """
-    y_train, fh = _airline_split()
-    kwargs = {
-        "task_name": "long_term_forecast",
-        "pred_len": 12,
-        "seq_len": len(y_train),
-        "llm_model": "GPT2",
-        "llm_layers": 3,
-        "llm_dim": 768,
-        "patch_len": 16,
-        "stride": 8,
-        "d_model": 128,
-        "d_ff": 128,
-        "n_heads": 4,
-        "dropout": 0.0,
-        "prompt_domain": False,
-    }
-    try:
-        source_a, source_b = _source_heads(y_train, n_passes=2, **kwargs)
-    except (OSError, RuntimeError, ValueError, ImportError) as err:
-        pytest.skip(
-            "GPT2 backbone could not be loaded for call-path check: "
-            f"{type(err).__name__}: {err}"
-        )
-    if not np.allclose(source_a, source_b, rtol=_RTOL, atol=_ATOL):
-        pytest.skip(
-            "GPT2 CPU bfloat16 Model.forward is not self-consistent (SDPA); "
-            "skipping rather than locking a noisy literal"
-        )
-    wrapper = _wrapper_head(y_train, fh, **kwargs)
-    _assert_head_close(wrapper, source_a)
+    # only the first values are stored
+    actual = y_pred.to_numpy().ravel()[: len(expected)]
+    np.testing.assert_allclose(actual, expected, rtol=_RTOL)
