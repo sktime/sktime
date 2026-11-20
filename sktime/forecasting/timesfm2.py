@@ -47,13 +47,14 @@ class TimesFM2Forecaster(BaseForecaster):
     - Prediction is bounded by ``model.config.horizon_length``. Requested
       forecast steps beyond this limit raise ``ValueError``.
     - Quantile prediction via ``predict_quantiles`` is only available for
-      quantiles present in ``model.config.quantiles``.
+      quantiles present in ``model.config.quantiles``. Quantile forecasts are
+      sorted in order of level, so they never cross.
     - Distributional prediction via ``predict_proba`` returns a ``skpro``
       ``HistogramQPD`` parameterized by the native quantile grid
       ``model.config.quantiles``: it interpolates linearly between adjacent
       native quantiles, and (via ``tails="mass"``) clamps levels outside the
-      native grid to the nearest native quantile. Interpolation assumes the
-      native quantiles are monotone in the level.
+      native grid to the nearest native quantile. At native levels, it agrees
+      with ``predict_quantiles``.
     - ``device_map`` and ``dtype`` are supported for both pretrained loading
       and config-only initialization. For pretrained loading, they are passed
       to ``from_pretrained``; for config-only initialization, they are applied
