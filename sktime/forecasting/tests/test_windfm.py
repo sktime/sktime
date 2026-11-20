@@ -363,3 +363,46 @@ def test_windfm_predictions_match_upstream_reference(
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.parametrize("marginal", [True, False])
+def test_windfm_predict_proba_consistent_with_predict_quantiles(marginal):
+    """predict_proba quantiles agree with predict_quantiles, see #10566."""
+    pytest.importorskip("skpro")
+    from skpro.distributions import Empirical
+
+    df = pd.DataFrame(
+        _WINDFM_EXAMPLE_DATA,
+        columns=_WINDFM_COLUMNS,
+        index=_WINDFM_INDEX,
+    )
+    y_train = df["power"].iloc[:_WINDFM_CONTEXT_LENGTH]
+    X_train = df[_WINDFM_COVARIATE_COLUMNS].iloc[:_WINDFM_CONTEXT_LENGTH]
+    fh = ForecastingHorizon(
+        df.index[_WINDFM_CONTEXT_LENGTH : _WINDFM_CONTEXT_LENGTH + 3],
+        is_relative=False,
+    )
+    sample_count = 5
+    forecaster = WindFMForecaster(
+        deterministic=True,
+        predict_kwargs={"sample_count": sample_count, "verbose": False},
+    )
+    forecaster.fit(y_train, X=X_train)
+
+    # includes levels on and between the steps of the empirical cdf
+    alpha = [0.1, 0.2, 0.3, 0.5, 0.6, 0.9]
+    q_direct = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+    pred_dist = forecaster.predict_proba(fh=fh, marginal=marginal)
+
+    assert isinstance(pred_dist, Empirical)
+    assert pred_dist.time_indep == marginal
+    assert len(pred_dist.spl) == sample_count * len(fh)
+    pd.testing.assert_index_equal(pred_dist.index, q_direct.index)
+
+    q_proba = pred_dist.quantile(alpha=alpha)
+    np.testing.assert_allclose(q_proba.to_numpy(), q_direct.to_numpy())
+
+    # quantiles are sample values, no interpolation between samples
+    spl = pred_dist.spl.to_numpy().reshape(sample_count, len(fh))
+    for i in range(len(fh)):
+        assert np.isin(q_direct.to_numpy()[i], spl[:, i]).all()
