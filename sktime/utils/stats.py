@@ -29,7 +29,9 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     sample_weight: 1D or 2D array-like
         Weights for each value in `array`. Must be same shape as `array` or
-        of shape `(array.shape[0],)`.
+        of shape `(array.shape[0],)`. Weights are aligned with `array` by
+        position, e.g., the index of a `pd.Series` is ignored.
+        Must be non-negative, with positive sum for each column of `array`.
 
     percentile: int or float, default=50
         Percentile to compute. Must be value between 0 and 100.
@@ -38,6 +40,11 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     -------
     percentile : int if `array` 1D, ndarray if `array` 2D
         Weighted percentile.
+
+    Raises
+    ------
+    ValueError
+        if `sample_weight` has negative entries, or sums to zero for a column
     """
     sample_weight = np.asarray(sample_weight)
     n_dim = array.ndim
@@ -48,6 +55,20 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     # When sample_weight 1D, repeat for each array.shape[1]
     if array.shape != sample_weight.shape and array.shape[0] == sample_weight.shape[0]:
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
+
+    # the cumulative weights below must be non-decreasing with positive total,
+    # otherwise the percentile is not defined
+    if np.any(sample_weight < 0):
+        raise ValueError(
+            "weights for weighted percentile, e.g., horizon_weight, "
+            "must be non-negative, but found negative values"
+        )
+    if np.any(np.sum(sample_weight, axis=0) == 0):
+        raise ValueError(
+            "weights for weighted percentile, e.g., horizon_weight, "
+            "must not all be zero"
+        )
+
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
 
