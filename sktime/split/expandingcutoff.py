@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, _check_fh
 from sktime.utils.validation.forecasting import check_step_length
 
 
@@ -97,14 +96,24 @@ class ExpandingCutoffSplitter(BaseSplitter):
     """
 
     def __init__(self, cutoff, fh, step_length):
-        super().__init__()
-        self.cutoff = _validate_cutoff(cutoff)
-        self.fh = fh
-        self._fh = _check_fh(fh)
+        self.cutoff = cutoff
         self.step_length = step_length
-        return
+        self.fh = fh
+        super().__init__()
 
-    def _split(self, y, fh=None):
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        _validate_cutoff(self.cutoff)
+        super().__post_init__()
+
+    def _split(self, y):
         """
         Generate indices to split data into training and testing sets.
 
@@ -112,8 +121,6 @@ class ExpandingCutoffSplitter(BaseSplitter):
         ----------
         y : array-like, shape = [n_samples]
             Time series data.
-        fh : int, default=None
-            Forecast horizon, if None, uses self.fh
 
         Yields
         ------
@@ -122,8 +129,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
         test : ndarray
             The testing set indices for that split.
         """
-        if fh is None:
-            fh = self._fh
+        fh = self.get_fh().to_relative(self.cutoff)
         for cutoff in self.get_cutoffs(y):
             train_window = np.arange(0, cutoff + 1, step=1)
             test_window = cutoff + fh
@@ -164,7 +170,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
                 )
         return index
 
-    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
+    def get_cutoffs(self, y=None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters
@@ -177,16 +183,22 @@ class ExpandingCutoffSplitter(BaseSplitter):
         cutoffs : 1D np.ndarray of int
             iloc location indices, in reference to y, of cutoff indices
         """
+        from sktime.forecasting.base import ForecastingHorizon
+
         if y is None:
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         y = self._validate_y(y)
-        fh = self._fh
+        fh = self.fh
+        if isinstance(fh, list):
+            fh = np.asarray(fh, dtype=int)
+        if isinstance(fh, ForecastingHorizon):
+            fh = fh.to_relative(self.cutoff).to_numpy()
         step_length = check_step_length(self.step_length)
         cutoff_index = self._get_first_cutoff_index(y)
         cutoffs = np.array([cutoff_index])
-        offset = fh.to_numpy().max()
+        offset = fh.max()
         while cutoff_index + offset + step_length < len(y):
             cutoff_index += step_length
             cutoffs = np.append(cutoffs, cutoff_index)

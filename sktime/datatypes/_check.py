@@ -30,8 +30,8 @@ import numpy as np
 from sktime.datatypes._base._common import _metadata_requested, _ret
 from sktime.datatypes._registry import (
     AMBIGUOUS_MTYPES,
-    SCITYPE_LIST,
     generate_mtype_cls_list,
+    generate_scitype_list,
     mtype_to_scitype,
 )
 
@@ -613,7 +613,7 @@ def check_is_error_msg(msg, var_name="obj", allowed_msg=None, raise_exception=Fa
         raise raise_exception(msg_invalid_input)
 
 
-def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPES):
+def scitype(obj, candidate_scitypes=None, exclude_mtypes=AMBIGUOUS_MTYPES):
     """Infer the scitype of an object.
 
     See glossary for explanations of :glossary:`mtype` and :glossary:`scitype`.
@@ -640,6 +640,8 @@ def scitype(obj, candidate_scitypes=SCITYPE_LIST, exclude_mtypes=AMBIGUOUS_MTYPE
     ------
     TypeError if no type can be identified, or more than one type is identified
     """
+    if candidate_scitypes is None:
+        candidate_scitypes = generate_scitype_list()
     candidate_scitypes = _coerce_list_of_str(
         candidate_scitypes, var_name="candidate_scitypes"
     )

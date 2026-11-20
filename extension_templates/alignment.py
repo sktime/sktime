@@ -96,6 +96,9 @@ class MyAligner(BaseAligner):
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
         "capability:unequal_length": True,  # can align sequences of unequal length?
+        "property:randomness": "deterministic",  # "deterministic", "stochastic",
+        # or "derandomized" (stochastic, but reproducible if random_state is set)
+        "capability:random_state": False,  # is there a random_state parameter?
     }
 
     # todo: add any hyper-parameters and components to constructor

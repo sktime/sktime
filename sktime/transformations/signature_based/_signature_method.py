@@ -80,6 +80,7 @@ class SignatureTransformer(BaseTransformer):
         # ---------------------
         "tests:libs": ["sktime.transformations.signature_based"],
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.signature_based.tests.test_method"],
     }
 
     def __init__(

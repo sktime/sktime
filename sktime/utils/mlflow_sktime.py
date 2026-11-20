@@ -212,7 +212,7 @@ def save_model(
     ...     sktime_model=forecaster,
     ...     path=model_path)  # doctest: +SKIP
     >>> loaded_model = mlflow_sktime.load_model(model_uri=model_path)  # doctest: +SKIP
-    >>> loaded_model.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> loaded_model.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
     _check_mlflow_dependencies(severity="error")
     from mlflow.exceptions import MlflowException
@@ -455,11 +455,11 @@ def load_model(model_uri, dst_path=None):
     model_uri : str
         The location, in URI format, of the MLflow model. For example:
 
-                    - ``/Users/me/path/to/local/model``
-                    - ``relative/path/to/local/model``
-                    - ``s3://my_bucket/path/to/model``
-                    - ``runs:/<mlflow_run_id>/run-relative/path/to/model``
-                    - ``mlflow-artifacts:/path/to/model``
+        - ``/Users/me/path/to/local/model``
+        - ``relative/path/to/local/model``
+        - ``s3://my_bucket/path/to/model``
+        - ``runs:/<mlflow_run_id>/run-relative/path/to/model``
+        - ``mlflow-artifacts:/path/to/model``
 
         For more information about supported URI schemes, see
         `Referencing Artifacts <https://www.mlflow.org/docs/latest/tracking.html#

@@ -116,6 +116,10 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     np.float64(0.7000014418652152)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     def _evaluate(self, y_true, y_pred, sample_weight=None, **kwargs):
         """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
 

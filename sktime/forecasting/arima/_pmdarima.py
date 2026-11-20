@@ -288,12 +288,14 @@ class AutoARIMA(_PmdArimaAdapter):
         # python_dependencies: "pmdarima" - inherited from _PmdArimaAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [
@@ -465,10 +467,15 @@ class AutoARIMA(_PmdArimaAdapter):
         -------
         self : returns an instance of self.
         """
+        from sktime.datatypes import update_data
+
         update_pdq = self.update_pdq
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         if update_params:
             if update_pdq:
-                self._fit(y=self._y, X=self._X, fh=self._fh)
+                self._fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
             else:
                 if X is not None:
                     X = X.loc[y.index]
@@ -697,6 +704,7 @@ class ARIMA(_PmdArimaAdapter):
     """  # noqa: E501
 
     _tags = {
+        "category": ["statistical"],
         "authors": [
             "tgsmith61591",  # for pmdarima
             "charlesdrotar",  # for pmdarima
@@ -713,6 +721,7 @@ class ARIMA(_PmdArimaAdapter):
         "tests:skip_by_name": [
             "test_predict_time_index_with_X",  # bug report #9081
         ],
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [

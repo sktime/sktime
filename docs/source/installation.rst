@@ -5,7 +5,7 @@ Installation
 
 ``sktime`` currently supports:
 
-* Python versions 3.10, 3.11, 3.12, 3.13, and 3.14.
+* Python versions 3.11, 3.12, 3.13, 3.14, and 3.15.
 * Operating systems Mac OS X, Unix-like OS, Windows 8.1 and higher
 
 See here for a `full list of precompiled wheels available on PyPI <https://pypi.org/simple/sktime/>`_.
@@ -131,6 +131,8 @@ For steps on how to obtain a local clone of the repository, please follow the st
 Alternatively, the ``.`` may be replaced with a full or relative path to the root directory.
 
 
+.. _developer-installation:
+
 Full developer setup for contributors and extension developers
 --------------------------------------------------------------
 
@@ -201,28 +203,6 @@ your environment is activated and linked to whatever IDE you are using.  If you 
 Notebooks, follow `these instructions <https://janakiev.com/blog/jupyter-virtual-envs/>`_ for
 adding your virtual environment as a new kernel for your notebook.
 
-Installing ``all_extras`` on mac with ARM processor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If you are using a mac with an ARM processor, you may encounter an error when installing
-``sktime[all_extras]``.  This is due to the fact that some libraries included in ``all_extras``
-are not compatible with ARM-based processors.
-
-The workaround is not to install some of the packages in ``all_extras`` and install ARM compatible
-replacements for others:
-
-* Do not install the following packages:
-    * ``esig``
-    * ``prophet``
-    * ``tsfresh``
-    * ``tslearn``
-* Replace ``tensorflow`` package with the following packages:
-    * ``tensorflow-macos``
-    * ``tensorflow-metal`` (optional)
-
-Also, ARM-based processors have issues when installing packages distributed as source distributions
-instead of Python wheels. To avoid this issue when installing a package you can try installing it
-through conda or use a prior version of the package that was distributed as a wheel.
-
 Other Startup Resources
 -----------------------
 
@@ -240,4 +220,4 @@ in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
 References
 ----------
 
-The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.
+The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/development_setup.html>`_.

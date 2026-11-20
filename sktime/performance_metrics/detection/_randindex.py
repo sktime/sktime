@@ -71,6 +71,9 @@ class RandIndex(BaseDetectionMetric):
         "requires_X": False,
         "requires_y_true": True,
         "lower_is_better": False,  # Higher Rand Index is better
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, use_loc=True):

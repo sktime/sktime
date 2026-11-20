@@ -31,6 +31,10 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         # the dependency tag translates to:
         # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
         "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_tsfresh"],
     }
 
     def __init__(
@@ -217,8 +221,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     ----------
     .. [1]  https://github.com/blue-yonder/tsfresh
     .. [2]  https://tsfresh.readthedocs.io/en/v0.1.2/text/feature_naming.html
-    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/
-            feature_extraction_settings.html
+    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/feature_extraction_settings.html
     .. [4]  https://tsfresh.readthedocs.io/en/latest/api/tsfresh.feature_extraction.html
             #module-tsfresh.feature_extraction.feature_calculators
     .. [5] Christ, M., Braun, N., Neuffer, J., and Kempa-Liehr A.W. (2018). Time Series
@@ -310,7 +313,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # When using the long input format, tsfresh seems to sort the index,
         # here we make sure we return the dataframe in the sort order as the
         # input data
-        instances = X.iloc[:, 0].unique()
+        instances = X[X.columns[0]].drop_duplicates().to_numpy()
         Xt = Xt.reindex(instances)
         return Xt
 
@@ -437,8 +440,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     ----------
     .. [1]  https://github.com/blue-yonder/tsfresh
     .. [2]  https://tsfresh.readthedocs.io/en/v0.1.2/text/feature_naming.html
-    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/
-            feature_extraction_settings.html
+    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/feature_extraction_settings.html
     .. [4]  https://tsfresh.readthedocs.io/en/latest/api/tsfresh.feature_extraction.html
             #module-tsfresh.feature_extraction.feature_calculators
     .. [5] Christ, M., Braun, N., Neuffer, J., and Kempa-Liehr A.W. (2018). Time Series
@@ -629,7 +631,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         self.reset()
         if y is None:
             raise ValueError("SupervisedIntervals requires `y` in `fit`.")
-        X, y, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+        X, y, metadata, _, _ = self._check_X_y(X=X, y=y, return_metadata=True)
 
         # lazy imports to avoid hard dependency
         from tsfresh.transformers.feature_selector import FeatureSelector

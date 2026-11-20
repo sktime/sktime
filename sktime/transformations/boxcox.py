@@ -1,4 +1,4 @@
-"""Implemenents Box-Cox and Log Transformations."""
+"""Implements Box-Cox and Log Transformations."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -184,8 +184,6 @@ class BoxCoxTransformer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_categorical_y_raises_error"],
-        # test causes "bracket error", data does not seem to work with box-cox
     }
 
     def __init__(

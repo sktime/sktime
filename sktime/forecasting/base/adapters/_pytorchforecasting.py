@@ -14,17 +14,13 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class _PytorchForecastingAdapter(BaseForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
@@ -52,7 +48,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {
@@ -61,7 +57,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
         "python_dependencies": [
-            "pytorch-forecasting>=1.0.0",
+            "pytorch-forecasting>=1.8.0",
             "torch",
             "lightning",
         ],
@@ -84,6 +80,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -140,7 +137,6 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
         super().__init__()
@@ -225,9 +221,21 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
             raise NotImplementedError(
                 f"No in sample predict support, but found fh with in sample index: {fh}"
             )
+        # snapshot y and X as passed, since _Xy_to_dataset renames columns and
+        # index levels in place, on the frames from _series_to_frame below.
+        # X is snapshotted before the dummy below is created: `_predict` creates
+        # its own dummy, spanning the index extended to the forecasting horizon
+        self._cur_y = y
+        self._cur_X = X
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
+        # store series name if pd.Series
+        if isinstance(y, pd.Series):
+            self._series_name = y.name
+            self._was_series = True
+        else:
+            self._was_series = False
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -272,6 +280,22 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
             import torch
 
             torch.set_rng_state(torch_state)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update the data snapshot that ``_predict`` conditions on.
+
+        ``_predict`` encodes the most recent observations from ``_cur_y``, so
+        appending keeps them contiguous with the cutoff, which advances in
+        ``update``.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        if update_params:
+            self._fit(y=self._cur_y, fh=self._fh, X=self._cur_X)
         return self
 
     def _predict(
@@ -351,7 +375,10 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         dateindex = output.index.get_level_values(-1).map(
             lambda x: x in absolute_horizons
         )
-        return output.loc[dateindex]
+        ret = output.loc[dateindex]
+        if self._was_series and isinstance(ret, pd.Series):
+            ret.name = self._series_name
+        return ret
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
@@ -447,11 +474,11 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         return output.loc[dateindex]
 
     def _Xy_precheck(self, X):
-        y = deepcopy(self._y)
+        y = deepcopy(self._cur_y)
         if X is None:
-            X = deepcopy(self._X)
-        elif self._X is not None:
-            X = pd.concat([deepcopy(self._X), X])
+            X = deepcopy(self._cur_X)
+        elif self._cur_X is not None:
+            X = pd.concat([deepcopy(self._cur_X), X])
         return X, y
 
     def _Xy_to_dataset(

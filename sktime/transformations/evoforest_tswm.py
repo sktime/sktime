@@ -809,6 +809,14 @@ class EvoForestTSWM(BaseTransformer):
     ----------
     pooling : {"full", "pruned"}, default="full"
         423 features ("full") or 245 ("pruned").
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.evoforest_tswm import EvoForestTSWM
+    >>> X_train, _ = load_unit_test(split="train")  # doctest: +SKIP
+    >>> t = EvoForestTSWM()  # doctest: +SKIP
+    >>> Xt = t.fit_transform(X_train)  # doctest: +SKIP
     """
 
     _tags = {
@@ -830,6 +838,7 @@ class EvoForestTSWM(BaseTransformer):
         # test and CI flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_evoforest_tswm"],
     }
 
     def __init__(self, pooling="full"):

@@ -113,12 +113,12 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer._tft.TemporalFusionTransformer.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer.TemporalFusionTransformer.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
+        "category": ["deep_learning"],
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
@@ -127,7 +127,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_all": True,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(
@@ -403,17 +403,18 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
+        "category": ["deep_learning"],
         "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
         "tests:skip_by_name": [
             "test_pred_int_tag",
             "test_save_estimators_to_file",
@@ -710,17 +711,18 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.deepar.DeepAR.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
+        "category": ["deep_learning"],
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(
@@ -992,17 +994,20 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nhits.NHiTS.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
+        "category": ["deep_learning"],
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        # CI and test flags
+        # -----------------
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(
@@ -1028,6 +1033,19 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             random_log_path,
             broadcasting,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         if self._model_loss is None:
             from pytorch_forecasting import QuantileLoss
 

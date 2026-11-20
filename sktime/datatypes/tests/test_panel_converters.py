@@ -377,7 +377,7 @@ def test_from_multiindex_to_listdataset(n_instances, n_columns, n_timepoints):
         level1_idx = [
             list(
                 pd.date_range(
-                    random_start_date[instance], periods=n_timepoints, freq="H"
+                    random_start_date[instance], periods=n_timepoints, freq="h"
                 )
             )
             for instance in range(n_instances)

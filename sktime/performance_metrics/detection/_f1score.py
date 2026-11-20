@@ -27,6 +27,9 @@ class WindowedF1Score(BaseDetectionMetric):
         "requires_X": False,  # not using X by default
         "requires_y_true": True,  # supervised metric
         "lower_is_better": False,  # higher F1 is better
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, margin=0):

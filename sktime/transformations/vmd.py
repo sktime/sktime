@@ -102,7 +102,7 @@ class VmdTransformer(BaseTransformer):
     to decompose, forecast individual components, then recompose:
     >>> from sktime.forecasting.trend import TrendForecaster  # doctest: +SKIP
     >>> pipe = VmdTransformer() * TrendForecaster()  # doctest: +SKIP
-    >>> pipe.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> pipe.fit(y, fh=3)  # doctest: +SKIP
     >>> y_pred = pipe.predict()  # doctest: +SKIP
     """
 
@@ -138,6 +138,7 @@ class VmdTransformer(BaseTransformer):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:libs": ["sktime.libs.vmdpy"],
+        "tests:specific": ["sktime.transformations.tests.test_vmd"],
     }
 
     def __init__(

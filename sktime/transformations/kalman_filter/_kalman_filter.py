@@ -210,15 +210,15 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
     Notes
     -----
     ``pykalman`` KalmanFilter documentation :
-        https://pykalman.github.io/#kalmanfilter
+        https://pykalman.readthedocs.io/en/latest/#kalmanfilter
 
     References
     ----------
     .. [1] Greg Welch and Gary Bishop, "An Introduction to the Kalman Filter", 2006
-           https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
+           https://web.archive.org/web/20210122230246/https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
     .. [2] R.H.Shumway and D.S.Stoffer "An Approach to time
            Series Smoothing and Forecasting Using the EM Algorithm", 1982
-           https://www.stat.pitt.edu/stoffer/dss_files/em.pdf
+           https://doi.org/10.1111/j.1467-9892.1982.tb00349.x
 
     Examples
     --------
@@ -303,6 +303,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         # test and CI flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_kalman_filter"],
     }
 
     def __init__(
@@ -708,10 +709,10 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
     References
     ----------
     .. [1] Greg Welch and Gary Bishop, "An Introduction to the Kalman Filter", 2006
-           https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
+           https://web.archive.org/web/20210122230246/https://www.cs.unc.edu/~welch/media/pdf/kalman_intro.pdf
     .. [2] R.H.Shumway and D.S.Stoffer "An Approach to time
            Series Smoothing and Forecasting Using the EM Algorithm", 1982
-           https://www.stat.pitt.edu/stoffer/dss_files/em.pdf
+           https://doi.org/10.1111/j.1467-9892.1982.tb00349.x
 
     Examples
     --------
@@ -795,6 +796,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_kalman_filter"],
     }
 
     def __init__(

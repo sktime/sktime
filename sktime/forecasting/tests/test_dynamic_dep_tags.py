@@ -16,17 +16,21 @@ import pytest
 
 from sktime.forecasting.chronos import ChronosForecaster
 from sktime.forecasting.chronos2 import Chronos2Forecaster
+from sktime.forecasting.cisco_tsm import CiscoTSMForecaster
 from sktime.forecasting.mantis import MantisForecaster
 from sktime.forecasting.timemoe import TimeMoEForecaster
 from sktime.forecasting.timesfm import TimesFMForecaster
+from sktime.forecasting.timesfm3 import TimesFM3Forecaster
 from sktime.tests.test_switch import run_test_module_changed
 
 CLASSES_AND_KWARGS = [
     (Chronos2Forecaster, {}),
     (ChronosForecaster, {"model_path": "amazon/chronos-t5-tiny"}),
+    (CiscoTSMForecaster, {}),
     (MantisForecaster, {}),
     (TimeMoEForecaster, {"model_path": "Maple728/TimeMoE-50M"}),
     (TimesFMForecaster, {}),
+    (TimesFM3Forecaster, {}),
 ]
 
 
@@ -111,4 +115,3 @@ def test_timesfm_broadcasting_tags():
 
     assert est.get_tag("y_inner_mtype") == "pd.Series"
     assert est.get_tag("X_inner_mtype") == "pd.DataFrame"
-    assert not est.get_tag("capability:global_forecasting")

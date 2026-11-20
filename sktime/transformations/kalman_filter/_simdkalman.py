@@ -146,6 +146,7 @@ class KalmanFilterTransformerSIMD(BaseKalmanFilter, BaseTransformer):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_kalman_filter"],
     }
 
     def __init__(

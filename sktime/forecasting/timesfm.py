@@ -8,15 +8,21 @@ __author__ = ["rajatsen91", "geetu040"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 
-class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+def _resolve_backend(backend):
+    """Resolve automatic JAX backend selection."""
+    if backend != "auto":
+        return backend
+
+    import jax
+
+    return "gpu" if jax.default_backend() == "gpu" else "cpu"
+
+
+class TimesFMForecaster(BaseForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
@@ -91,7 +97,8 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         The batch size to be used per core during model inference.
     backend : str, optional (default="cpu")
         The computational backend to be used,
-        which can be one of "cpu", "gpu", or "tpu".
+        which can be one of "auto", "cpu", "gpu", or "tpu". ``"auto"`` selects
+        GPU when JAX has a GPU backend and CPU otherwise.
         This setting is case-sensitive.
     verbose : bool, optional (default=False)
         Whether to print detailed logs during execution.
@@ -174,6 +181,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.Series",
         "capability:multivariate": False,
         "capability:exogenous": False,
@@ -184,12 +192,12 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm"],
     }
 
     def __init__(
@@ -229,6 +237,10 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._backend = _resolve_backend(self.backend)
+
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
 
@@ -237,7 +249,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
-                # todo 1.1.0: Regularly check whether timesfm version can be updated
+                # todo 1.4.0: Regularly check whether timesfm version can be updated
                 # if changed, also needs to be changed in docstring
                 self.set_tags(python_dependencies=["timesfm<1.2.0"])
         else:
@@ -254,7 +266,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
@@ -313,7 +324,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "num_layers": self.num_layers,
             "model_dims": self.model_dims,
             "per_core_batch_size": self.per_core_batch_size,
-            "backend": self.backend,
+            "backend": self._backend,
             "verbose": self.verbose,
         }
 

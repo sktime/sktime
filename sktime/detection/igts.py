@@ -104,7 +104,7 @@ def generate_segments_pandas(X: npt.ArrayLike, change_points: list) -> npt.Array
 class IGTS:
     """Information Gain based Temporal Segmentation (IGTS).
 
-    IGTS is a n unsupervised method for segmenting multivariate time series
+    IGTS is an unsupervised method for segmenting multivariate time series
     into non-overlapping segments by locating change points that for which
     the information gain is maximized.
 
@@ -119,18 +119,18 @@ class IGTS:
 
     .. note::
 
-    IGTS does not work very well for univariate series but it can still be
-    used if the original univariate series are augmented by an extra feature
-    dimensions. A technique proposed in the paper [1]_ us to subtract the
-    series from it's largest element and append to the series.
+        IGTS does not work very well for univariate series but it can still be
+        used if the original univariate series are augmented by an extra feature
+        dimensions. A technique proposed in the paper [1]_ is to subtract the
+        series from its largest element and append to the series.
 
     Parameters
     ----------
     k_max: int, default=10
         Maximum number of change points to find. The number of segments is thus k+1.
-    step: : int, default=5
+    step : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...].
+        For example a ``step=5`` would produce candidates [0, 5, 10, ...].
         Has the same meaning as ``step`` in ``range`` function.
 
     Attributes
@@ -189,9 +189,12 @@ class IGTS:
             Current set of change points, that will be used to exclude values
             from candidates.
 
-        TODO: exclude points within a neighborhood of existing
-        change points with neighborhood radius
+        Returns
+        -------
+        candidates : list of int
+            Candidate change point locations, excluding existing change points.
         """
+        # TODO: exclude points within a neighborhood of existing change points
         return sorted(
             set(range(0, n_samples, self.step)).difference(set(change_points))
         )
@@ -314,7 +317,7 @@ class SegmentationMixin:
 class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     """Information Gain based Temporal Segmentation (IGTS) Estimator.
 
-    IGTS is a n unsupervised method for segmenting multivariate time series
+    IGTS is an unsupervised method for segmenting multivariate time series
     into non-overlapping segments by locating change points that for which
     the information gain is maximized.
 
@@ -330,17 +333,17 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
        IGTS does not work very well for univariate series but it can still be
        used if the original univariate series are augmented by an extra feature
-       dimensions. A technique proposed in the paper [1]_ us to subtract the
-       series from it's largest element and append to the series.
+       dimensions. A technique proposed in the paper [1]_ is to subtract the
+       series from its largest element and append to the series.
 
     Parameters
     ----------
     k_max: int, default=10
         Maximum number of change points to find. The number of segments is thus k+1.
 
-    step: : int, default=5
+    step : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...]. Has the same
+        For example a ``step=5`` would produce candidates [0, 5, 10, ...]. Has the same
         meaning as ``step`` in ``range`` function.
 
     Attributes
