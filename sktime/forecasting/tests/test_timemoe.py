@@ -34,17 +34,37 @@ from sktime.tests.test_switch import run_test_for_class
 # keeps the cached model separate from the one ``get_test_params`` loads,
 # which ``pretrain`` in the estimator suite fine-tunes in place.
 #
-# Environment: Python 3.12.14, torch 2.14.0, transformers 4.40.1,
-# accelerate 0.28.0, numpy 1.26.4.
+# Environment: the horizon cases were generated on arm64 (macOS) with
+# Python 3.12.14, torch 2.14.0, transformers 4.40.1, accelerate 0.28.0 and
+# numpy 1.26.4. The sparse ``fh`` and short context cases were generated on
+# x86-64 (linux) with Python 3.12.13, torch 2.9.1+cpu, transformers 4.40.1,
+# accelerate 0.28.0 and numpy 1.26.4, where the script also reproduces the
+# horizon cases within the tolerances below.
 #
 # The reference values were produced by the following standalone script:
+#
+#     """Generate golden reference outputs for TimeMoEForecaster from Time-MoE.
+#
+#     Calls the upstream remote code of the Maple728/TimeMoE checkpoints directly
+#     through transformers, as in the README of github.com/Time-MoE/Time-MoE,
+#     and never imports sktime.
+#     """
+#
+#     import platform
+#     from importlib.metadata import version
 #
 #     import numpy as np
 #     import torch
 #     from transformers import AutoModelForCausalLM
 #
-#     # sktime.datasets.load_airline, monthly from 1949-01, inlined so that
-#     # this script does not import sktime
+#     # Hugging Face repository -> immutable commit (model code and weights)
+#     REVISIONS = {
+#         "Maple728/TimeMoE-50M": "446753ee48ff3726d0606a81d0092d54acee995e",
+#         "Maple728/TimeMoE-200M": "794591bfeb1225fdf742cec0f4c71f20c3f3b87e",
+#     }
+#     SEED = 0
+#
+#     # sktime.datasets.load_airline, monthly from 1949-01
 #     AIRLINE_VALUES = [
 #         112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
 #         115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
@@ -58,60 +78,75 @@ from sktime.tests.test_switch import run_test_for_class
 #         340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
 #         360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
 #         417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432,
+#     ]  # fmt: skip
+#
+#     # (repo, fh, context length). The checkpoints have output heads for 1, 8, 32
+#     # and 64 steps; each generation step uses the largest head that does not
+#     # exceed the number of values still to be generated.
+#     # * fh 1..1: one step of the 1-step head
+#     # * fh 1..3: three autoregressive steps of the 1-step head
+#     # * fh 1..12: the 8-step head, then four steps of the 1-step head
+#     # * fh 1..100: the 64-step and 32-step heads, then four 1-step steps
+#     # * fh [2, 5, 12]: sparse, generates 12 steps and selects three
+#     # * context 36: a shorter context than the full training series
+#     CASES = [
+#         (repo, list(range(1, horizon + 1)), None)
+#         for repo in REVISIONS
+#         for horizon in (1, 3, 12, 100)
+#     ] + [
+#         ("Maple728/TimeMoE-50M", [2, 5, 12], None),
+#         ("Maple728/TimeMoE-50M", list(range(1, 13)), 36),
 #     ]
-#
-#     # Hugging Face repository -> immutable commit (model code and weights)
-#     REVISIONS = {
-#         "Maple728/TimeMoE-50M": "446753ee48ff3726d0606a81d0092d54acee995e",
-#         "Maple728/TimeMoE-200M": "794591bfeb1225fdf742cec0f4c71f20c3f3b87e",
-#     }
-#     SEED = 0
-#
-#     # The released checkpoints have output heads for 1, 8, 32 and 64 steps;
-#     # each generation step uses the largest head that does not exceed the
-#     # number of values still to be generated (the 1-step head is cut to size).
-#     #
-#     # * 1: a single step of the 1-step head.
-#     # * 3: three autoregressive steps of the 1-step head.
-#     # * 12: one step of the 8-step head, then four steps of the 1-step head.
-#     # * 100: the 64-step and 32-step heads, then four steps of the 1-step head.
-#     HORIZONS = [1, 3, 12, 100]
 #
 #
 #     def fmt(values):
 #         return "[" + ", ".join(f"{float(v):.9g}" for v in values) + "]"
 #
 #
-#     def main():
-#         # first 132 airline values, i.e., without the last 12 months
+#     def forecast(model, fh, context_length):
+#         # the first 132 values, i.e., without the last 12 months
 #         y = np.asarray(AIRLINE_VALUES, dtype=np.float32)[:-12]
+#         if context_length is not None:
+#             y = y[-context_length:]
+#         horizon = max(fh)
+#         # z-score the context, generate, invert the z-score;
+#         # a new tensor per call, since generate modifies its input
+#         seqs = torch.tensor(y, dtype=torch.float32)[None]
+#         mean = seqs.mean(dim=-1, keepdim=True)
+#         std = seqs.std(dim=-1, keepdim=True)
+#         normed_seqs = (seqs - mean) / std
+#         torch.manual_seed(SEED)
+#         with torch.no_grad():
+#             output = model.generate(normed_seqs, max_new_tokens=horizon)
+#         # output: [batch=1, context length + horizon]
+#         values = (output[:, -horizon:] * std + mean)[0].numpy()
+#         return values[[h - 1 for h in fh]]
 #
+#
+#     def main():
+#         print("python", platform.python_version())
+#         for package in ["numpy", "torch", "transformers", "accelerate"]:
+#             print(package, version(package))
+#
+#         models = {}
 #         for repo, revision in REVISIONS.items():
-#             # loaded on CPU in float32. The model is deterministic: the
-#             # checkpoints have no dropout and generation is greedy, so SEED
-#             # only pins the RNG state for good measure.
-#             model = AutoModelForCausalLM.from_pretrained(
-#                 repo, revision=revision, trust_remote_code=True, device_map="cpu"
+#             # CPU, float32; from_pretrained puts the model in eval mode
+#             models[repo] = AutoModelForCausalLM.from_pretrained(
+#                 repo,
+#                 revision=revision,
+#                 trust_remote_code=True,
+#                 device_map="cpu",
+#                 torch_dtype=torch.float32,
 #             )
-#             model.eval()
+#             models[repo].eval()
 #
-#             for horizon in HORIZONS:
-#                 # usage as in the README of github.com/Time-MoE/Time-MoE:
-#                 # z-score the context, generate, invert the z-score.
-#                 # A new tensor per call, since generate modifies its input.
-#                 seqs = torch.tensor(y, dtype=torch.float32)[None]
-#                 mean = seqs.mean(dim=-1, keepdim=True)
-#                 std = seqs.std(dim=-1, keepdim=True)
-#                 normed_seqs = (seqs - mean) / std
-#                 torch.manual_seed(SEED)
-#                 with torch.no_grad():
-#                     output = model.generate(normed_seqs, max_new_tokens=horizon)
-#                 # output: [batch=1, context length + horizon]
-#                 forecast = (output[:, -horizon:] * std + mean)[0].numpy()
-#                 assert forecast.shape == (horizon,), forecast.shape
-#                 print(f"== {repo} horizon {horizon}")
-#                 print("  head :", fmt(forecast[:3]))
-#                 print("  tail :", fmt(forecast[-3:]))
+#         for repo, fh, context_length in CASES:
+#             first = forecast(models[repo], fh, context_length)
+#             second = forecast(models[repo], fh, context_length)
+#             assert np.array_equal(first, second), "not reproducible"
+#             print(f"== {repo} fh {fh[0]}..{fh[-1]} ({len(fh)}) ctx {context_length}")
+#             print("  head :", fmt(first[:3]))
+#             print("  tail :", fmt(first[-3:]))
 #
 #
 #     if __name__ == "__main__":
@@ -256,5 +291,55 @@ def test_timemoe_predictions_match_upstream_reference(
         y_pred.iloc[-3:].to_numpy().ravel(),
         np.asarray(expected_tail, dtype=np.float32),
         rtol=_RTOL_LONG_HORIZON_TAIL if horizon >= _LONG_HORIZON else _RTOL,
+        atol=1e-4,
+    )
+
+
+# (model_path, fh, context length, expected forecast at fh)
+_TIMEMOE_UPSTREAM_FH_CONTEXT_CASES = [
+    # sparse fh: generates 12 steps and returns only the requested ones
+    pytest.param(
+        "Maple728/TimeMoE-50M",
+        [2, 5, 12],
+        None,
+        [388.648346, 433.013794, 397.196289],
+        id="50M-sparse-fh",
+    ),
+    # the last 36 values of the training series as context;
+    # first and last three values of the 12-step forecast
+    pytest.param(
+        "Maple728/TimeMoE-50M",
+        [1, 2, 3, 10, 11, 12],
+        36,
+        [414.354523, 410.816223, 449.615448, 423.824585, 382.559784, 416.8862],
+        id="50M-context-36",
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "model_path,fh,context_length,expected",
+    _TIMEMOE_UPSTREAM_FH_CONTEXT_CASES,
+)
+def test_timemoe_fh_and_context_match_upstream_reference(
+    model_path, fh, context_length, expected
+):
+    """TimeMoE matches upstream for sparse fh and a shorter context."""
+    # airline passengers without the last 12 months
+    y_train = load_airline().iloc[:-12]
+    if context_length is not None:
+        y_train = y_train.iloc[-context_length:]
+    forecaster = TimeMoEForecaster(
+        model_path=_pinned_snapshot(model_path), device="cpu", seed=0
+    )
+
+    y_pred = forecaster.fit(y_train).predict(fh=fh)
+
+    expected_index = y_train.index[-1] + np.asarray(fh)
+    assert list(y_pred.index) == list(expected_index)
+    np.testing.assert_allclose(
+        y_pred.to_numpy().ravel(),
+        np.asarray(expected, dtype=np.float32),
+        rtol=_RTOL,
         atol=1e-4,
     )
