@@ -134,9 +134,11 @@ class TiRexForecaster(BaseForecaster):
         "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
+        "capability:insample": False,
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_tirex"],
         # Shorthands
         # ----------
         "shorthands": {
@@ -258,7 +260,9 @@ class TiRexForecaster(BaseForecaster):
 
         context_tensor = torch.as_tensor(context_values, dtype=torch.float32)
 
-        predict_len = len(fh)
+        # forecast up to the furthest step, then pick the steps in fh
+        steps = fh.to_relative(self.cutoff).to_numpy()
+        predict_len = int(steps.max())
 
         forecast = self.model_.forecast(
             context=context_tensor, prediction_length=predict_len
@@ -270,7 +274,7 @@ class TiRexForecaster(BaseForecaster):
         if hasattr(forecast, "detach"):
             forecast = forecast.detach().cpu().numpy()
 
-        yhat = forecast.reshape(-1)[: len(fh)]
+        yhat = forecast.reshape(-1)[steps - 1]
 
         index = fh.to_absolute(self.cutoff).to_pandas()
 
