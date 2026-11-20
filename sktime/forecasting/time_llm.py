@@ -137,12 +137,11 @@ class TimeLLMForecaster(BaseForecaster):
 
         self.fh_ = fh
 
-        if isinstance(fh, int):
-            self._pred_len = fh
-        elif hasattr(fh, "__len__"):
-            self._pred_len = len(fh)
-        else:
+        if fh is None:
             self._pred_len = self.pred_len
+        else:
+            # the model forecasts steps 1 to pred_len, fh selects from them
+            self._pred_len = int(max(fh.to_relative(self.cutoff)))
 
         if len(y) < self.seq_len:
             raise ValueError(
@@ -259,9 +258,11 @@ class TimeLLMForecaster(BaseForecaster):
             )
 
         forecast_index = fh.to_absolute(self.cutoff).to_pandas()
+        steps = fh.to_relative(self.cutoff).to_numpy() - 1
+        values = res.detach().float().cpu().numpy().flatten()[steps]
 
         y_pred = pd.DataFrame(
-            data=res.detach().cpu().numpy().flatten(),
+            data=values,
             index=forecast_index,
             columns=self.last_values.columns,
         )
