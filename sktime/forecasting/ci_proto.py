@@ -81,7 +81,7 @@ class CIProtoForecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
-        "python_version": ">=3.11,<3.15",
+        "python_version": "<3.15",
         "python_dependencies": ["continuousintelligence", "skpro>=2.14"],
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_ci_proto"],
