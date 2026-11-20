@@ -287,10 +287,10 @@ class TimesFMForecaster(BaseForecaster):
             )
         elif fh is not None and self.horizon_len is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(self.horizon_len, *fh._values.values)
+            self._horizon_len = int(max(self.horizon_len, max(fh._values.values)))
         elif fh is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(*fh._values.values)
+            self._horizon_len = int(max(fh._values.values))
         else:
             self._horizon_len = self.horizon_len
 
@@ -359,7 +359,7 @@ class TimesFMForecaster(BaseForecaster):
         if not hasattr(self, "tfm") or self.tfm is None:
             self.tfm = self._load_model()
 
-        pred, _ = self.tfm.forecast(context_np)
+        pred, _ = self.tfm.forecast(context_np, freq=[self.freq])
 
         # converting pred datatype
 
