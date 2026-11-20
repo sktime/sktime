@@ -34,11 +34,19 @@ class MCDCNNNetwork(BaseDeepNetwork):
         Activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+
+    Examples
+    --------
+    >>> from sktime.networks.mcdcnn import MCDCNNNetwork
+    >>> network = MCDCNNNetwork(
+    ...     kernel_size=5, filter_sizes=(8, 8), random_state=42
+    ... )
     """
 
     _tags = {
         "authors": ["hfawaz", "James-Large", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

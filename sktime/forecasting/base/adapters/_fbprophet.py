@@ -19,6 +19,7 @@ class _ProphetAdapter(BaseForecaster):
         "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
         # bletham and tcuongd for prophet/fbprophet
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
@@ -74,6 +75,8 @@ class _ProphetAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         self._instantiate_model()
         self._check_changepoints()
 
@@ -311,7 +314,7 @@ class _ProphetAdapter(BaseForecaster):
 
         References
         ----------
-        https://facebook.github.io/prophet/docs/additional_topics.html
+        https://meta.github.io/prophet/docs/additional_topics.html
         """
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:

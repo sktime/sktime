@@ -119,10 +119,13 @@ class CNNRegressorTorch(BaseDeepRegressorTorch):
     _tags = {
         "authors": ["hfawaz", "AurumnPegasus", "achieveordie", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.cnn._cnn_torch"],
     }
 
     def __init__(

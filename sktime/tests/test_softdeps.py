@@ -19,7 +19,6 @@ import pytest
 from skbase.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 from sktime.registry import all_estimators
-from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
@@ -130,6 +129,20 @@ def test_module_softdeps(module):
         ) from e
 
 
+@pytest.mark.parametrize("module", modules)
+def test_module_all(module):
+    """Test that ``__all__`` of sktime modules lists names of module attributes.
+
+    ``from module import *`` requires all entries of ``__all__`` to be strings
+    which are names of attributes of the module, see bug #11410.
+    """
+    imported_module = import_module(module)
+
+    for name in getattr(imported_module, "__all__", []):
+        assert isinstance(name, str)
+        assert hasattr(imported_module, name)
+
+
 def test_moirai_forecaster_import_is_lazy_for_forecasting_imports(monkeypatch):
     """Test MOIRAI does not import vendored forecast when importing forecasters."""
     import sys
@@ -215,7 +228,7 @@ def _python_compat(est):
 
 
 # all estimators - exclude estimators on the global exclusion list
-all_ests = all_estimators(return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS)
+all_ests = all_estimators(return_names=False, filter_tags={"tests:skip_all": False})
 
 
 # estimators that should fail to construct because of python version

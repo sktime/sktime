@@ -67,13 +67,19 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
           equivalent to a call of the ``evaluate`` method.
         * If ``True``, direct call to the metric object evaluates the metric at each
           time point, equivalent to a call of the ``evaluate_by_index`` method.
-    """
 
-    _tags = {
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
-    }
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import (
+    ...     MeanSquaredErrorPercentage,
+    ... )
+    >>> y_true = np.array([1.0, 2.0, 3.0])
+    >>> y_pred = np.array([1.0, 2.0, 4.0])
+    >>> msep = MeanSquaredErrorPercentage()
+    >>> round(float(msep(y_true, y_pred)), 3)
+    0.167
+    """
 
     def __init__(
         self,

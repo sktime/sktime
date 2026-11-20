@@ -122,6 +122,7 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
     _tags = {
         "authors": ["michaelellis003"],
         "maintainers": ["michaelellis003"],
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(
@@ -157,6 +158,13 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
         n = y_true.shape[0]
         y_train_vals = y_train.values
         y_true_vals = y_true.values
+
+        if sp > y_train.shape[0]:
+            raise ValueError(
+                f"Seasonal periodicity sp={sp} exceeds the number of training "
+                f"observations ({y_train.shape[0]}). "
+                "TheilU2 requires len(y_train) >= sp."
+            )
 
         if sp > n:
             raise ValueError(

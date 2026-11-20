@@ -228,6 +228,16 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     ----------
 
         [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.augmenter import RandomSamplesAugmenter
+    >>> X = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]})
+    >>> augmenter = RandomSamplesAugmenter(n=3, random_state=42)
+    >>> Xt = augmenter.fit_transform(X)
+    >>> len(Xt)
+    3
     """  # noqa: E501
 
     _tags = {
@@ -248,7 +258,7 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
             if n < 1 or not np.isfinite(n):
                 raise ValueError("n must be a finite number >= 1.")
         else:
-            raise ValueError("n must be int or float, not " + str(type(n))) + "."
+            raise ValueError(f"n must be int or float, not {type(n)}.")
         self.n = n
         self.without_replacement = without_replacement
         self.random_state = random_state
@@ -267,3 +277,27 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
             replace = True
         Xt = rng.choice(values, n, replace)
         return pd.DataFrame(Xt)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        return [
+            {},
+            {"n": 5, "without_replacement": False, "random_state": 0},
+        ]

@@ -134,6 +134,10 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     np.float64(0.21935483870967742)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",

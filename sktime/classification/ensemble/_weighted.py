@@ -270,6 +270,15 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
         params0 = {"classifiers": [DummyClassifier()]}
 
+        # soft dependency free second parameter set, with fixed weights
+        params_dummy = {
+            "classifiers": [
+                ("prior", DummyClassifier()),
+                ("stratified", DummyClassifier(strategy="stratified")),
+            ],
+            "weights": [2, 1],
+        }
+
         ests = [KNeighborsTimeSeriesClassifier, RocketClassifier]
         if _check_estimator_deps(ests, severity="none"):
             params1 = {
@@ -288,6 +297,6 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
                 "weights": 2,
                 "cv": 3,
             }
-            return [params0, params1, params2]
+            return [params0, params_dummy, params1, params2]
         else:
-            return params0
+            return [params0, params_dummy]

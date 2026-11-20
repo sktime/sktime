@@ -26,9 +26,9 @@ from sktime.datasets import load_airline, load_longley
 # from sktime.exceptions import FitFailedWarning
 # commented out until bugs are resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
+from sktime.forecasting.dummy_global import DummyGlobalForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_evaluation._functions import (
@@ -92,7 +92,10 @@ def _check_evaluate_output(
     # Check column names.
     scoring = _check_scores(scoring)
     columns = _get_column_order_and_datatype(
-        metric_types=scoring, return_data=return_data, return_model=return_model
+        metric_types=scoring,
+        return_data=return_data,
+        return_model=return_model,
+        global_mode=cv_global is not None,
     )
     assert set(out.columns) == columns.keys(), "Columns are not identical"
 
@@ -136,11 +139,7 @@ def _check_evaluate_output(
         assert np.all(out.loc[0, "len_train_window"] == cv.window_length)
 
     elif cv_global is not None:
-        if isinstance(cv.fh, ForecastingHorizon):
-            window_length = cv.window_length + np.max(cv.fh.to_relative(cutoff))
-        else:
-            window_length = cv.window_length + np.max(cv.fh)
-        assert np.all(out.loc[:, "len_train_window"] == window_length)
+        assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
 
     else:
         assert np.all(out.loc[:, "len_train_window"] == cv.window_length)
@@ -214,14 +213,15 @@ def test_evaluate_common_configs(
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_global_mode(scoring, strategy, backend):
     """Check that evaluate works with hierarchical data."""
-    if backend["backend"] == "multiprocessing":
+    if backend["backend"] in ["multiprocessing", "threading"]:
         # multiprocessing will block the test due to unknown reason
+        # refit and threading leads to race conditions
         if strategy not in ["update", "no-update_params"]:
             # if strategy in ["update","no-update_params"], it won't run parallelly
             return None
 
     hierarchy_levels = (4, 4)
-    timepoints = 5
+    timepoints = 6
     data = _make_hierarchical(
         hierarchy_levels=hierarchy_levels,
         max_timepoints=timepoints,
@@ -254,7 +254,7 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     }
     forecaster = PytorchForecastingDeepAR(**params)
     cv_global = InstanceSplitter(KFold(2))
-    cv = SingleWindowSplitter(fh=[1], window_length=4)
+    cv = SingleWindowSplitter(fh=[1], window_length=5)
     out = evaluate(
         forecaster,
         cv,
@@ -329,6 +329,57 @@ def test_evaluate_global_mode_with_temporal_split():
     )
     # Two instance splits, and 2 temporal splits for each instance split
     assert len(out) == 2 * 4
+
+
+class _CountingGlobalForecaster(DummyGlobalForecaster):
+    """DummyGlobalForecaster that counts pretrain calls."""
+
+    n_pretrain = 0
+
+    @classmethod
+    def reset_counts(cls):
+        cls.n_pretrain = 0
+
+    def pretrain(self, y, X=None, fh=None):
+        type(self).n_pretrain += 1
+        return super().pretrain(y=y, X=X, fh=fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([evaluate, DummyGlobalForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("strategy", ["update", "no-update_params"])
+def test_evaluate_global_mode_update_refits_each_instance_fold(strategy):
+    """Update strategies refit at i=0 of each global instance fold j."""
+    _CountingGlobalForecaster.reset_counts()
+
+    timepoints = 12
+    n_instances = 4
+    y = _make_hierarchical(
+        hierarchy_levels=(n_instances,),
+        max_timepoints=timepoints,
+        min_timepoints=timepoints,
+        n_columns=1,
+        random_state=0,
+    )
+    cv_global = InstanceSplitter(KFold(2, shuffle=False))
+    cv = SlidingWindowSplitter(fh=1, window_length=6, step_length=2)
+    n_j = cv_global.get_n_splits(y)
+    n_i = cv.get_n_splits(y)
+
+    out = evaluate(
+        _CountingGlobalForecaster(),
+        cv,
+        y,
+        strategy=strategy,
+        error_score="raise",
+        cv_global=cv_global,
+    )
+
+    assert len(out) == n_j * n_i
+    # pretrain once per instance fold j (at i=0), not once overall
+    assert _CountingGlobalForecaster.n_pretrain == n_j
 
 
 @pytest.mark.skipif(
