@@ -2,6 +2,8 @@
 
 __author__ = ["ltsaprounis"]
 
+import re
+
 import pytest
 from pandas.testing import assert_series_equal
 
@@ -70,7 +72,8 @@ def test_log_is_property():
     mixin = _MockEstimatorMixin()
     with pytest.raises(AttributeError) as excinfo:
         mixin.log = 1
-        assert "can't set attribute" in str(excinfo.value)
+
+    assert re.search(r"can't set attribute|has no setter", str(excinfo.value))
 
 
 @pytest.mark.skipif(
@@ -91,7 +94,8 @@ def test_method_logger_exception():
     with pytest.raises(TypeError) as excinfo:
         dummy_instance = _DummyClass()
         dummy_instance._method()
-        assert "Estimator is not a Mock Estimator" in str(excinfo.value)
+
+    assert "method_logger requires a MockEstimator class" in str(excinfo.value)
 
 
 @pytest.mark.skipif(
