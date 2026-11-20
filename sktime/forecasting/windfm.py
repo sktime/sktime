@@ -82,7 +82,12 @@ class WindFMForecaster(BaseForecaster):
     and ``X`` to contain the historical weather covariates required by WindFM:
     wind speed, wind direction, density, temperature, and pressure. WindFM
     generates sample paths internally; this wrapper returns the median across
-    those samples as a point forecast.
+    those samples as a point forecast. ``predict_proba`` returns an ``skpro``
+    ``Empirical`` distribution over the sample paths, and ``predict_quantiles``
+    returns the quantiles of that distribution, i.e., the inverse of the
+    empirical cdf of the samples, without interpolation between samples.
+    The number of samples is set via ``sample_count`` in ``predict_kwargs``,
+    and defaults to 1, in which case all quantiles coincide.
 
     WindFM was trained with UTC timestamps. If the input index is not
     datetime-like, synthetic timestamps are generated from ``start`` and
@@ -333,6 +338,7 @@ class WindFMForecaster(BaseForecaster):
         """
         pred_df, y_index = self._predict_samples(fh)
 
+        # inverse empirical cdf, same as the Empirical quantiles in _predict_proba
         samples = np.sort(pred_df.to_numpy(), axis=1)
         cumulative_probability = np.arange(1, samples.shape[1] + 1) / samples.shape[1]
         quantile_indices = np.searchsorted(cumulative_probability, np.asarray(alpha))
