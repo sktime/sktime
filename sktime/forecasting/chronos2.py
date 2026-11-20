@@ -21,6 +21,14 @@ class Chronos2Forecaster(BaseForecaster):
     past-only covariates, and known-future covariates via a group attention
     mechanism described in [2]_.
 
+    Probabilistic forecasts via ``predict_proba`` are a ``skpro`` ``HistogramQPD``
+    parameterized by the native quantile grid of the model,
+    ``model_pipeline.quantiles``. Like ``Chronos2Pipeline.predict_quantiles``,
+    ``predict_quantiles`` interpolates linearly between adjacent native quantiles,
+    and clamps levels outside the native grid to the nearest native quantile,
+    so it agrees with the quantiles of ``predict_proba``.
+    Quantile forecasts are sorted in order of level, so they never cross.
+
     Parameters
     ----------
     model_path : str, default="amazon/chronos-2"
