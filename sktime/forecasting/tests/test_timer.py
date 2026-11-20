@@ -23,15 +23,17 @@ from sktime.tests.test_switch import run_test_for_class
 # Reference forecasts were generated on CPU from the upstream Timer remote code
 # in the thuml/timer-base-84m Hugging Face repository at the immutable commit
 # 70077a71acce1b4c00d98332fcaabc694255d8e5 (model code and weights), loaded
-# through ``transformers.AutoModelForCausalLM`` with ``trust_remote_code=True``
-# and bypassing sktime entirely.
+# through ``transformers.AutoModelForCausalLM`` with ``trust_remote_code=True``,
+# in a venv without sktime. The airline values are embedded in the script.
 #
 # ``TimerForecaster`` has no ``revision`` parameter, so the tests below load
 # the ``main`` revision of the checkpoint, which at the time of writing is the
 # commit above; the model code itself comes from the vendored copy in
 # ``sktime.libs.timer``, which is functionally identical to that commit.
 #
-# Environment: Python 3.12.14, torch 2.14.0, transformers 4.40.1, numpy 1.26.4.
+# Environment: Python 3.12.13, torch 2.15.0 (CPU), transformers 4.40.1,
+# numpy 1.26.4. Two runs gave identical values; the model has no dropout and
+# generation is greedy.
 #
 # The reference values were produced by the following standalone script:
 #
@@ -39,87 +41,64 @@ from sktime.tests.test_switch import run_test_for_class
 #     import torch
 #     from transformers import AutoModelForCausalLM
 #
-#     # sktime is only used as a data source here (airline passengers).
-#     from sktime.datasets import load_airline
-#
 #     REPO = "thuml/timer-base-84m"
 #     REVISION = "70077a71acce1b4c00d98332fcaabc694255d8e5"
-#     SEED = 0
-#     SYNTHETIC_LENGTH = 300
+#     INPUT_TOKEN_LEN = 96
 #
-#     # The pretrained checkpoint at REVISION (84M parameters, 337 MB of float32
-#     # weights) is loaded on CPU, the torch default device. The model is
-#     # deterministic: it has no dropout and generation is greedy, so SEED only
-#     # pins the RNG state for good measure.
-#     #
-#     # Each case mirrors one TimerForecaster configuration:
-#     #
-#     # * "default": TimerForecaster() on the first 132 airline values, fh=1..12.
-#     #   The context is the last 96 values (one input token, the remainder is
-#     #   dropped), one generation step is truncated to 12 values.
-#     # * "default-two-steps": as "default" with fh=1..100, so the 96 values of the
-#     #   first generation step are followed by a second step through the KV cache
-#     #   that yields the remaining 4 values.
-#     # * "context-length-96": TimerForecaster(context_length=96) on a synthetic
-#     #   seasonal series with trend of 300 values, fh=1..12. The context is cut to
-#     #   the last 96 values before token rounding, i.e. one token instead of the
-#     #   three tokens (288 values) that the default context length would use.
-#     CASES = {
-#         "default": {"series": "airline", "context_length": 2880, "horizon": 12},
-#         "default-two-steps": {
-#             "series": "airline",
-#             "context_length": 2880,
-#             "horizon": 100,
-#         },
-#         "context-length-96": {
-#             "series": "synthetic",
-#             "context_length": 96,
-#             "horizon": 12,
-#         },
-#     }
+#     # values of sktime.datasets.load_airline, monthly from 1949-01
+#     AIRLINE_VALUES = [
+#         112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+#         115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+#         145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+#         171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+#         196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+#         204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+#         242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+#         284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+#         315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+#         340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+#         360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+#         417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432,
+#     ]
 #
 #
-#     def seasonal_trend_series(n):
+#     def seasonal_trend(n=300):
 #         t = np.arange(n, dtype=np.float64)
 #         return 100.0 + 0.5 * t + 20.0 * np.sin(2 * np.pi * t / 12)
 #
 #
-#     SERIES = {
-#         "airline": lambda: load_airline().to_numpy()[:-12],
-#         "synthetic": lambda: seasonal_trend_series(SYNTHETIC_LENGTH),
+#     # name: (series, context_length, horizon), horizon = max(fh)
+#     CASES = {
+#         # context 2880 > 132 values, so 96 values (one token) are used
+#         "default": (np.asarray(AIRLINE_VALUES[:-12]), 2880, 12),
+#         # 100 > output_token_len 96: second generation step via the KV cache
+#         "default-two-steps": (np.asarray(AIRLINE_VALUES[:-12]), 2880, 100),
+#         # context_length cuts 300 values to 96 instead of 288 (three tokens)
+#         "context-length-96": (seasonal_trend(), 96, 12),
 #     }
 #
 #
-#     def fmt(values):
-#         return "[" + ", ".join(f"{float(v):.9g}" for v in values) + "]"
+#     def build_context(y, context_length):
+#         # mirrors TimerForecaster: float32, zero padding at the front up to
+#         # one token, last context_length values, whole tokens only
+#         y = y.astype(np.float32)
+#         if len(y) < INPUT_TOKEN_LEN:
+#             pad = np.zeros(INPUT_TOKEN_LEN - len(y), np.float32)
+#             y = np.concatenate([pad, y])
+#         y = y[-context_length:]
+#         return y[-(len(y) // INPUT_TOKEN_LEN) * INPUT_TOKEN_LEN :]
 #
 #
-#     def main():
-#         model = AutoModelForCausalLM.from_pretrained(
-#             REPO, revision=REVISION, trust_remote_code=True, torch_dtype=torch.float32
-#         )
-#         model.eval()
-#
-#         for name, case in CASES.items():
-#             y = SERIES[case["series"]]().astype(np.float32)
-#             # TimerForecaster keeps the most recent ``context_length`` values;
-#             # upstream ``generate`` then drops the oldest remainder that does not
-#             # fill a whole input token of config.input_token_len values.
-#             context = y[-case["context_length"] :]
-#             past_values = torch.tensor(context, dtype=torch.float32)[None]
-#             torch.manual_seed(SEED)
-#             with torch.no_grad():
-#                 output = model.generate(past_values, max_new_tokens=case["horizon"])
-#             # output: [batch=1, horizon]
-#             forecast = output[0].numpy()
-#             assert forecast.shape == (case["horizon"],), forecast.shape
-#             print(f"== {name} (context {len(context)} values)")
-#             print("  head :", fmt(forecast[:3]))
-#             print("  tail :", fmt(forecast[-3:]))
-#
-#
-#     if __name__ == "__main__":
-#         main()
+#     model = AutoModelForCausalLM.from_pretrained(
+#         REPO, revision=REVISION, trust_remote_code=True, torch_dtype=torch.float32
+#     )
+#     model.eval()
+#     for name, (y, context_length, horizon) in CASES.items():
+#         past = torch.tensor(build_context(y, context_length))[None]
+#         with torch.no_grad():
+#             forecast = model.generate(past, max_new_tokens=horizon)[0].numpy()
+#         assert forecast.shape == (horizon,)
+#         print(name, forecast[:3].tolist(), forecast[-3:].tolist())
 
 _TIMER_MODEL_NAME = "thuml/timer-base-84m"
 _TIMER_SYNTHETIC_LENGTH = 300
@@ -144,15 +123,15 @@ _TIMER_UPSTREAM_REFERENCE_CASES = [
         _load_airline_train,
         2880,
         12,
-        [393.205109, 401.126251, 405.195679],
-        [377.61911, 373.585724, 385.950806],
+        [393.205139, 401.126282, 405.195709],
+        [377.61911, 373.585754, 385.950836],
         id="default",
     ),
     pytest.param(
         _load_airline_train,
         2880,
         100,
-        [393.205109, 401.126251, 405.195679],
+        [393.205139, 401.126282, 405.195709],
         [343.705017, 345.483154, 347.02417],
         id="default-two-steps",
     ),
@@ -160,8 +139,8 @@ _TIMER_UPSTREAM_REFERENCE_CASES = [
         lambda: _seasonal_trend_series(_TIMER_SYNTHETIC_LENGTH),
         96,
         12,
-        [246.726791, 256.788849, 262.056763],
-        [220.53685, 223.281296, 231.372559],
+        [246.726776, 256.788849, 262.056763],
+        [220.53685, 223.281311, 231.372559],
         id="context-length-96",
     ),
 ]
