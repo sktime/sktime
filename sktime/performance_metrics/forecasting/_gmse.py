@@ -14,13 +14,39 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
-    """Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
+    r"""Geometric mean squared error (GMSE) or Root geometric mean squared error (RGMSE).
 
     If ``square_root`` is False then calculates GMSE and if ``square_root`` is True
     then RGMSE is calculated. Both GMSE and RGMSE return non-negative floating
     point. The best value is approximately zero, rather than zero.
 
-    Like MSE and MdSE, GMSE is measured in squared units of the input data. RMdSE is
+    For a univariate, non-hierarchical sample of
+    true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`\mathbb{R}`),
+    ``evaluate`` or call returns the Geometric Mean Squared Error, defined as:
+
+    .. math::
+        \text{GMSE} = \left(\prod_{i=1}^n (y_i - \widehat{y}_i)^2\right)^{\frac{1}{n}}
+
+    If ``square_root`` is True, the square root of the above is returned instead,
+    the Root Geometric Mean Squared Error:
+
+    .. math::
+        \text{RGMSE} = \sqrt{\text{GMSE}}
+
+    Errors that are exactly zero, i.e., where :math:`y_i = \widehat{y}_i`,
+    are replaced by machine epsilon (``np.finfo(np.float64).eps``) before squaring,
+    so that a single exactly correct forecast does not collapse the product to zero.
+    This is why the best value is approximately, but not exactly, zero.
+
+    ``evaluate_by_index`` returns, at each time index, the jackknife pseudo-value
+    of the metric at that time index (the default implementation, based on
+    leave-one-out re-evaluation of ``evaluate``).
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    Like MSE and MdSE, GMSE is measured in squared units of the input data. RGMSE is
     on the same scale as the input data like RMSE and RdMSE. Because GMSE and RGMSE
     square the forecast error rather than taking the absolute value, they
     penalize large errors more than GMAE.
