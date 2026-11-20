@@ -154,7 +154,7 @@ class FalconTSTForecaster(BaseForecaster):
     References
     ----------
     .. [1] Falcon-TST repository:
-       https://github.com/AntGroup/Falcon-TST
+       https://github.com/ant-intl/Falcon-TST
     .. [2] Falcon-TST model card:
        https://huggingface.co/ant-intl/Falcon-TST_Large
     .. [3] Quantization docs:
@@ -215,6 +215,7 @@ class FalconTSTForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,
@@ -225,6 +226,7 @@ class FalconTSTForecaster(BaseForecaster):
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>=4.23.0,<5.0.0"],
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_falcon_tst"],
     }
 
     def __init__(

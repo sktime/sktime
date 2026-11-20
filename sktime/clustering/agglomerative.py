@@ -35,6 +35,29 @@ class TimeSeriesAgglomerativeClustering(BaseClusterer):
         Cluster labels for each point.
     linkage_matrix_ : ndarray
         The hierarchical clustering encoded as a linkage matrix.
+
+    Examples
+    --------
+    Cluster four univariate time series using Euclidean distance and complete
+    linkage. The input shape is (n_instances, n_variables, n_timepoints).
+
+    >>> import numpy as np
+    >>> from sktime.clustering.agglomerative import TimeSeriesAgglomerativeClustering
+    >>> X = np.array([
+    ...     [[0., 0., 0.]],
+    ...     [[0., 0., 1.]],
+    ...     [[10., 10., 10.]],
+    ...     [[10., 10., 11.]],
+    ... ])
+    >>> clusterer = TimeSeriesAgglomerativeClustering(
+    ...     n_clusters=2, linkage="complete", distance="euclidean"
+    ... )
+    >>> clusterer.fit(X)  # doctest: +ELLIPSIS
+    TimeSeriesAgglomerativeClustering(...)
+    >>> clusterer.labels_.tolist()
+    [0, 0, 1, 1]
+    >>> clusterer.linkage_matrix_.shape
+    (3, 4)
     """
 
     _tags = {
