@@ -359,7 +359,7 @@ class TimesFMForecaster(BaseForecaster):
         if not hasattr(self, "tfm") or self.tfm is None:
             self.tfm = self._load_model()
 
-        pred, _ = self.tfm.forecast(context_np)
+        pred, _ = self.tfm.forecast(context_np, freq=[self.freq])
 
         # converting pred datatype
 
