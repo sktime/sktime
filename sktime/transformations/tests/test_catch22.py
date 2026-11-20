@@ -35,6 +35,7 @@ def test_catch22_on_basic_motions():
     )
 
 
+@pytest.mark.xfail(reason="some features changed in newer versions of pycatch22")
 @pytest.mark.skipif(
     not run_test_for_class(Catch22Wrapper),
     reason="run test only if softdeps are present and incrementally (if requested)",
