@@ -92,7 +92,7 @@ class Model(nn.Module):
                 self.llm_model = LlamaModel.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/",
                     "huggyllama/llama-7b",
-                    local_files_only=True,
+                    local_files_only=False,
                     config=self.llama_config,
                     # load_in_4bit=True
                 )
@@ -109,7 +109,7 @@ class Model(nn.Module):
                 self.tokenizer = LlamaTokenizer.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/tokenizer.model",
                     "huggyllama/llama-7b",
-                    local_files_only=True,
+                    local_files_only=False,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
                 print("Local tokenizer files not found. Attempting to download them..")
@@ -160,7 +160,7 @@ class Model(nn.Module):
             try:
                 self.llm_model = BertModel.from_pretrained(
                     "google-bert/bert-base-uncased",
-                    local_files_only=True,
+                    local_files_only=False,
                     config=self.bert_config,
                 )
             except OSError:  # downloads model from HF is not already done
@@ -174,7 +174,7 @@ class Model(nn.Module):
             try:
                 self.tokenizer = BertTokenizer.from_pretrained(
                     "google-bert/bert-base-uncased",
-                    local_files_only=True,
+                    local_files_only=False,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
                 print("Local tokenizer files not found. Attempting to download them..")
