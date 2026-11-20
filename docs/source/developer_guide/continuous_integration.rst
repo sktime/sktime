@@ -169,8 +169,6 @@ The mapping between Python versions and ``PYTHON_VERSION`` values is displayed i
 | Python version | PYTHON_VERSION |
 +================+================+
 +----------------+----------------+
-|     3.10    |      py310        |
-+----------------+----------------+
 |     3.11    |      py311        |
 +----------------+----------------+
 |     3.12    |      py312        |

@@ -162,7 +162,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6]
-    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
     .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
@@ -178,6 +178,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -569,7 +570,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     .. [3] https://github.com/Nixtla/neuralforecast/
     .. [4] https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
-    .. [6] https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [6] https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
     .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
@@ -585,6 +586,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -961,7 +963,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6]
-    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
     .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
@@ -977,6 +979,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -1364,7 +1367,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6]
-    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
     .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
@@ -1380,6 +1383,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -1765,7 +1769,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
     https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
     .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
     .. [6]
-    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
     .. [7] https://pytorch.org/docs/stable/optim.html
     .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
     .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
@@ -1781,6 +1785,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
