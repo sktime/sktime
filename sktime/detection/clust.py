@@ -25,6 +25,17 @@ class ClusterSegmenter(BaseDetector):
     ----------
     clusterer : sklearn.cluster
         The instance of clustering algorithm used for segmentation.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.detection.clust import ClusterSegmenter
+    >>> X = pd.Series(
+    ...     [1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 1.0, 1.0],
+    ...     index=pd.date_range("2000", periods=8, freq="D"),
+    ... )
+    >>> detector = ClusterSegmenter()
+    >>> y_pred = detector.fit_predict(X)  # doctest: +SKIP
     """
 
     _tags = {

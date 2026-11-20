@@ -106,6 +106,18 @@ class GGS:
     "Greedy Gaussian segmentation of multivariate time series.",
     Adv Data Anal Classif 13, 727-751 (2019).
     https://doi.org/10.1007/s11634-018-0335-0
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.ggs import GGS
+    >>> data = np.array(
+    ...     [[1.0, 2.0], [1.0, 2.0], [1.0, 2.0],
+    ...      [5.0, 6.0], [5.0, 6.0], [5.0, 6.0]]
+    ... )
+    >>> ggs = GGS(k_max=2)
+    >>> ggs.initialize_intermediates()
+    >>> change_points = ggs.find_change_points(data)
     """
 
     k_max: int = 10
@@ -415,6 +427,17 @@ class GreedyGaussianSegmentation(BaseDetector):
        "Greedy Gaussian segmentation of multivariate time series.",
        Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.detection.ggs import GreedyGaussianSegmentation
+    >>> X = pd.DataFrame(
+    ...     {"a": [1.0, 1.0, 1.0, 5.0, 5.0, 5.0, 1.0, 1.0, 1.0, 5.0]},
+    ...     index=pd.date_range("2000", periods=10, freq="D"),
+    ... )
+    >>> detector = GreedyGaussianSegmentation(k_max=2, random_state=0)
+    >>> y_pred = detector.fit_predict(X)
     """
 
     _tags = {

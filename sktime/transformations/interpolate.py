@@ -23,6 +23,16 @@ class TSInterpolator(BaseTransformer):
     Parameters
     ----------
     length : integer, the length of time series to resize to.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.interpolate import TSInterpolator
+    >>> X = pd.DataFrame(
+    ...     {"dim_0": [pd.Series(range(20)) for _ in range(3)]}
+    ... )
+    >>> transformer = TSInterpolator(length=10)
+    >>> X_transformed = transformer.fit_transform(X)  # doctest: +SKIP
     """
 
     _tags = {
