@@ -124,7 +124,7 @@ class TransformerPairwisePanelTransformSymm(TransformerPairwisePanelTestScenario
     def args(self):
         d = {"col1": [1, 2], "col2": [3, 4]}
         d = pd.DataFrame(d)
-        X = [d, d]
+        X = [d, d + 1]
 
         return {
             "fit": {"X": None, "X2": None},

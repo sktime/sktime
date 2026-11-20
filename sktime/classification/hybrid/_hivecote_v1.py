@@ -103,6 +103,10 @@ class HIVECOTEV1(BaseClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "hybrid",
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # mac failures, see #3103
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

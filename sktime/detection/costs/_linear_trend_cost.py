@@ -101,6 +101,31 @@ class LinearTrendCost(BaseCost):
     share_fixed_trend : bool, optional (default=False)
         If True, a single ``[slope, intercept]`` pair is broadcast
         to all data columns.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.costs import LinearTrendCost
+    >>> X = np.array([0., 1., 2., 3., 10., 9., 8., 7.]).reshape(-1, 1)
+    >>> cost = LinearTrendCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[ 0.  ],
+           [ 0.  ],
+           [33.33]])
+
+    Each of the first two intervals lies exactly on a straight line, so the
+    residuals, and hence the cost, are zero. The third interval contains the
+    change in slope and cannot be fitted by a single line.
+
+    Passing ``param`` evaluates the cost at a fixed ``[slope, intercept]``
+    instead of fitting the trend to the interval:
+
+    >>> cost = LinearTrendCost(param=np.array([[1.0, 0.0]]),
+    ...                        share_fixed_trend=True)
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[ 0.],
+           [56.],
+           [56.]])
     """
 
     _tags = {

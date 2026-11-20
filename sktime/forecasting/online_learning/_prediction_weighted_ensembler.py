@@ -30,6 +30,7 @@ class _PredictionWeightedEnsembler:
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:update": True,
     }
 
     def __init__(self, n_estimators=10, loss_func=None):
@@ -199,6 +200,12 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         # Calculating Normalizing Constant
         R_plus = np.array(list(map(lambda x: 0 if 0 > x else x, self.R)))
         normalizing_R = np.max(R_plus)
+
+        # no estimator has positive regret: the NormalHedge update is 0/0 here,
+        # so fall back to uniform weights, as at initialization (all regrets 0)
+        if normalizing_R == 0:
+            self._uniform_weights(self.n_estimators)
+            return
 
         R_plus /= normalizing_R
 

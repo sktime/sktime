@@ -419,6 +419,20 @@ class LagLlamaForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["pranavvp16"],
+        "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
+        "python_dependencies": [
+            "gluonts>=0.14.0",
+            "torch",
+            "lightning>=2.0",
+            "huggingface_hub",
+        ],
+        # estimator type
+        # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:exogenous": False,
         "capability:multivariate": False,  # LagLlama is univariate only
@@ -431,18 +445,20 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
-        "authors": ["pranavvp16"],
-        "maintainers": ["pranavvp16"],
-        "python_version": "<3.14",
-        "python_dependencies": [
-            "gluonts>=0.14.0",
-            "torch",
-            "lightning>=2.0",
-            "huggingface_hub",
-        ],
+        "capability:update": True,  # can estimator update its parameters with new data?
+        # test and CI flags
+        # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
         "tests:libs": ["sktime.libs.lag_llama"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "lagllama": (
+                "LagLlamaForecaster("
+                'ckpt_path="time-series-foundation-models/Lag-Llama")'
+            ),
+        },
     }
 
     def __init__(
@@ -811,6 +827,8 @@ class LagLlamaForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         # Store the inner column names seen during fit.
         # For pd.Series input, sktime converts to pd.DataFrame with:
         # - column 0 if Series.name is None
@@ -907,6 +925,24 @@ class LagLlamaForecaster(BaseForecaster):
             "prediction_length": prediction_length,
         }
         return str(sorted(config.items()))
+
+    def _update(self, y, X=None, update_params=True):
+        """Update forecaster with new data, i.e., extend the context series.
+
+        New observations extend the context that ``_predict`` conditions on.
+        Appending is required for ``_extend_df`` to produce a contiguous index,
+        since the cutoff advances in ``update``.
+
+        ``update_params`` has no effect: the model is used zero-shot, and ``_fit``
+        does not train, it loads the pretrained predictor. Fine-tuning on new data
+        is only available via ``pretrain``.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        return self
 
     def infer_freq(self, index):
         """
@@ -1018,8 +1054,8 @@ class LagLlamaForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions with same index type as input y
         """
-        # Use self._y (stored during fit)
-        y = self._y
+        # Use self._cur_y (stored during fit)
+        y = self._cur_y
 
         forecasts, _is_hierarchical, _original_index_names = self._generate_forecasts(
             fh
@@ -1070,7 +1106,7 @@ class LagLlamaForecaster(BaseForecaster):
                 "in-sample forecasting is not supported by LagLlamaForecaster"
             )
 
-        _y = self._y.copy()
+        _y = self._cur_y.copy()
         _y = self._extend_df(_y, fh)
 
         # _is_range_index is pre-computed in _fit; do not mutate it here
@@ -1263,7 +1299,7 @@ class LagLlamaForecaster(BaseForecaster):
                 new_tuples, names=original_index_names
             )
 
-        y = self._y
+        y = self._cur_y
         pred_out_expected = fh.get_expected_pred_idx(y, cutoff=self.cutoff)
         wide = self._align_prediction_index(wide, y, pred_out_expected)
 
@@ -1341,7 +1377,7 @@ class LagLlamaForecaster(BaseForecaster):
         """
         from skpro.distributions.empirical import Empirical
 
-        y = self._y
+        y = self._cur_y
         forecasts, is_hierarchical, original_index_names = self._generate_forecasts(fh)
 
         # Assemble samples in wide format: rows = (instance, time), cols = sample id.

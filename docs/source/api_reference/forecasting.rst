@@ -148,6 +148,20 @@ Direct and recursive - 3rd party
     DartsLinearRegressionModel
     DartsXGBModel
 
+Probabilistic reduction forecasters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Meta-algorithms that wrap probabilistic tabular regressors (e.g., from ``skpro``)
+to produce probabilistic forecasts via reduction.
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MCRecursiveProbaReductionForecaster
+    DirectTabularRegressionForecaster
 
 Naive forecasters
 -----------------
@@ -755,6 +769,22 @@ Domain agnostic foundation models
 
     T0Forecaster
 
+.. currentmodule:: sktime.forecasting.tabby
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TabbyForecaster
+
+.. currentmodule:: sktime.forecasting.tafsut
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TafsutForecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
@@ -787,6 +817,14 @@ Domain agnostic foundation models
 
     TimerS1Forecaster
 
+.. currentmodule:: sktime.forecasting.timeh2o
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeH2OForecaster
+
 .. currentmodule:: sktime.forecasting.timesfm
 
 .. autosummary::
@@ -802,6 +840,14 @@ Domain agnostic foundation models
     :template: class.rst
 
     TimesFM2Forecaster
+
+.. currentmodule:: sktime.forecasting.timesfm3
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimesFM3Forecaster
 
 .. currentmodule:: sktime.forecasting.ttm
 
@@ -952,6 +998,16 @@ Ensembles and stacking
     :template: class.rst
 
     MAPAForecaster
+
+.. currentmodule:: sktime.forecasting.hypertrees
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HyperTreeARForecaster
+    HyperTreeNetARForecaster
+
 
 Causal Forecasting
 ------------------
