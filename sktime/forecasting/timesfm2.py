@@ -698,21 +698,15 @@ class TimesFM2Forecaster(BaseForecaster):
 
         self.model_ = self._load_model()
 
-        quantiles = self.model_.config.quantiles
+        quantiles = [round(i, 3) for i in self.model_.config.quantiles]
+        preds = self._predict_quantiles(fh=fh, X=X, alpha=quantiles)
 
-        fh, preds_idx = self._validate_predict_fh(fh)
-
-        preds = self._predict_full_quantiles()
-        # drop point forecast column, keep native quantile grid columns
-        preds = preds[preds_idx][:, 1:]
-
-        pred_index = fh.to_absolute(self._cutoff)._values
-        name = self.context_.name if self.context_.name is not None else 0
-        columns = pd.Index([name])
+        pred_index = preds.index
+        columns = preds.columns.get_level_values(0).unique()
 
         # rows of q_df are (quantile level, time index), see HistogramQPD docs
         row_index = pd.MultiIndex.from_product([quantiles, pred_index])
-        data = preds.T.reshape(-1, 1)
+        data = preds.to_numpy().T.reshape(-1, 1)
         q_df = pd.DataFrame(data, index=row_index, columns=columns)
 
         return HistogramQPD(q_df, tails="mass", index=pred_index, columns=columns)
