@@ -674,3 +674,33 @@ def test_evaluate_hierarchical_unequal_X_y():
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_evaluate_joblib_backend_default_n_jobs(monkeypatch):
+    """Test that evaluate uses all cores with a joblib backend and no n_jobs.
+
+    Regression test for #5293, where evaluate did not run in parallel
+    unless ``n_jobs`` was passed explicitly in ``backend_params``.
+    """
+    import joblib
+
+    n_jobs_seen = []
+    original_init = joblib.Parallel.__init__
+
+    def spy_init(self, *args, **kwargs):
+        n_jobs_seen.append(kwargs.get("n_jobs"))
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(joblib.Parallel, "__init__", spy_init)
+
+    y = make_forecasting_problem(n_timepoints=30, index_type="int")
+    cv = ExpandingWindowSplitter(initial_window=15, step_length=5, fh=[1, 2, 3])
+
+    out = evaluate(forecaster=NaiveForecaster(), y=y, cv=cv, backend="threading")
+
+    assert len(out) == cv.get_n_splits(y)
+    assert n_jobs_seen == [-1]
