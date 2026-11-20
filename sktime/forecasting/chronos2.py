@@ -233,7 +233,26 @@ class Chronos2Forecaster(BaseForecaster):
         return self
 
     def _get_predict_tensor(self, fh, X=None):
-        """Shared utility to execute the Chronos-2 pipeline and return raw tensors."""
+        """Run the Chronos-2 pipeline, shared by ``_predict`` and ``_predict_proba``.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future).
+
+        Returns
+        -------
+        pred_tensor : torch.Tensor of shape (n_variates, n_quantiles, prediction_length)
+            Quantile forecasts at the native levels ``quantiles``,
+            for all steps up to the largest step in ``fh``.
+        quantiles : list of float
+            Native quantile levels of the model, in increasing order.
+        index : array-like of length prediction_length
+            Absolute time index of all steps up to the largest step in ``fh``.
+        pred_out : pd.Index
+            Time index of the steps in ``fh``, a subset of ``index``.
+        """
         import transformers
 
         self._ensure_model_pipeline_loaded()
@@ -289,7 +308,19 @@ class Chronos2Forecaster(BaseForecaster):
         return pred_tensor, quantiles, index, pred_out
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon."""
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future). Column names must be
+            a subset of X provided in fit.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+        """
         pred_tensor, quantiles, index, pred_out = self._get_predict_tensor(fh, X)
 
         median_idx = quantiles.index(0.5)
