@@ -213,8 +213,10 @@ class Model(nn.Module):
         if configs.prompt_domain:
             self.description = configs.content
         else:
-            self.description = "The Electricity Transformer Temperature (ETT) \
-                is a crucial indicator in the electric power long-term deployment."
+            self.description = (
+                "The Electricity Transformer Temperature (ETT) is a crucial "
+                "indicator in the electric power long-term deployment."
+            )
 
         self.dropout = nn.Dropout(configs.dropout)
 
@@ -280,8 +282,8 @@ class Model(nn.Module):
             lags_values_str = str(lags[b].tolist())
             prompt_ = (
                 f"<|start_prompt|>Dataset description: {self.description}"
-                f"Task description: forecast the next {str(self.pred_len)} steps \
-                    given the previous {str(self.seq_len)} steps information; "
+                f"Task description: forecast the next {str(self.pred_len)} steps "
+                f"given the previous {str(self.seq_len)} steps information; "
                 "Input statistics: "
                 f"min value {min_values_str}, "
                 f"max value {max_values_str}, "
