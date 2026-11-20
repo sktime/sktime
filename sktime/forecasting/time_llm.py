@@ -85,6 +85,7 @@ class TimeLLMForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "requires-fh-in-fit": True,
+        "capability:insample": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
