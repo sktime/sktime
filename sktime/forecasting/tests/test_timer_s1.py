@@ -74,7 +74,6 @@ from sktime.tests.test_switch import run_test_for_class
 #         "num_experts": 4,
 #         "num_hidden_layers": 2,
 #         "num_mtp_tokens": 1,
-#         "dropout_rate": 0.0,
 #     }
 #
 #     CASES = {
@@ -162,9 +161,6 @@ _TIMER_S1_BASE_CONFIG = {
     "num_experts": 4,
     "num_hidden_layers": 2,
     "num_mtp_tokens": 1,
-    # randomly initialized models are left in training mode, so dropout
-    # would otherwise be active in predict and depend on the RNG state
-    "dropout_rate": 0.0,
 }
 
 # (config overrides, forward_kwargs, expected point head, expected point tail)
