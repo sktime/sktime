@@ -3,6 +3,7 @@
 import logging
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pandas as pd
 
@@ -62,6 +63,13 @@ def _check_estimators_type(objs: dict | list | BaseEstimator) -> None:
             "One or many estimator(s) is not an initialised BaseEstimator "
             "object(s). Please instantiate the estimator(s) first."
         )
+
+
+def _same_results_path(left, right):
+    """Return whether two benchmark output paths refer to the same file."""
+    if left is None or right is None:
+        return left is None and right is None
+    return Path(left) == Path(right)
 
 
 def _get_dataset_name(dataset_loader):
@@ -751,9 +759,13 @@ class BaseBenchmark:
         """
         self._check_ready_to_run()
 
-        results = BenchmarkingResults(path=results_path)
+        results = self._prepare_results(results_path)
         self._results = results
-        self._failed_experiments = []
+        prior_failures = {
+            (failure.task_id, failure.model_id): failure
+            for failure in self._failed_experiments
+        }
+        new_failures = []
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():
             if results._contains(task_id, estimator_id) and (
@@ -767,6 +779,7 @@ class BaseBenchmark:
                 )
                 continue
 
+            prior_failures.pop((task_id, estimator_id), None)
             logger.info(f"Running validation - model: {task_id} - {estimator_id}")
             try:
                 folds = self._run_validation(task, estimator)
@@ -777,7 +790,7 @@ class BaseBenchmark:
                     exception_type=type(exc).__name__,
                     exception_message=str(exc),
                 )
-                self._failed_experiments.append(failure)
+                new_failures.append(failure)
                 logger.error(
                     "Validation failed: %s - %s: %s: %s",
                     task_id,
@@ -795,11 +808,31 @@ class BaseBenchmark:
                 )
             )
 
+        self._failed_experiments = new_failures
         self._report_failed_experiments()
+        self._failed_experiments = [*prior_failures.values(), *new_failures]
 
         if results_path is not None:
             results._save()
         return results.to_df()
+
+    def _prepare_results(self, results_path):
+        """Return the result store for this run, reusing completed experiments.
+
+        The in-memory store is shared by `run` and `leaderboard`. A later call
+        skips task-model pairs already stored there. A new ``results_path``
+        retargets where those results are written and does not discard them.
+        """
+        if self._results is None:
+            return BenchmarkingResults(path=results_path)
+
+        results = self._results
+        if results_path is not None and not _same_results_path(
+            results.path, results_path
+        ):
+            results.path = results_path
+            results._persistence = BenchmarkResultsPersistence(results.path)
+        return results
 
     def _report_failed_experiments(self):
         """Log a summary of failed task-estimator pairs from the current run."""
@@ -845,6 +878,12 @@ class BaseBenchmark:
         completion and checkpointed incrementally during the run. The file
         extension (``.json``, ``.csv``, or ``.parquet``) selects the final
         storage format; see `get_storage_backend`.
+
+        Completed experiments are kept in memory and shared with `leaderboard`.
+        A later call skips those task-model pairs instead of fitting them
+        again. ``force_rerun`` still re-executes the pairs it names. Passing
+        ``output_file`` after an in-memory run writes the cached results to
+        that file.
 
         Parameters
         ----------
@@ -896,9 +935,14 @@ class BaseBenchmark:
         column, named with the scorer. Ranks from different metrics are not
         averaged. Rows are ordered by the first scorer.
 
-        By default every task and every scorer from the most recent `run` is
-        used. Pass ``dataset`` to rank on one dataset, or on a chosen subset.
-        On a single task with one scorer, the order follows that task's score.
+        Calling `leaderboard` runs the benchmark when it has not already been
+        run. `run` afterwards reuses those results and does not repeat
+        completed experiments. `leaderboard` after `run` does not run the
+        benchmark again.
+
+        By default every task and every scorer is used. Pass ``dataset`` to
+        rank on one dataset, or on a chosen subset. On a single task with one
+        scorer, the order follows that task's score.
 
         ``dataset`` matches either a dataset name — the ``[dataset=...]``
         field of a generated task id — or a full ``validation_id``. A dataset
@@ -927,7 +971,9 @@ class BaseBenchmark:
         results : pandas.DataFrame or str, optional (default=None)
             Results to rank. A dataframe is the table returned by `run`. A
             string is a path to a results file written by `run`. ``None`` uses
-            the results of the most recent `run` on this benchmark.
+            the benchmark's own results, running the benchmark first when
+            those results are not already available. An explicit value is
+            ranked as given and does not run the benchmark.
 
         Returns
         -------
@@ -941,8 +987,8 @@ class BaseBenchmark:
         Raises
         ------
         ValueError
-            If `run` has not been called and ``results`` is ``None``. Also if
-            the results contain no matching tasks or scorers, or a model is
+            If the benchmark defines no experiments to run. Also if the
+            results contain no matching tasks or scorers, or a model is
             missing a score on a selected task.
 
         See Also
@@ -962,18 +1008,12 @@ class BaseBenchmark:
         >>> benchmark.add_task(
         ...     make_classification_problem, KFold(n_splits=2), [accuracy_score]
         ... )
-        >>> _ = benchmark.run()
         >>> board = benchmark.leaderboard()
         >>> int(board.loc[0, "accuracy_score_rank"])
         1
         """
         if results is None:
-            if self._results is None:
-                raise ValueError(
-                    "No benchmark results are available. Call `run` first, "
-                    "or pass `results` as a DataFrame or a path to a results "
-                    "file."
-                )
+            self.run()
             frame = self._results.to_df()
         else:
             frame = _coerce_results(results)

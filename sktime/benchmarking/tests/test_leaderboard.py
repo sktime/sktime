@@ -300,10 +300,45 @@ def test_accuracy_score_direction_from_name():
     assert board["model_id"].tolist() == ["good", "bad"]
 
 
-def test_leaderboard_before_run_raises():
-    """Calling leaderboard without results raises a clear error."""
+def test_leaderboard_runs_and_run_reuses_the_same_results(tmp_path):
+    """leaderboard runs the benchmark, and a later run does not repeat it."""
     benchmark = ClassificationBenchmark()
-    with pytest.raises(ValueError, match="Call `run` first"):
+    benchmark.add_estimator(DummyClassifier())
+    benchmark.add_task(make_classification_problem, KFold(n_splits=2), [accuracy_score])
+    calls = {"n": 0}
+    original = benchmark._run_validation
+
+    def _counting_validation(task, estimator):
+        calls["n"] += 1
+        return original(task, estimator)
+
+    benchmark._run_validation = _counting_validation
+
+    board = benchmark.leaderboard()
+    assert calls["n"] == 1
+    assert board["model_id"].iloc[0] == "DummyClassifier"
+
+    results = benchmark.run()
+    assert calls["n"] == 1
+    assert list(results["model_id"]) == ["DummyClassifier"]
+
+    benchmark.leaderboard()
+    assert calls["n"] == 1
+
+    path = tmp_path / "results.csv"
+    benchmark.run(path)
+    assert calls["n"] == 1
+    assert path.exists()
+    assert list(BenchmarkingResults(path).to_df()["model_id"]) == ["DummyClassifier"]
+
+    benchmark.run(force_rerun="all")
+    assert calls["n"] == 2
+
+
+def test_leaderboard_without_a_task_raises():
+    """An empty benchmark fails when leaderboard tries to run it."""
+    benchmark = ClassificationBenchmark()
+    with pytest.raises(ValueError, match="Benchmark cannot run"):
         benchmark.leaderboard()
 
 
