@@ -377,10 +377,6 @@ class _DartsRegressionAdapter(BaseForecaster):
             endogenous_point_predictions.index = (
                 endogenous_point_predictions.index.to_period(expected_index.freqstr)
             )
-        if isinstance(expected_index, pd.RangeIndex):
-            endogenous_point_predictions.index = pd.RangeIndex(
-                start=0, stop=len(endogenous_point_predictions)
-            )
         if isinstance(expected_index, pd.DatetimeIndex):
             endogenous_point_predictions.index = pd.date_range(
                 start=expected_index[0],
