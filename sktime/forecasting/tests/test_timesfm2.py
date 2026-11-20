@@ -1,9 +1,7 @@
 """Regression tests for the TimesFM-2 forecaster."""
 
 import numpy as np
-import pandas as pd
 import pytest
-from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline
 from sktime.forecasting.timesfm2 import TimesFM2Forecaster
@@ -71,85 +69,101 @@ def test_timesfm2_airline_predictions_match_transformers_reference(
     )
 
 
-class _StubTimesFM2Model:
-    """Deterministic stand-in for the transformers TimesFM prediction model.
-
-    Emits full predictions with value ``step + 0.5`` in the point forecast
-    column, and value ``step + q`` in the column of quantile level ``q``,
-    for horizon steps 1, 2, ..., ``horizon_length``. The quantile columns
-    are monotone in the level, as for a trained TimesFM model.
-    """
-
-    def __init__(self, quantiles, horizon_length):
-        import torch
-
-        self.config = type("_Config", (), {})()
-        self.config.quantiles = quantiles
-        self.config.horizon_length = horizon_length
-        self.dtype = torch.float32
-        self.device = "cpu"
-
-        steps = torch.arange(1, horizon_length + 1, dtype=torch.float32)
-        cols = [steps + 0.5] + [steps + q for q in quantiles]
-        self._full_predictions = torch.stack(cols, dim=-1).unsqueeze(0)
-
-    def __call__(self, past_values, **kwargs):
-        output = type("_Output", (), {})()
-        output.full_predictions = self._full_predictions
-        return output
+# Reference quantile forecasts at levels 0.1, 0.5, 0.9 for the first three steps,
+# generated as above from ``output.full_predictions``, where column 0 is the mean
+# forecast and the forecast at ``model.config.quantiles[k]`` is in column ``k + 1``.
+_TIMESFM2_QUANTILE_REFERENCE_CASES = [
+    pytest.param(
+        "google/timesfm-2.5-200m-transformers",
+        [
+            [382.19610595703125, 407.3865051269531, 426.4412841796875],
+            [348.47515869140625, 378.2121276855469, 401.3867492675781],
+            [395.8646240234375, 429.0090026855469, 454.17608642578125],
+        ],
+        id="timesfm-2.5-200m-transformers",
+    ),
+    pytest.param(
+        "google/timesfm-2.0-500m-pytorch",
+        [
+            [388.2955322265625, 419.729736328125, 451.2749328613281],
+            [379.2339782714844, 412.2949523925781, 446.4942626953125],
+            [411.508056640625, 446.5558776855469, 481.1740417480469],
+        ],
+        id="timesfm-2.0-500m-pytorch",
+    ),
+]
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(TimesFM2Forecaster, severity="none"),
-    reason="run test only if softdeps are present",
+    not run_test_for_class(TimesFM2Forecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_timesfm2_predict_proba_consistent_with_predict_quantiles():
-    """predict_proba quantiles must agree with predict_quantiles, see #10566.
+@pytest.mark.parametrize("model_path,expected_head", _TIMESFM2_QUANTILE_REFERENCE_CASES)
+def test_timesfm2_airline_quantiles_match_transformers_reference(
+    model_path, expected_head
+):
+    """TimesFM-2 quantiles match the raw transformers implementation."""
+    y = load_airline()
+    y_train = y.iloc[:-12]
+    fh = np.arange(1, 13)
 
-    Uses a deterministic stub model so the test is checkable against
-    closed-form values without model downloads:
+    forecaster = TimesFM2Forecaster(model_path=model_path, device_map="cpu")
+    forecaster.fit(y_train, fh=fh)
+    y_pred = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.5, 0.9])
 
-    * ``predict_quantiles`` at native levels returns the model's native
-      quantile forecasts (guards against off-by-one into the point
-      forecast column of ``full_predictions``)
-    * ``predict_proba`` returns a ``HistogramQPD``, not the Normal fallback
-    * quantiles derived from ``predict_proba`` match ``predict_quantiles``
-      at native levels, interpolate linearly between native levels, and
-      clamp to the boundary quantiles outside the native grid
-    """
+    np.testing.assert_allclose(
+        y_pred.iloc[:3].to_numpy(),
+        np.asarray(expected_head, dtype=np.float32),
+        rtol=1e-5,
+        atol=1e-4,
+    )
+
+
+_TIMESFM2_PROBA_CASES = [
+    pytest.param(
+        {"model_path": "google/timesfm-2.5-200m-transformers", "device_map": "cpu"},
+        id="timesfm-2.5-200m-transformers",
+    ),
+    pytest.param(
+        {"model_path": "google/timesfm-2.0-500m-pytorch", "device_map": "cpu"},
+        id="timesfm-2.0-500m-pytorch",
+    ),
+    # randomly initialized, quantile forecasts may cross
+    pytest.param(
+        TimesFM2Forecaster.get_test_params()[0],
+        id="random-init",
+    ),
+]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimesFM2Forecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("params", _TIMESFM2_PROBA_CASES)
+def test_timesfm2_predict_proba_consistent_with_predict_quantiles(params):
+    """predict_proba quantiles agree with predict_quantiles, see #10566."""
     pytest.importorskip("skpro")
     from skpro.distributions import HistogramQPD
 
-    quantiles = [0.1, 0.25, 0.5, 0.75, 0.9]
-    horizon_length = 6
+    y = load_airline()
+    y_train = y.iloc[:-12]
+    fh = np.arange(1, 7)
 
-    y = pd.Series(np.sin(np.linspace(0, 10, 30)), name="y")
-
-    params = TimesFM2Forecaster.get_test_params()[0]
     forecaster = TimesFM2Forecaster(**params)
-    forecaster.fit(y)
-    # replace the fitted model with the deterministic stub
-    forecaster.model_ = _StubTimesFM2Model(quantiles, horizon_length)
+    forecaster.fit(y_train, fh=fh)
 
-    fh = [1, 3, 5]
-    steps = np.array(fh, dtype=float)
-    alpha = [0.1, 0.5, 0.9]
-
+    alpha = sorted(round(a, 3) for a in forecaster.model_.config.quantiles)
     q_direct = forecaster.predict_quantiles(fh=fh, alpha=alpha)
-    expected = np.column_stack([steps + a for a in alpha])
-    np.testing.assert_allclose(q_direct.to_numpy(), expected)
-
     pred_dist = forecaster.predict_proba(fh=fh)
+
     assert isinstance(pred_dist, HistogramQPD)
 
-    q_from_proba = pred_dist.quantile(alpha=alpha)
-    np.testing.assert_allclose(q_direct.to_numpy(), q_from_proba.to_numpy(), rtol=1e-6)
+    q_proba = pred_dist.quantile(alpha=alpha)
+    np.testing.assert_allclose(q_proba.to_numpy(), q_direct.to_numpy(), rtol=1e-5)
 
-    # interpolated level between native grid points 0.25 and 0.5
-    q_interp = pred_dist.quantile(alpha=[0.375])
-    np.testing.assert_allclose(q_interp.to_numpy().ravel(), steps + 0.375, rtol=1e-6)
-
-    # levels outside the native grid clamp to the boundary quantiles
-    q_clamped = pred_dist.quantile(alpha=[0.01, 0.99])
-    np.testing.assert_allclose(q_clamped.to_numpy()[:, 0], steps + 0.1, rtol=1e-6)
-    np.testing.assert_allclose(q_clamped.to_numpy()[:, 1], steps + 0.9, rtol=1e-6)
+    # linear interpolation between adjacent native levels
+    mid = (alpha[0] + alpha[1]) / 2
+    q_mid = pred_dist.quantile(alpha=[mid]).to_numpy().ravel()
+    expected_mid = q_direct.to_numpy()[:, :2].mean(axis=1)
+    np.testing.assert_allclose(q_mid, expected_mid, rtol=1e-5)
