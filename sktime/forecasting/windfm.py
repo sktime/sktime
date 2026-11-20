@@ -357,7 +357,7 @@ class WindFMForecaster(BaseForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
+        X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
         marginal : bool, optional (default=True)
