@@ -138,6 +138,7 @@ class TiRexForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_tirex"],
         # Shorthands
         # ----------
         "shorthands": {
