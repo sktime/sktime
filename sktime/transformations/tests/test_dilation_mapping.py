@@ -1,5 +1,6 @@
 """DilationMapping transformer test code."""
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -39,7 +40,7 @@ def test_dilation_mapping_preserves_missing_values():
     not run_test_for_class(DilationMappingTransformer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("dilation", [1, 10])
+@pytest.mark.parametrize("dilation", [1, np.int64(3), 10])
 def test_dilation_mapping_boundary_dilations(dilation):
     """Test boundary dilation values preserve values and reset the index."""
     X = pd.Series(

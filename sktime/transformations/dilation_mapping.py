@@ -3,6 +3,8 @@
 A transformer for applying dilation mapping to time series data.
 """
 
+from operator import index
+
 __author__ = ["fspinna"]
 __all__ = ["DilationMappingTransformer"]
 
@@ -106,10 +108,14 @@ class DilationMappingTransformer(BaseTransformer):
         return self._dilate_series(X, self.dilation)
 
     def _dilate_series(self, x, d):
-        x_dilations = [x[i::d] for i in range(0, d)]
-        x_dilated = pd.concat(x_dilations, axis=0)
+        d = index(d)
+        if d == 1 or d >= len(x):
+            return x.reset_index(drop=True)
+
+        x_dilations = [x[i::d] for i in range(d)]
+        x_dilated = pd.concat(x_dilations, ignore_index=True)
         x_dilated.name = x.name
-        return x_dilated.reset_index(drop=True)
+        return x_dilated
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
