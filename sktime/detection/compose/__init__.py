@@ -4,8 +4,10 @@
 
 from sktime.detection.compose._as_transform import DetectorAsTransformer
 from sktime.detection.compose._pipeline import DetectorPipeline
+from sktime.detection.compose._update_refits_every import UpdateRefitsEveryDetector
 
 __all__ = [
     "DetectorAsTransformer",
     "DetectorPipeline",
+    "UpdateRefitsEveryDetector",
 ]
