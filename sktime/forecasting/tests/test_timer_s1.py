@@ -10,10 +10,6 @@ vendored model in ``sktime.libs.timer_s1`` plus the ``TimerS1Forecaster``
 wrapper are compared against the upstream model class from the
 ``bytedance-research/Timer-S1`` Hugging Face repository at commit
 8911430cc7f32add5c8913afe12e3b05742f5bb2.
-
-The generation script embedded below has a ``PRETRAINED`` switch, so anyone
-with roughly 40 GB of RAM can regenerate references from the pretrained
-checkpoint and add a corresponding test case.
 """
 
 import numpy as np
@@ -26,82 +22,85 @@ from sktime.tests.test_switch import run_test_for_class
 # Reference forecasts were generated on CPU from the upstream Timer-S1 remote
 # code in the bytedance-research/Timer-S1 Hugging Face repository at the
 # immutable commit 8911430cc7f32add5c8913afe12e3b05742f5bb2, loaded through
-# ``transformers.AutoModelForCausalLM`` with ``trust_remote_code=True`` and
-# bypassing sktime entirely.
+# ``transformers.AutoModelForCausalLM`` with ``trust_remote_code=True``, in a
+# venv without sktime. The airline values are embedded in the script.
 #
 # The only pretrained Timer-S1 checkpoint has 8.3B parameters (16.6 GB in
 # bfloat16), so the references use a small randomly initialized model instead.
 # Weights are initialized from ``torch.manual_seed(_TIMER_S1_SEED)`` right
 # before model construction, by both the reference script and the tests below.
 # The vendored ``sktime.libs.timer_s1`` code registers parameters in the same
-# order as upstream, so the seeded weights are identical.
+# order as upstream, so the seeded weights are identical. No checkpoint is
+# downloaded by the tests.
 #
-# Environment: Python 3.12.14, torch 2.14.0, transformers 4.57.6, numpy 2.5.3.
+# Environment: Python 3.12.13, torch 2.15.0 (CPU), transformers 4.57.6,
+# numpy 2.5.5. Two runs gave identical values. The tests also pass with
+# transformers 5.
 #
-# The forecast horizon of 48 exceeds the 32 values produced per generation
-# step (input_token_len=16 times 1 + num_mtp_tokens), so two autoregressive
+# A forecast horizon of 48 exceeds the 32 values produced per generation step
+# (input_token_len=16 times 1 + num_mtp_tokens), so two autoregressive
 # generation steps are exercised, including the KV-cache update path.
 #
 # The reference values were produced by the following standalone script:
 #
 #     import numpy as np
 #     import torch
+#     from huggingface_hub import snapshot_download
 #     from transformers import AutoConfig, AutoModelForCausalLM
-#
-#     # sktime is only used as a data source here (airline passengers).
-#     from sktime.datasets import load_airline
 #
 #     REPO = "bytedance-research/Timer-S1"
 #     REVISION = "8911430cc7f32add5c8913afe12e3b05742f5bb2"
 #     SEED = 0
-#     CONTEXT_LENGTH = 132  # airline minus last 12 months
-#     HORIZON = 48  # > 32 values per generation step -> two generation steps
-#     ALPHA = [0.1, 0.5, 0.9]
 #
-#     # PRETRAINED=False: small model with seeded random weights (the references
-#     # in this file). PRETRAINED=True: the 8.3B checkpoint at REVISION loaded in
-#     # float32 on CPU (the torch default device), which needs roughly 40 GB of
-#     # RAM. Its default config has num_mtp_tokens=16, so HORIZON=48 is then
-#     # covered by a single generation step. The matching sktime call is
-#     # TimerS1Forecaster(model_path=REPO, forward_kwargs=..., deterministic=True)
-#     # without setting any seed.
-#     PRETRAINED = False
+#     # values of sktime.datasets.load_airline, monthly from 1949-01
+#     AIRLINE = [
+#         112, 118, 132, 129, 121, 135, 148, 148, 136, 119, 104, 118,
+#         115, 126, 141, 135, 125, 149, 170, 170, 158, 133, 114, 140,
+#         145, 150, 178, 163, 172, 178, 199, 199, 184, 162, 146, 166,
+#         171, 180, 193, 181, 183, 218, 230, 242, 209, 191, 172, 194,
+#         196, 196, 236, 235, 229, 243, 264, 272, 237, 211, 180, 201,
+#         204, 188, 235, 227, 234, 264, 302, 293, 259, 229, 203, 229,
+#         242, 233, 267, 269, 270, 315, 364, 347, 312, 274, 237, 278,
+#         284, 277, 317, 313, 318, 374, 413, 405, 355, 306, 271, 306,
+#         315, 301, 356, 348, 355, 422, 465, 467, 404, 347, 305, 336,
+#         340, 318, 362, 348, 363, 435, 491, 505, 404, 359, 310, 337,
+#         360, 342, 406, 396, 420, 472, 548, 559, 463, 407, 362, 405,
+#         417, 391, 419, 461, 472, 535, 622, 606, 508, 461, 390, 432,
+#     ]
 #
+#     # small config, weights drawn from torch.manual_seed(SEED); every other
+#     # setting comes from the checkpoint's config.json at REVISION
 #     BASE_CONFIG = {
 #         "hidden_size": 32,
 #         "intermediate_size": 32,
 #         "num_attention_heads": 4,
 #         "num_experts": 4,
 #         "num_hidden_layers": 2,
-#         "num_mtp_tokens": 1,
+#         "num_mtp_tokens": 1,  # 16 + 16 = 32 values per generation step
 #     }
+#     FH_48 = list(range(1, 49))  # 48 > 32: two generation steps
 #
+#     # name: (n training values, config overrides, generate kwargs, fh)
 #     CASES = {
-#         "default": {"config": {}, "generate_kwargs": {}},
-#         "revin-false": {"config": {}, "generate_kwargs": {"revin": False}},
-#         "no-kv-cache": {"config": {"use_cache": False}, "generate_kwargs": {}},
+#         # 132 values, left padded by the model to 9 patches of 16
+#         "default": (132, {}, {}, FH_48),
+#         "revin-false": (132, {}, {"revin": False}, FH_48),
+#         "no-kv-cache": (132, {"use_cache": False}, {}, FH_48),
+#         # 128 values, a whole number of patches, no padding
+#         "unpadded": (128, {}, {}, FH_48),
+#         # max(fh) = 40: second step returns only 8 of 16 values
+#         "sparse-fh": (132, {}, {}, [2, 17, 40]),
 #     }
+#     ALPHA = [0.1, 0.5, 0.9]
 #
 #
 #     def build_model(config_overrides):
-#         if PRETRAINED:
-#             config = AutoConfig.from_pretrained(
-#                 REPO, revision=REVISION, trust_remote_code=True, **config_overrides
-#             )
-#             model = AutoModelForCausalLM.from_pretrained(
-#                 REPO,
-#                 config=config,
-#                 revision=REVISION,
-#                 trust_remote_code=True,
-#                 dtype=torch.float32,
-#             )
-#             return model.eval()
+#         # config.json and the remote model code only, no weights
+#         path = snapshot_download(
+#             REPO, revision=REVISION, allow_patterns=["*.py", "config.json"]
+#         )
 #         config = AutoConfig.from_pretrained(
-#             REPO,
-#             revision=REVISION,
-#             trust_remote_code=True,
-#             **BASE_CONFIG,
-#             **config_overrides,
+#             path, trust_remote_code=True, **BASE_CONFIG, **config_overrides
 #         )
 #         torch.manual_seed(SEED)
 #         model = AutoModelForCausalLM.from_config(
@@ -110,12 +109,10 @@ from sktime.tests.test_switch import run_test_for_class
 #         return model.eval()
 #
 #
-#     def point_forecast_weights(quantiles):
-#         # weights of the sktime point forecast: each quantile level is
-#         # weighted by the width of its Voronoi cell on [0, 1]
-#         quantiles = np.asarray(quantiles)
-#         mids = (quantiles[:-1] + quantiles[1:]) / 2
-#         edges = np.concatenate([[0.0], mids, [1.0]])
+#     def point_weights(quantiles):
+#         # sktime point forecast: quantiles weighted by their Voronoi cell
+#         q = np.asarray(quantiles)
+#         edges = np.concatenate([[0.0], (q[:-1] + q[1:]) / 2, [1.0]])
 #         return np.diff(edges)
 #
 #
@@ -123,33 +120,23 @@ from sktime.tests.test_switch import run_test_for_class
 #         return "[" + ", ".join(f"{float(v):.9g}" for v in values) + "]"
 #
 #
-#     def main():
-#         y = load_airline().to_numpy()[:CONTEXT_LENGTH]
-#         past_values = torch.tensor(y[None], dtype=torch.float32)
-#
-#         for name, case in CASES.items():
-#             model = build_model(case["config"])
-#             with torch.no_grad():
-#                 output = model.generate(
-#                     past_values, max_new_tokens=HORIZON, **case["generate_kwargs"]
-#                 )
-#             # output: [batch=1, n_quantiles=9, HORIZON]
-#             raw = output[0].float().numpy()
-#             quantiles = [round(q, 3) for q in model.config.quantiles]
-#             weights = point_forecast_weights(quantiles)
-#             point = np.average(raw, weights=weights, axis=0)
-#             print(f"== {name}")
-#             print("  point head :", fmt(point[:3]))
-#             print("  point tail :", fmt(point[-3:]))
+#     for name, (n, config_overrides, gen_kwargs, fh) in CASES.items():
+#         model = build_model(config_overrides)
+#         y = np.asarray(AIRLINE[:n], dtype=np.float64)
+#         past = torch.tensor(y[None], dtype=torch.float32)
+#         idx = np.asarray(fh) - 1
+#         with torch.no_grad():
+#             out = model.generate(past, max_new_tokens=max(fh), **gen_kwargs)
+#         raw = out[0].float().numpy()  # [n_quantiles, max(fh)]
+#         quantiles = [round(q, 3) for q in model.config.quantiles]
+#         point = np.average(raw, weights=point_weights(quantiles), axis=0)[idx]
+#         print(name, fmt(point[:3]), fmt(point[-3:]))
+#         if name == "default":
 #             for a in ALPHA:
-#                 print(f"  q={a} head :", fmt(raw[quantiles.index(a), :3]))
-#
-#
-#     if __name__ == "__main__":
-#         main()
+#                 q_a = raw[quantiles.index(a)]
+#                 print(f"  q={a}", fmt(q_a[:3]), fmt(q_a[-3:]))
 
 _TIMER_S1_SEED = 0
-_TIMER_S1_HORIZON = 48
 
 # a config distinct from ``get_test_params`` so that the multiton model cache
 # used by ``TimerS1Forecaster`` cannot hand back a model that was randomly
@@ -163,36 +150,75 @@ _TIMER_S1_BASE_CONFIG = {
     "num_mtp_tokens": 1,
 }
 
-# (config overrides, forward_kwargs, expected point head, expected point tail)
+_FH_48 = list(range(1, 49))
+
+# (n training values, config overrides, forward_kwargs, fh,
+#  expected point forecasts at selected fh steps)
 _TIMER_S1_UPSTREAM_REFERENCE_CASES = [
     pytest.param(
+        132,
         {},
         None,
-        [259.501067, 265.958752, 264.10755],
-        [263.565356, 258.812035, 261.972707],
+        _FH_48,
+        {
+            1: 259.501064,
+            2: 265.958755,
+            3: 264.10755,
+            46: 263.565353,
+            47: 258.812035,
+            48: 261.972707,
+        },
         id="default",
     ),
     pytest.param(
+        132,
         {},
         {"revin": False},
-        [-0.0773399752, 0.0199278594, 0.000543895178],
-        [0.0119642884, -0.0347806784, -0.0110267563],
+        _FH_48,
+        {
+            1: -0.0773400117,
+            2: 0.0199278687,
+            3: 0.000543892756,
+            46: 0.011964298,
+            47: -0.0347806731,
+            48: -0.0110267494,
+        },
         id="revin-false",
     ),
     pytest.param(
+        132,
         {"use_cache": False},
         None,
-        [259.501067, 265.958752, 264.10755],
-        [263.565353, 258.812035, 261.972708],
+        _FH_48,
+        {
+            1: 259.501064,
+            2: 265.958755,
+            3: 264.10755,
+            46: 263.565353,
+            47: 258.812035,
+            48: 261.972707,
+        },
         id="no-kv-cache",
     ),
 ]
 
-# native quantile forecasts of the "default" case, first three steps
-_TIMER_S1_UPSTREAM_QUANTILE_HEAD = {
-    0.1: [270.20993, 268.108398, 263.512726],
-    0.5: [274.391785, 281.542847, 273.148865],
-    0.9: [260.220581, 272.270081, 264.433838],
+# native quantile forecasts of the "default" case at selected fh steps
+_TIMER_S1_UPSTREAM_QUANTILES = {
+    0.1: {
+        1: 270.2099,
+        2: 268.108398,
+        3: 263.512726,
+    },
+    0.5: {
+        1: 274.391785,
+        2: 281.542847,
+        3: 273.148865,
+    },
+    0.9: {
+        1: 260.220581,
+        2: 272.270081,
+        3: 264.433807,
+    },
 }
 
 
@@ -202,12 +228,11 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def _fit_seeded_forecaster(config_overrides, forward_kwargs):
+def _fit_seeded_forecaster(n_train, config_overrides, forward_kwargs):
     """Fit a TimerS1Forecaster with seeded random weights on airline data."""
     import torch
 
-    y = load_airline()
-    y_train = y.iloc[:-12]
+    y_train = load_airline().iloc[:n_train]
     forecaster = TimerS1Forecaster(
         model_path=None,
         config={**_TIMER_S1_BASE_CONFIG, **config_overrides},
@@ -220,28 +245,22 @@ def _fit_seeded_forecaster(config_overrides, forward_kwargs):
 
 
 @pytest.mark.parametrize(
-    "config_overrides,forward_kwargs,expected_head,expected_tail",
+    "n_train,config_overrides,forward_kwargs,fh,expected",
     _TIMER_S1_UPSTREAM_REFERENCE_CASES,
 )
 def test_timer_s1_airline_predictions_match_upstream_reference(
-    config_overrides, forward_kwargs, expected_head, expected_tail
+    n_train, config_overrides, forward_kwargs, fh, expected
 ):
     """TimerS1 point predictions match the upstream Timer-S1 model outputs."""
-    fh = np.arange(1, _TIMER_S1_HORIZON + 1)
-    forecaster = _fit_seeded_forecaster(config_overrides, forward_kwargs)
+    forecaster = _fit_seeded_forecaster(n_train, config_overrides, forward_kwargs)
 
     y_pred = forecaster.predict(fh=fh)
 
-    assert len(y_pred) == _TIMER_S1_HORIZON
+    assert len(y_pred) == len(fh)
+    positions = [fh.index(step) for step in expected]
     np.testing.assert_allclose(
-        y_pred.iloc[:3].to_numpy(),
-        np.asarray(expected_head, dtype=np.float32),
-        rtol=1e-5,
-        atol=1e-4,
-    )
-    np.testing.assert_allclose(
-        y_pred.iloc[-3:].to_numpy(),
-        np.asarray(expected_tail, dtype=np.float32),
+        y_pred.iloc[positions].to_numpy(),
+        np.asarray(list(expected.values()), dtype=np.float32),
         rtol=1e-5,
         atol=1e-4,
     )
@@ -249,19 +268,21 @@ def test_timer_s1_airline_predictions_match_upstream_reference(
 
 def test_timer_s1_airline_quantiles_match_upstream_reference():
     """TimerS1 quantile predictions match the upstream Timer-S1 model outputs."""
-    fh = np.arange(1, _TIMER_S1_HORIZON + 1)
-    alpha = sorted(_TIMER_S1_UPSTREAM_QUANTILE_HEAD)
-    forecaster = _fit_seeded_forecaster({}, None)
+    alpha = sorted(_TIMER_S1_UPSTREAM_QUANTILES)
+    forecaster = _fit_seeded_forecaster(132, {}, None)
 
-    pred_quantiles = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+    pred_quantiles = forecaster.predict_quantiles(fh=_FH_48, alpha=alpha)
 
-    assert pred_quantiles.shape == (_TIMER_S1_HORIZON, len(alpha))
+    assert pred_quantiles.shape == (len(_FH_48), len(alpha))
     for a in alpha:
+        expected = _TIMER_S1_UPSTREAM_QUANTILES[a]
+        positions = [_FH_48.index(step) for step in expected]
         # columns are (variable name, alpha), select by alpha only
-        pred_a = pred_quantiles.xs(a, axis=1, level=1).iloc[:3, 0]
+        pred_a = pred_quantiles.xs(a, axis=1, level=1).iloc[positions, 0]
         np.testing.assert_allclose(
             pred_a.to_numpy(),
-            np.asarray(_TIMER_S1_UPSTREAM_QUANTILE_HEAD[a], dtype=np.float32),
+            np.asarray(list(expected.values()), dtype=np.float32),
             rtol=1e-5,
             atol=1e-4,
+            err_msg=f"alpha={a}",
         )
