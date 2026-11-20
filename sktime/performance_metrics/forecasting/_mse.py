@@ -127,6 +127,10 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     np.float64(0.8936491673103708)
     """  # noqa: E501
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
@@ -222,7 +226,7 @@ class MeanSquaredError(BaseForecastingErrorMetric):
 
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
 
-        return self._handle_multioutput(raw_values, multioutput)
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

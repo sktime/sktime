@@ -44,6 +44,13 @@ class MLPNetwork(BaseDeepNetwork):
     Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
     International joint conference on neural networks (IJCNN)}, pages={
     1578--1585}, year={2017}, organization={IEEE} }
+
+    Examples
+    --------
+    >>> from sktime.networks.mlp import MLPNetwork
+    >>> network = MLPNetwork(
+    ...     n_layers=3, hidden_dim=256, random_state=42
+    ... )
     """
 
     _tags = {
@@ -142,3 +149,24 @@ class MLPNetwork(BaseDeepNetwork):
 
         output_layer = keras.layers.Dropout(_dropout[self.n_layers])(x)
         return input_layer, output_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return lightweight test parameter sets for MLPNetwork."""
+        params1 = {
+            "n_layers": 1,
+            "hidden_dim": 8,
+            "dropout": 0.1,
+            "activation": "relu",
+            "random_state": 0,
+        }
+
+        params2 = {
+            "n_layers": 2,
+            "hidden_dim": (8, 4),
+            "dropout": (0.1, 0.2, 0.0),
+            "activation": "tanh",
+            "random_state": 0,
+        }
+
+        return [params1, params2]

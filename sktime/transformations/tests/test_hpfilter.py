@@ -20,7 +20,9 @@ def test_HPFilter_wrapper():
     import statsmodels.api as sm
 
     dta = sm.datasets.macrodata.load_pandas().data
-    index = pd.date_range(start="1959Q1", end="2009Q4", freq="Q")
+    index = pd.date_range(
+        start="1959Q1", end="2009Q4", freq=pd.offsets.QuarterEnd(startingMonth=12)
+    )
     dta.set_index(index, inplace=True)
     sm_cycle = sm.tsa.filters.hpfilter(dta[["realinv"]], 1600)[0]
     sm_cycle = pd.DataFrame(sm_cycle)

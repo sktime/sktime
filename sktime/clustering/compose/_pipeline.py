@@ -6,8 +6,6 @@ import numpy as np
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.clustering.base import BaseClusterer
 from sktime.datatypes import convert_to
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose import TransformerPipeline
 from sktime.utils.sklearn import is_sklearn_clusterer
 
 __author__ = ["fkiraly"]
@@ -114,11 +112,14 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
     def __init__(self, clusterer, transformers):
         self.clusterer = clusterer
-        self.clusterer_ = clusterer.clone()
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
-
         super().__init__()
+
+        self.clusterer_ = clusterer.clone()
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # can handle multivariate iff: both clusterer and all transformers can
         multivariate = clusterer.get_tag("capability:multivariate", False)
@@ -193,6 +194,8 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         -------
         ClustererPipeline object, concatenation of `other` (first) with `self` (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
@@ -347,14 +350,22 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         params1 = {"transformers": [t1], "clusterer": c}
         params = params + [params1]
 
+        # soft dependency free second parameter set, with named steps
+        t1 = ExponentTransformer(power=2)
+        t2 = ExponentTransformer(power=0.5)
+        c = TimeSeriesDBSCAN.create_test_instance()
+
+        params2 = {"transformers": [("square", t1), ("sqrt", t2)], "clusterer": c}
+        params = params + [params2]
+
         if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
             t1 = ExponentTransformer(power=2)
             t2 = ExponentTransformer(power=0.5)
             c = TimeSeriesKMeans(random_state=42)
 
-            params2 = {"transformers": [t1, t2], "clusterer": c}
+            params3 = {"transformers": [t1, t2], "clusterer": c}
 
-            params = params + [params2]
+            params = params + [params3]
 
         return params
 
@@ -459,11 +470,15 @@ class SklearnClustererPipeline(ClustererPipeline):
         from sklearn.base import clone
 
         self.clusterer = clusterer
-        self.clusterer_ = clone(clusterer)
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
 
         super(ClustererPipeline, self).__init__()
+
+        self.clusterer_ = clone(clusterer)
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
@@ -521,6 +536,8 @@ class SklearnClustererPipeline(ClustererPipeline):
         -------
         ClustererPipeline object, concatenation of `other` (first) with `self` (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_

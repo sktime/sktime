@@ -64,6 +64,12 @@ class MyTrafoPw(BasePairwiseTransformer):
         # maintainer = algorithm maintainer role, "owner" of the sktime class
         #     for 3rd party interfaces, the scope is the sktime class only
         # remove maintainer tag if maintained by sktime core team
+        #
+        # estimator tags
+        # --------------
+        "property:randomness": "deterministic",  # "deterministic", "stochastic",
+        # or "derandomized" (stochastic, but reproducible if random_state is set)
+        "capability:random_state": False,  # is there a random_state parameter?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)

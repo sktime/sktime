@@ -269,6 +269,8 @@ class _DartsRegressionAdapter(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         del fh  # avoid being detected as unused by ``vulture`` like tools
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
@@ -321,7 +323,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
         non_auto_regressive_fh = ForecastingHorizon(
-            [i for i in range(1, self.output_chunk_length + 1)]
+            [*range(1, self.output_chunk_length + 1)]
         )
         # warning for fh out of range of output_chunk_length
         if max(fh.to_indexer(cutoff=self.cutoff)) > max(
@@ -388,7 +390,7 @@ class _DartsRegressionAdapter(BaseForecaster):
 
         if (
             len(endogenous_point_predictions.columns) > 1
-            and self._y.columns.dtype != "object"
+            and self._cur_y.columns.dtype != "object"
         ):
             endogenous_point_predictions.columns = pd.RangeIndex(
                 start=0, stop=len(endogenous_point_predictions.columns), step=1
@@ -594,7 +596,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
                 at quantile probability in second col index, for the row index.
         """
         non_auto_regressive_fh = ForecastingHorizon(
-            [i for i in range(1, self.output_chunk_length + 1)]
+            [*range(1, self.output_chunk_length + 1)]
         )
         # warning for fh out of range of output_chunk_length
         if max(fh.to_indexer(cutoff=self.cutoff)) > max(

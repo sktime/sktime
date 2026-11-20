@@ -65,7 +65,8 @@ class ForecastingHorizonSplitter(BaseSplitter):
     }
 
     def __init__(self, fh):
-        super().__init__(fh=fh)
+        self.fh = fh
+        super().__init__()
 
     def _split(self, y: pd.Index):
         """Return train/test indices based on forecasting horizon."""

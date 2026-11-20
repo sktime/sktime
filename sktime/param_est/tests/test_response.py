@@ -258,10 +258,14 @@ def test_irf_on_vecm():
     """Test ImpulseResponseFunctions on airline data with VECM."""
     from sktime.forecasting.vecm import VECM as skvecm
 
-    # Convergence and estimation warnings happen regularly in statsmodels too.
-    X = load_airline()
-    X2 = X.shift(1).bfill()
-    df = pd.DataFrame({"X": X, "X2": X2})
+    rng = np.random.RandomState(42)
+    X1 = load_airline().values.astype(float)
+    X1_stationary = np.diff(np.log(X1))
+    noise = rng.normal(scale=0.05, size=len(X1_stationary))
+    X2_stationary = 0.6 * X1_stationary + 0.4 * np.roll(X1_stationary, 1) + noise
+
+    df = pd.DataFrame({"X1": X1_stationary[1:], "X2": X2_stationary[1:]})
+    df.index = pd.date_range("1949-02-01", periods=len(df), freq="MS")
 
     sk_model = skvecm().fit(df)
     sk_res = ImpulseResponseFunction(sk_model)
@@ -280,17 +284,21 @@ def test_additional_irfparams_on_vecm():
     """Test more ImpulseResponseFunction parameters with airline data on VECM."""
     from sktime.forecasting.vecm import VECM as skvecm
 
-    # Convergence and estimation warnings happen regularly in statsmodels too.
-    X = load_airline()
-    X2 = X.shift(1).bfill()
-    df = pd.DataFrame({"X": X, "X2": X2})
+    rng = np.random.RandomState(42)
+    X1 = load_airline().values.astype(float)
+    X1_stationary = np.diff(np.log(X1))
+    noise = rng.normal(scale=0.05, size=len(X1_stationary))
+    X2_stationary = 0.6 * X1_stationary + 0.4 * np.roll(X1_stationary, 1) + noise
+
+    df = pd.DataFrame({"X1": X1_stationary[1:], "X2": X2_stationary[1:]})
+    df.index = pd.date_range("1949-02-01", periods=len(df), freq="MS")
 
     sk_model = skvecm().fit(df)
     sk_res = ImpulseResponseFunction(sk_model, cumulative=True, steps=4)
     sk_res.fit(df)
 
     actual = np.round(sk_res.get_fitted_params()["irf"].sum())
-    expected = 30.0
+    expected = 18.0
     np.testing.assert_allclose(actual, expected, rtol=0.10)
 
 
@@ -304,9 +312,14 @@ def test_irf_vecm_against_statsmodels():
 
     from sktime.forecasting.vecm import VECM as skvecm
 
-    X = load_airline()
-    X2 = X.shift(1).bfill()
-    df = pd.DataFrame({"X": X, "X2": X2})
+    rng = np.random.RandomState(42)
+    X1 = load_airline().values.astype(float)
+    X1_stationary = np.diff(np.log(X1))
+    noise = rng.normal(scale=0.05, size=len(X1_stationary))
+    X2_stationary = 0.6 * X1_stationary + 0.4 * np.roll(X1_stationary, 1) + noise
+
+    df = pd.DataFrame({"X1": X1_stationary[1:], "X2": X2_stationary[1:]})
+    df.index = pd.date_range("1949-02-01", periods=len(df), freq="MS")
 
     st_model = statsvecm(df, seasons=2)
     fitted_model = st_model.fit()
