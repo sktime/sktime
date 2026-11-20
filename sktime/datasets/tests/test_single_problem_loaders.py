@@ -10,6 +10,7 @@ from sktime.datasets import (
     load_basic_motions,
     load_italy_power_demand,
     load_japanese_vowels,
+    load_longley,
     load_osuleaf,
     load_plaid,
     load_tecator,
@@ -73,3 +74,17 @@ def test_load_numpy2d_multivariate_raises(loader):
     """Test that multivariate and/or unequal length raise the correct error."""
     with pytest.raises(ValueError, match="attempting to load into a numpy2d"):
         X, y = loader(return_type="numpy2d")
+
+def test_load_longley_index():
+    """Test that Longley has the expected yearly index."""
+    y, X = load_longley()
+
+    expected_index = pd.period_range(
+        start="1947",
+        end="1962",
+        freq="Y",
+        name="Period",
+    )
+
+    pd.testing.assert_index_equal(y.index, expected_index)
+    pd.testing.assert_index_equal(X.index, expected_index)
