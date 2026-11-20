@@ -41,6 +41,10 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         Weighted percentile.
     """
     array = np.asarray(array)
+    # The upper percentile negates the values, which wraps around for
+    # unsigned and smallest signed integers.
+    if np.issubdtype(array.dtype, np.integer):
+        array = array.astype(np.float64)
     lower = _lower_weighted_percentile(array, sample_weight, percentile)
     upper = -_lower_weighted_percentile(-array, sample_weight, 100 - percentile)
     return (lower + upper) / 2
@@ -90,6 +94,11 @@ def _lower_weighted_percentile(array, sample_weight, percentile=50):
     adjusted_percentile[mask] = np.nextafter(
         adjusted_percentile[mask], adjusted_percentile[mask] + 1
     )
+    # The cumulative sum carries rounding error, so a weight that should land
+    # exactly on the percentile can end up just below it; treat values that
+    # close as equal, so equal non-integer weights average like equal ones.
+    tol = weight_cdf.shape[0] * np.finfo(np.float64).eps * weight_cdf[-1]
+    adjusted_percentile[~mask] -= tol[~mask]
 
     percentile_idx = np.array(
         [

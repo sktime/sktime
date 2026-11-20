@@ -31,3 +31,32 @@ def test_weighted_percentile_median(n):
 
     assert np.isclose(_weighted_percentile(x, np.ones(n), 0), x.min())
     assert np.isclose(_weighted_percentile(x, np.ones(n), 100), x.max())
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+@pytest.mark.parametrize("scale", [0.1, 1 / 3, 1 / 7])
+@pytest.mark.parametrize("percentile", [10, 25, 50, 75, 90])
+def test_weighted_percentile_scaled_weights(scale, percentile):
+    """Test that scaling equal weights does not change the percentile.
+
+    The cumulative sum of non-integer weights has rounding error, which must
+    not move a value that lies exactly on the percentile.
+    """
+    x = np.arange(8.0)
+    expected = _weighted_percentile(x, np.ones(8), percentile)
+    assert np.isclose(_weighted_percentile(x, np.full(8, scale), percentile), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+@pytest.mark.parametrize("dtype", [np.uint8, np.int8, np.uint64])
+def test_weighted_percentile_integer_dtypes(dtype):
+    """Test that integer input, including unsigned, gives np.median."""
+    values = [0, 5, 9, 2] if dtype != np.int8 else [-128, 5, 9, 2]
+    x = np.array(values, dtype=dtype)
+    assert np.isclose(_weighted_percentile(x, np.ones(4)), np.median(values))
