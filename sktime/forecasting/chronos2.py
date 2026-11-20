@@ -21,6 +21,14 @@ class Chronos2Forecaster(BaseForecaster):
     past-only covariates, and known-future covariates via a group attention
     mechanism described in [2]_.
 
+    Probabilistic forecasts via ``predict_proba`` are a ``skpro`` ``HistogramQPD``
+    parameterized by the native quantile grid of the model,
+    ``model_pipeline.quantiles``. Like ``Chronos2Pipeline.predict_quantiles``,
+    ``predict_quantiles`` interpolates linearly between adjacent native quantiles,
+    and clamps levels outside the native grid to the nearest native quantile,
+    so it agrees with the quantiles of ``predict_proba``.
+    Quantile forecasts are sorted in order of level, so they never cross.
+
     Parameters
     ----------
     model_path : str, default="amazon/chronos-2"
@@ -83,7 +91,8 @@ class Chronos2Forecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -246,6 +255,48 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         y_pred : pd.DataFrame
         """
+        pred_tensor, prediction_length = self._predict_tensor(fh, X)
+
+        quantiles = self.model_pipeline.quantiles
+        median_idx = quantiles.index(0.5)
+        point_forecast = pred_tensor[:, median_idx, :].numpy()
+
+        index = (
+            ForecastingHorizon(range(1, prediction_length + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+        pred_out = fh.get_expected_pred_idx(self._context, cutoff=self.cutoff)
+
+        pred_df = pd.DataFrame(
+            point_forecast.T,
+            index=index,
+            columns=self._get_varnames(),
+        )
+        pred_df.index.names = self._y_index_names
+
+        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
+        return pred_df.loc[dateindex]
+
+    def _predict_tensor(self, fh, X=None):
+        """Run the underlying Chronos-2 pipeline and return the raw prediction tensor.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future). Column names must be
+            a subset of X provided in fit.
+
+        Returns
+        -------
+        pred_tensor : torch.Tensor
+            Raw prediction tensor of shape
+            ``(n_variates, n_quantiles, prediction_length)``
+            as returned by ``Chronos2Pipeline.predict``.
+        prediction_length : int
+            Number of steps ahead the tensor was generated for.
+        """
         import transformers
 
         self._ensure_model_pipeline_loaded()
@@ -288,27 +339,127 @@ class Chronos2Forecaster(BaseForecaster):
             limit_prediction_length=self._config["limit_prediction_length"],
         )
 
-        pred_tensor = predictions[0]
-        quantiles = self.model_pipeline.quantiles
-        median_idx = quantiles.index(0.5)
-        point_forecast = pred_tensor[:, median_idx, :].numpy()
+        return predictions[0], prediction_length
+
+    def _predict_native_quantiles(self, fh, X=None):
+        """Return the native quantile forecasts of the model, at the steps in ``fh``.
+
+        Shared by ``_predict_quantiles`` and ``_predict_proba``, so both use
+        the same forward pass and the same quantile values.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future).
+
+        Returns
+        -------
+        levels : list of float
+            Native quantile levels ``model_pipeline.quantiles``, sorted ascending.
+        values : np.ndarray of shape (n_levels, len(fh), n_variates)
+            Quantile forecasts at ``levels``, sorted along the level axis,
+            so quantiles never cross.
+        index : pd.Index
+            Time index of the steps in ``fh``, as in ``predict``.
+        """
+        pred_tensor, prediction_length = self._predict_tensor(fh, X)
 
         index = (
             ForecastingHorizon(range(1, prediction_length + 1))
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(self._context, cutoff=self.cutoff)
+        in_fh = np.asarray([x in pred_out for x in index])
+        index = pd.Index(index[in_fh])
+        index.names = self._y_index_names
 
-        pred_df = pd.DataFrame(
-            point_forecast.T,
-            index=index,
-            columns=self._get_varnames(),
+        quantiles = self.model_pipeline.quantiles
+        order = np.argsort(quantiles, kind="stable")
+        levels = [float(quantiles[i]) for i in order]
+
+        # (n_variates, n_levels, n_steps) -> (n_levels, n_steps, n_variates)
+        values = pred_tensor.detach().float().cpu().numpy()
+        values = values[:, order][:, :, in_fh].transpose(1, 2, 0)
+        # random or poorly trained weights can give crossing quantiles
+        values = np.sort(values, axis=0)
+
+        return levels, values, index
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        The underlying Chronos-2 pipeline natively outputs a grid of quantile
+        forecasts (``model_pipeline.quantiles``). This method interpolates that
+        grid linearly onto the requested ``alpha`` levels, and clamps levels
+        outside the grid to the nearest native quantile,
+        like ``Chronos2Pipeline.predict_quantiles``.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future). Column names must be
+            a subset of X provided in fit.
+        alpha : list of float
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+            second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+            at quantile probability in second col index, for the row index.
+        """
+        levels, values, index = self._predict_native_quantiles(fh, X)
+        n_levels, n_steps, n_vars = values.shape
+
+        flat = values.reshape(n_levels, n_steps * n_vars)
+        quantile_vals = np.stack(
+            [np.interp(alpha, levels, flat[:, k]) for k in range(flat.shape[1])],
+            axis=1,
         )
-        pred_df.index.names = self._y_index_names
+        # (n_alpha, n_steps, n_vars) -> (n_steps, n_vars * n_alpha)
+        quantile_vals = quantile_vals.reshape(len(alpha), n_steps, n_vars)
+        quantile_vals = quantile_vals.transpose(1, 2, 0).reshape(n_steps, -1)
 
-        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
-        return pred_df.loc[dateindex]
+        columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
+        return pd.DataFrame(quantile_vals, index=index, columns=columns)
+
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        The distribution is a ``HistogramQPD`` with the native quantile grid
+        ``model_pipeline.quantiles`` as knots, so its quantiles agree with
+        ``predict_quantiles``.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future). Column names must be
+            a subset of X provided in fit.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro HistogramQPD
+            predictive distribution
+        """
+        from skpro.distributions import HistogramQPD
+
+        levels, values, index = self._predict_native_quantiles(fh, X)
+        columns = self._get_varnames()
+
+        # rows of q_df are (quantile level, time index), see HistogramQPD docs
+        row_index = pd.MultiIndex.from_product([levels, index])
+        data = values.reshape(len(levels) * len(index), -1)
+        q_df = pd.DataFrame(data, index=row_index, columns=columns)
+
+        return HistogramQPD(q_df, tails="mass", index=index, columns=columns)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

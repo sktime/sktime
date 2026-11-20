@@ -7,6 +7,7 @@ from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline
 from sktime.forecasting.chronos2 import Chronos2Forecaster
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
@@ -141,6 +142,112 @@ def test_chronos2_multivariate_cross_learning_matches_source_reference():
     not _check_estimator_deps(Chronos2Forecaster, severity="none"),
     reason="Chronos2Forecaster soft dependencies not available",
 )
+def test_chronos2_predict_quantiles_median_matches_point_forecast():
+    """The median quantile forecast equals the point forecast.
+
+    Chronos2Forecaster discards all native quantile levels except the median in
+    ``_predict``; ``predict_quantiles`` reuses the same tensor, so the 0.5 quantile
+    must coincide with the point forecast exactly.
+    """
+    import torch
+
+    y = load_airline()
+    y_train = y.iloc[:-12]
+    fh = np.arange(1, 13)
+
+    forecaster = Chronos2Forecaster(
+        model_path="autogluon/chronos-2-small",
+        config={"device_map": "cpu", "torch_dtype": torch.float32},
+        seed=1,
+    )
+    forecaster.fit(y_train, fh=fh)
+
+    assert forecaster.get_tag("capability:pred_int") is True
+
+    y_pred = forecaster.predict(fh=fh)
+    quantiles = forecaster.predict_quantiles(fh=fh, alpha=[0.5])
+
+    median_col = ("Number of airline passengers", 0.5)
+    np.testing.assert_allclose(
+        quantiles[median_col].to_numpy(),
+        y_pred.to_numpy().flatten(),
+        atol=1e-4,
+    )
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(Chronos2Forecaster, severity="none"),
+    reason="Chronos2Forecaster soft dependencies not available",
+)
+def test_chronos2_predict_quantiles_are_monotone_in_alpha():
+    """Quantile forecasts are non-decreasing in the quantile level alpha."""
+    import torch
+
+    y = load_airline()
+    y_train = y.iloc[:-12]
+    fh = np.arange(1, 13)
+
+    forecaster = Chronos2Forecaster(
+        model_path="autogluon/chronos-2-small",
+        config={"device_map": "cpu", "torch_dtype": torch.float32},
+        seed=1,
+    )
+    forecaster.fit(y_train, fh=fh)
+
+    alpha = [0.1, 0.5, 0.9]
+    quantiles = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+
+    # alpha levels not on the native Chronos-2 grid (0.01..0.99 in steps of 0.05
+    # for the boundary levels) must be interpolated; the interpolated quantiles
+    # must still bracket the median.
+    quantiles_interp = forecaster.predict_quantiles(fh=fh, alpha=[0.025, 0.975])
+
+    name = "Number of airline passengers"
+    lo, med, hi = (quantiles[(name, a)].to_numpy() for a in [0.1, 0.5, 0.9])
+    assert np.all(lo <= med) and np.all(med <= hi)
+
+    lo2 = quantiles_interp[(name, 0.025)].to_numpy()
+    hi2 = quantiles_interp[(name, 0.975)].to_numpy()
+    assert np.all(lo2 <= med) and np.all(med <= hi2)
+
+    # all requested columns must be present, in the order requested
+    assert quantiles.columns.tolist() == [(name, a) for a in alpha]
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(Chronos2Forecaster, severity="none"),
+    reason="Chronos2Forecaster soft dependencies not available",
+)
+def test_chronos2_predict_interval_bounds_enclose_median():
+    """Prediction intervals returned via predict_interval enclose the median."""
+    import torch
+
+    y = load_airline()
+    y_train = y.iloc[:-12]
+    fh = np.arange(1, 13)
+
+    forecaster = Chronos2Forecaster(
+        model_path="autogluon/chronos-2-small",
+        config={"device_map": "cpu", "torch_dtype": torch.float32},
+        seed=1,
+    )
+    forecaster.fit(y_train, fh=fh)
+
+    y_pred = forecaster.predict(fh=fh)
+    intervals = forecaster.predict_interval(fh=fh, coverage=0.9)
+
+    name = "Number of airline passengers"
+    lo = intervals[(name, 0.9, "lower")].to_numpy()
+    up = intervals[(name, 0.9, "upper")].to_numpy()
+    med = y_pred.to_numpy().flatten()
+
+    assert np.all(lo <= med) and np.all(med <= up)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(Chronos2Forecaster, severity="none"),
+    reason="Chronos2Forecaster soft dependencies not available",
+)
 def test_chronos2_covariates_match_source_reference():
     """Predictions with past/future covariates match the source implementation."""
     import torch
@@ -174,3 +281,66 @@ def test_chronos2_covariates_match_source_reference():
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+_CHRONOS2_PROBA_CASES = [
+    pytest.param("autogluon/chronos-2-small", ["a"], id="chronos-2-small"),
+    pytest.param("amazon/chronos-2", ["a"], id="chronos-2-univariate"),
+    pytest.param("amazon/chronos-2", ["a", "b"], id="chronos-2-multivariate"),
+]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Chronos2Forecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("model_path,columns", _CHRONOS2_PROBA_CASES)
+def test_chronos2_predict_proba_consistent_with_predict_quantiles(model_path, columns):
+    """predict_proba agrees with predict_quantiles and Chronos-2, see #10566."""
+    pytest.importorskip("skpro")
+    import torch
+    from skpro.distributions import HistogramQPD
+
+    rng = np.random.default_rng(42)
+    y = pd.DataFrame(
+        rng.standard_normal((60, len(columns))).cumsum(axis=0), columns=columns
+    )
+    fh = [1, 3, 4]
+    # native levels, levels in between and levels outside the native grid
+    alpha = [0.001, 0.1, 0.15, 0.5, 0.73, 0.9, 0.999]
+
+    forecaster = Chronos2Forecaster(
+        model_path=model_path,
+        config={"device_map": "cpu", "torch_dtype": torch.float32},
+        seed=1,
+    )
+    forecaster.fit(y)
+
+    pred_dist = forecaster.predict_proba(fh=fh)
+    q_direct = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+    y_pred = forecaster.predict(fh=fh)
+
+    assert isinstance(pred_dist, HistogramQPD)
+    assert pred_dist.shape == (len(fh), len(columns))
+    assert list(pred_dist.columns) == columns
+    assert (pred_dist.index == y_pred.index).all()
+    assert (q_direct.index == y_pred.index).all()
+
+    q_proba = pred_dist.quantile(alpha=alpha)
+    pd.testing.assert_frame_equal(q_proba, q_direct, check_dtype=False)
+
+    # median agrees with point forecast
+    np.testing.assert_allclose(
+        pred_dist.quantile(alpha=[0.5]).to_numpy(), y_pred.to_numpy(), rtol=1e-5
+    )
+
+    # interpolation and tails agree with Chronos2Pipeline.predict_quantiles
+    quantiles, _ = forecaster.model_pipeline.predict_quantiles(
+        [{"target": y.to_numpy().T}],
+        prediction_length=max(fh),
+        quantile_levels=alpha,
+    )
+    # (n_variates, prediction_length, n_alpha) -> (n_fh, n_variates * n_alpha)
+    expected = quantiles[0].numpy()[:, np.asarray(fh) - 1, :]
+    expected = expected.transpose(1, 0, 2).reshape(len(fh), -1)
+    np.testing.assert_allclose(q_direct.to_numpy(), expected, rtol=1e-4, atol=1e-5)
