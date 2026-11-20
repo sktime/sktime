@@ -34,7 +34,7 @@ from sktime.utils import check_estimator
 #   )
 #   tfm = timesfm.TimesFm(
 #       context_len=160,  # TimesFMForecaster default: next multiple of 32 above 132
-#       horizon_len=128,
+#       horizon_len=150,  # max(128, max(fh))
 #       input_patch_len=32,
 #       output_patch_len=128,
 #       num_layers=20,
@@ -44,8 +44,56 @@ from sktime.utils import check_estimator
 #   )
 #   tfm.load_from_checkpoint(checkpoint_path=os.path.join(ckpt, "checkpoints"))
 #   point_forecast, _ = tfm.forecast(np.expand_dims(y, axis=0), freq=[0])
-#   point_forecast[0, :3]
-_TIMESFM_EXPECTED_HEAD = [401.7046813964844, 392.53509521484375, 429.7331848144531]
+#   point_forecast[0, [0, 1, 2, 128, 149]]
+#
+# The other cases change ``freq`` and the training length, mirroring
+# TimesFMForecaster: ``horizon_len`` is ``max(horizon_len, max(fh))`` and the
+# forecast is indexed at ``fh - 1``. All cases resolve to context_len=160 and
+# horizon_len=150, so the checkpoint is loaded once, as the model cache keys on both.
+#
+# The steps are sparse and go past output_patch_len=128, so the steps after 128
+# come from a second autoregressive decode step.
+_TIMESFM_FH = [1, 2, 3, 129, 150]
+
+# Each case is (n_train, forecaster params, expected values at _TIMESFM_FH).
+_TIMESFM_REFERENCE_CASES = {
+    # all defaults: 132 points front-padded to context_len=160
+    "default": (
+        132,
+        {},
+        [
+            401.7046813964844,
+            392.53509521484375,
+            429.7331848144531,
+            602.2587280273438,
+            635.2188720703125,
+        ],
+    ),
+    # medium frequency, passed to the model as its frequency input
+    "freq1": (
+        132,
+        {"freq": 1},
+        [
+            401.327880859375,
+            386.6180114746094,
+            420.43597412109375,
+            634.5017700195312,
+            706.54150390625,
+        ],
+    ),
+    # 20 points, front-padded by more than four input patches
+    "short-history": (
+        20,
+        {"context_len": 160},
+        [
+            152.55755615234375,
+            141.4217071533203,
+            131.2585906982422,
+            129.93707275390625,
+            127.61333465576172,
+        ],
+    ),
+}
 
 
 @pytest.mark.skipif(
@@ -68,15 +116,22 @@ def test_timesfmforecaster():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_timesfm_airline_predictions_match_upstream_reference():
-    """TimesFMForecaster predictions match the upstream ``timesfm`` implementation."""
-    y_train = load_airline().iloc[:-12]
-    fh = np.arange(1, 13)
+    """TimesFMForecaster predictions match the upstream ``timesfm`` implementation.
 
-    y_pred = TimesFMForecaster().fit(y_train, fh=fh).predict(fh=fh)
+    The cases run in one test rather than as parametrized tests, since loading the
+    200M checkpoint peaks at about 12 GB of memory, and several loads in parallel
+    under ``pytest -n auto`` would exceed the memory of a CI runner.
+    """
+    y = load_airline()
+    fh = _TIMESFM_FH
 
-    np.testing.assert_allclose(
-        y_pred.iloc[:3].to_numpy(),
-        np.asarray(_TIMESFM_EXPECTED_HEAD),
-        rtol=1e-5,
-        atol=1e-4,
-    )
+    for case, (n_train, params, expected) in _TIMESFM_REFERENCE_CASES.items():
+        y_pred = TimesFMForecaster(**params).fit(y.iloc[:n_train], fh=fh).predict()
+
+        np.testing.assert_allclose(
+            y_pred.to_numpy(),
+            np.asarray(expected),
+            rtol=1e-5,
+            atol=1e-4,
+            err_msg=f"case: {case}",
+        )
