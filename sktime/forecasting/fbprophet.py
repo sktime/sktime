@@ -124,7 +124,7 @@ class Prophet(_ProphetAdapter):
 
     References
     ----------
-    .. [1] https://facebook.github.io/prophet
+    .. [1] https://meta.github.io/prophet/
 
     Examples
     --------
@@ -141,6 +141,10 @@ class Prophet(_ProphetAdapter):
     Prophet(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
+
+    _tags = {
+        "category": ["statistical"],
+    }
 
     def __init__(
         self,

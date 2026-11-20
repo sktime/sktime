@@ -213,11 +213,17 @@ def _evaluate_blueprint(blueprint, cv, y, X=None):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             results = evaluate(forecaster=forecaster, y=y, X=X, cv=cv)
-        score = results["test_MeanAbsolutePercentageError"].mean()
+        score = float(results["test_MeanAbsolutePercentageError"].mean())
+        error = None
+        if not math.isfinite(score):
+            # evaluate can succeed and still score nan, e.g. when a transformer
+            # leaves NaNs in the target. Report it as a failure so it is ranked
+            # as FAILED and eligible for a fix attempt, not shown as a score.
+            error = f"ValueError: evaluation returned a non-finite score ({score})"
         return {
             "name": blueprint_name,
-            "score": float(score),
-            "error": None,
+            "score": score,
+            "error": error,
             "forecaster": forecaster,
             "blueprint": blueprint,
         }
@@ -532,6 +538,7 @@ class AutoResearchForecaster(BaseForecaster):
         "python_dependencies": ["litellm"],
         # estimator type
         # --------------
+        "category": ["agentic"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
@@ -613,7 +620,7 @@ class AutoResearchForecaster(BaseForecaster):
         )
         failed = [r for r in self.blueprint_history_ if r["error"] is not None]
         lines = [
-            f"  #{i + 1} Score={r['score']:.6f}"
+            f"  #{i + 1} Score={r['score']:.6f}  "
             + f"{r['name']}  spec={r['blueprint'].get('spec', '')}"
             for i, r in enumerate(valid)
         ] + [
@@ -832,6 +839,15 @@ class AutoResearchForecaster(BaseForecaster):
     def _predict(self, fh, X=None):
         """Predict using the best blueprint forecaster."""
         return self.best_forecaster_.predict(fh=fh, X=X)
+
+    def _update(self, y, X=None, update_params=True):
+        """Update the best blueprint forecaster with new data.
+
+        The LLM blueprint search is not re-run, only ``best_forecaster_``
+        is updated, so its cutoff stays in sync with this forecaster.
+        """
+        self.best_forecaster_.update(y=y, X=X, update_params=update_params)
+        return self
 
     def summary(self):
         """Return a summary DataFrame of all evaluated blueprints.

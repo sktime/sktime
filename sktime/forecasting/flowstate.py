@@ -89,6 +89,16 @@ class FlowStateForecaster(BaseForecaster):
         ``past_values`` layout for the model.
     prediction_type : {"mean", "median"}, default="mean"
         Point forecast type passed to the model.
+    device : str or None, default=None
+        Torch device used for inference, e.g. ``"cpu"``, ``"cuda"``, or
+        ``"mps"``. When ``None`` (the default), the device is resolved
+        automatically: ``cuda`` if a CUDA GPU is available, then ``mps``
+        on Apple Silicon, then ``cpu``.
+
+        Pin to ``"cpu"`` in golden-output tests or reproducibility-sensitive
+        settings to avoid platform-dependent floating-point differences
+        (MPS matmul reductions on Apple Silicon give numerically different
+        results from CPU/BLAS on Linux).
 
     Notes
     -----
@@ -115,6 +125,7 @@ class FlowStateForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": [
             "largraf",
             "bohnstingl",
@@ -141,6 +152,19 @@ class FlowStateForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_flowstate"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "flowstate": (
+                'FlowStateForecaster(model_path="ibm-research/flowstate", '
+                'revision="r1.1")'
+            ),
+            "flowstate_granite": (
+                "FlowStateForecaster("
+                'model_path="ibm-granite/granite-timeseries-flowstate-r1", '
+                'revision="r1.1")'
+            ),
+        },
     }
 
     def __init__(
@@ -151,6 +175,7 @@ class FlowStateForecaster(BaseForecaster):
         config: dict | None = None,
         batch_first: bool = True,
         prediction_type: str = "mean",
+        device: str | None = None,
     ):
         self.model_path = model_path
         self.revision = revision
@@ -158,6 +183,7 @@ class FlowStateForecaster(BaseForecaster):
         self.config = config
         self.batch_first = batch_first
         self.prediction_type = prediction_type
+        self.device = device
         self.model = None
         super().__init__()
 
@@ -174,7 +200,10 @@ class FlowStateForecaster(BaseForecaster):
     def __post_init__(self):
         """Post-initialization setup."""
         self._config = {} if self.config is None else self.config.copy()
-        self._device = _resolve_device()
+        if self.device is None:
+            self._device = _resolve_device()
+        else:
+            self._device = self.device
 
     def _get_unique_model_key(self):
         key_items = {
@@ -213,6 +242,12 @@ class FlowStateForecaster(BaseForecaster):
         self
         """
         self._scale_factor = float(self.scale_factor)
+        # Lazily resolve device on first _fit, in case __post_init__ was skipped
+        # (BaseForecaster skips __post_init__ when soft deps are absent).
+        if not hasattr(self, "_device") or self._device is None:
+            self._device = self.device if self.device is not None else _resolve_device()
+        if not hasattr(self, "_config") or self._config is None:
+            self._config = {} if self.config is None else self.config.copy()
         self.model = self._load_model()
         self.model.eval()
         self._context = y
