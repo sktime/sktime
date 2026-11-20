@@ -423,3 +423,32 @@ def test_fit_transform_no_warnings():
         warnings.simplefilter("always")
         transformer.fit_transform(y)
         assert len(w) == 0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DateTimeFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_datetime_features_millisecond_of_second():
+    """Regression test for issue #11817: millisecond_of_second calculation."""
+    # Timestamps sorted monotonically with known microsecond and expected millisecond values
+    # 0 microseconds       -> 0 milliseconds
+    # 123,456 microseconds -> 123 milliseconds
+    # 500,000 microseconds -> 500 milliseconds
+    # 999,999 microseconds -> 999 milliseconds
+    idx = pd.to_datetime([
+        "2023-01-01 00:00:00.000000",
+        "2023-01-01 00:00:00.123456",
+        "2023-01-01 00:00:00.500000",
+        "2023-01-01 00:00:00.999999",
+    ])
+    y = pd.DataFrame({"val": [1, 2, 3, 4]}, index=idx)
+
+    transformer = DateTimeFeatures(manual_selection=["millisecond_of_second"])
+    yt = transformer.fit_transform(y)
+
+    expected = pd.DataFrame(
+        {"millisecond_of_second": [0, 123, 500, 999]},
+        index=idx,
+    )
+    assert_frame_equal(yt, expected)
