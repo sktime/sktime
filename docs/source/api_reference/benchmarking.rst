@@ -41,6 +41,14 @@ Benchmarking Framework
 
     RegressionBenchmark
 
+.. currentmodule:: sktime.benchmarking.detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DetectionBenchmark
+
 Result Loading Utility
 ----------------------
 
