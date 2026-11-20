@@ -8,6 +8,7 @@ This module provides an ``sktime`` forecaster wrapping the Hugging Face
 - zero-shot prediction through :meth:`fit` + :meth:`predict`
 - global pretraining on panel/hierarchical data through :meth:`pretrain`
 - quantile prediction through :meth:`predict_quantiles`
+- distributional prediction through :meth:`predict_proba`
 - Hugging Face ``device_map`` and ``dtype`` model-loading options
 - optional quantized pretrained model loading
 - optional PEFT wrapping for pretrained models
@@ -45,8 +46,15 @@ class TimesFM2Forecaster(BaseForecaster):
     -----
     - Prediction is bounded by ``model.config.horizon_length``. Requested
       forecast steps beyond this limit raise ``ValueError``.
-    - Quantile prediction is only available for quantiles present in
-      ``model.config.quantiles``.
+    - Quantile prediction via ``predict_quantiles`` is only available for
+      quantiles present in ``model.config.quantiles``. Quantile forecasts are
+      sorted in order of level, so they never cross.
+    - Distributional prediction via ``predict_proba`` returns a ``skpro``
+      ``HistogramQPD`` parameterized by the native quantile grid
+      ``model.config.quantiles``: it interpolates linearly between adjacent
+      native quantiles, and (via ``tails="mass"``) clamps levels outside the
+      native grid to the nearest native quantile. At native levels, it agrees
+      with ``predict_quantiles``.
     - ``device_map`` and ``dtype`` are supported for both pretrained loading
       and config-only initialization. For pretrained loading, they are passed
       to ``from_pretrained``; for config-only initialization, they are applied
@@ -544,20 +552,11 @@ class TimesFM2Forecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        import torch
-
         self.model_ = self._load_model()
 
         fh, preds_idx = self._validate_predict_fh(fh)
 
-        past_values = self.context_
-        past_values = np.expand_dims(past_values, axis=0)
-        past_values = torch.from_numpy(past_values)
-        past_values = past_values.to(self.model_.dtype)
-        past_values = past_values.to(self.model_.device)
-
-        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
-        output = self.model_(past_values=past_values, **forward_kwargs)
+        output = self._forward()
 
         preds = output.mean_predictions
         preds = preds.ravel()
@@ -604,12 +603,9 @@ class TimesFM2Forecaster(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        import torch
-
         self.model_ = self._load_model()
 
         quantiles = self.model_.config.quantiles
-        past_values = self.context_
 
         fh, preds_idx = self._validate_predict_fh(fh)
 
@@ -624,19 +620,20 @@ class TimesFM2Forecaster(BaseForecaster):
             )
         quantiles_idx = np.array([quantiles.index(i) for i in alpha])
 
-        past_values = np.expand_dims(past_values, axis=0)
-        past_values = torch.from_numpy(past_values)
-        past_values = past_values.to(self.model_.dtype)
-        past_values = past_values.to(self.model_.device)
-
-        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
-        output = self.model_(past_values=past_values, **forward_kwargs)
+        output = self._forward()
 
         preds = output.full_predictions
         preds = preds.squeeze(0)
         preds = preds[preds_idx]
-        preds = preds[:, quantiles_idx]
         preds = preds.detach().float().cpu().numpy()
+        # column 0 of full_predictions is the mean forecast,
+        # quantile forecasts for config.quantiles start at column 1
+        preds = preds[:, 1:]
+        # sort values in order of level so quantiles never cross,
+        # this keeps them consistent with predict_proba
+        order = np.argsort(quantiles, kind="stable")
+        preds[:, order] = np.sort(preds[:, order], axis=1)
+        preds = preds[:, quantiles_idx]
 
         index = fh.to_absolute(self._cutoff)._values
         name = self.context_.name if self.context_.name is not None else 0
@@ -648,6 +645,69 @@ class TimesFM2Forecaster(BaseForecaster):
         )
 
         return pred_quantiles
+
+    def _forward(self):
+        """Run the model forward pass on the stored context.
+
+        Shared helper for ``_predict`` and ``_predict_quantiles``.
+
+        Returns
+        -------
+        output : transformers model output
+            Output of the TimesFM prediction model, with ``mean_predictions``
+            of shape ``(1, horizon_length)`` and ``full_predictions`` of shape
+            ``(1, horizon_length, 1 + n_quantiles)``. Column 0 of
+            ``full_predictions`` is the mean forecast, column ``k`` for
+            ``k >= 1`` is the forecast at level ``model.config.quantiles[k - 1]``.
+        """
+        import torch
+
+        past_values = self.context_
+        past_values = np.expand_dims(past_values, axis=0)
+        past_values = torch.from_numpy(past_values)
+        past_values = past_values.to(self.model_.dtype)
+        past_values = past_values.to(self.model_.device)
+
+        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
+        return self.model_(past_values=past_values, **forward_kwargs)
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : sktime time series object, optional (default=None)
+            Exogeneous time series for the forecast
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro BaseDistribution
+            predictive distribution, ``HistogramQPD`` parameterized by the
+            native quantile grid ``model.config.quantiles``
+        """
+        from skpro.distributions import HistogramQPD
+
+        self.model_ = self._load_model()
+
+        quantiles = [round(i, 3) for i in self.model_.config.quantiles]
+        preds = self._predict_quantiles(fh=fh, X=X, alpha=quantiles)
+
+        pred_index = preds.index
+        columns = preds.columns.get_level_values(0).unique()
+
+        # rows of q_df are (quantile level, time index), see HistogramQPD docs
+        row_index = pd.MultiIndex.from_product([quantiles, pred_index])
+        data = preds.to_numpy().T.reshape(-1, 1)
+        q_df = pd.DataFrame(data, index=row_index, columns=columns)
+
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=columns)
 
     def _load_model(self):
         """Load or retrieve a cached TimesFM model instance.
