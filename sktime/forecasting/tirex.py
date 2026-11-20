@@ -134,6 +134,7 @@ class TiRexForecaster(BaseForecaster):
         "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
+        "capability:insample": False,
         # CI and test flags
         # -----------------
         "tests:vm": True,
