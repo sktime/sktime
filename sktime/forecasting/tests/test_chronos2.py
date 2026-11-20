@@ -7,6 +7,7 @@ from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline
 from sktime.forecasting.chronos2 import Chronos2Forecaster
+from sktime.tests.test_switch import run_test_for_class
 
 
 @pytest.mark.skipif(
@@ -280,3 +281,66 @@ def test_chronos2_covariates_match_source_reference():
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+_CHRONOS2_PROBA_CASES = [
+    pytest.param("autogluon/chronos-2-small", ["a"], id="chronos-2-small"),
+    pytest.param("amazon/chronos-2", ["a"], id="chronos-2-univariate"),
+    pytest.param("amazon/chronos-2", ["a", "b"], id="chronos-2-multivariate"),
+]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Chronos2Forecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("model_path,columns", _CHRONOS2_PROBA_CASES)
+def test_chronos2_predict_proba_consistent_with_predict_quantiles(model_path, columns):
+    """predict_proba agrees with predict_quantiles and Chronos-2, see #10566."""
+    pytest.importorskip("skpro")
+    import torch
+    from skpro.distributions import HistogramQPD
+
+    rng = np.random.default_rng(42)
+    y = pd.DataFrame(
+        rng.standard_normal((60, len(columns))).cumsum(axis=0), columns=columns
+    )
+    fh = [1, 3, 4]
+    # native levels, levels in between and levels outside the native grid
+    alpha = [0.001, 0.1, 0.15, 0.5, 0.73, 0.9, 0.999]
+
+    forecaster = Chronos2Forecaster(
+        model_path=model_path,
+        config={"device_map": "cpu", "torch_dtype": torch.float32},
+        seed=1,
+    )
+    forecaster.fit(y)
+
+    pred_dist = forecaster.predict_proba(fh=fh)
+    q_direct = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+    y_pred = forecaster.predict(fh=fh)
+
+    assert isinstance(pred_dist, HistogramQPD)
+    assert pred_dist.shape == (len(fh), len(columns))
+    assert list(pred_dist.columns) == columns
+    assert (pred_dist.index == y_pred.index).all()
+    assert (q_direct.index == y_pred.index).all()
+
+    q_proba = pred_dist.quantile(alpha=alpha)
+    pd.testing.assert_frame_equal(q_proba, q_direct, check_dtype=False)
+
+    # median agrees with point forecast
+    np.testing.assert_allclose(
+        pred_dist.quantile(alpha=[0.5]).to_numpy(), y_pred.to_numpy(), rtol=1e-5
+    )
+
+    # interpolation and tails agree with Chronos2Pipeline.predict_quantiles
+    quantiles, _ = forecaster.model_pipeline.predict_quantiles(
+        [{"target": y.to_numpy().T}],
+        prediction_length=max(fh),
+        quantile_levels=alpha,
+    )
+    # (n_variates, prediction_length, n_alpha) -> (n_fh, n_variates * n_alpha)
+    expected = quantiles[0].numpy()[:, np.asarray(fh) - 1, :]
+    expected = expected.transpose(1, 0, 2).reshape(len(fh), -1)
+    np.testing.assert_allclose(q_direct.to_numpy(), expected, rtol=1e-4, atol=1e-5)
