@@ -314,3 +314,32 @@ def test_dropna_pipeline():
     # Predict
     y_pred = pipe_yX.predict(fh=[1], X=X.iloc[-1:, :])
     assert len(y_pred) == 1
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_inverse_transform_uses_transform_values_not_fit():
+    """inverse(transform(X)) recovers X even when X overlaps fit indices.
+
+    Regression for #2265: when transform sees different values at the same
+    timestamps as fit, inverse_transform must not reconstruct the fit values.
+    """
+    def make_panel(values_offset=0.0):
+        index = pd.MultiIndex.from_product(
+            [[0, 1], [0, 1, 2, 3]], names=["instance", "time"]
+        )
+        values = np.arange(8).astype(float) + values_offset
+        return pd.DataFrame({"var_0": values}, index=index)
+
+    X_fit = make_panel(values_offset=0.0)
+    X_transform = make_panel(values_offset=100.0)
+
+    estimator = Differencer.create_test_instance()
+    estimator.fit(X_fit)
+    Xt = estimator.transform(X_transform)
+    Xit = estimator.inverse_transform(Xt)
+
+    assert not np.allclose(Xit.values, X_fit.values)
+    pd.testing.assert_frame_equal(Xit, X_transform, check_dtype=False)
