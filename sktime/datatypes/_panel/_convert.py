@@ -35,6 +35,7 @@ __all__ = [
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.datatypes._base import BaseConverter
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.utils.pandas import df_map
@@ -152,7 +153,6 @@ def _check_equal_index(X):
                 f"but found: "
                 f"{len(first_index)} observations in column: {col}"
             )
-
         # Check index for all rows.
         for i in range(1, X.shape[0]):
             index = (
@@ -171,7 +171,7 @@ def _check_equal_index(X):
 
 
 def from_3d_numpy_to_2d_array(X):
-    """Convert 2D NumPy Panel to 2D numpy Panel.
+    """Convert 3D NumPy Panel to 2D numpy Panel.
 
     Converts 3D numpy array (n_instances, n_columns, n_timepoints) to
     a 2D numpy array with shape (n_instances, n_columns*n_timepoints)
@@ -191,11 +191,23 @@ def from_3d_numpy_to_2d_array(X):
     return array_2d
 
 
-def from_3d_numpy_to_2d_array_adp(obj, store=None):
-    return from_3d_numpy_to_2d_array(obj)
+class Numpy3DToNumpyFlat(BaseConverter):
+    """Convert a 3D NumPy Panel to a flattened NumPy Panel."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy3D",
+        "mtype_to": "numpyflat",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return from_3d_numpy_to_2d_array(obj)
 
 
-convert_dict[("numpy3D", "numpyflat", "Panel")] = from_3d_numpy_to_2d_array_adp
+convert_dict[("numpy3D", "numpyflat", "Panel")] = Numpy3DToNumpyFlat()
 
 
 def from_nested_to_2d_array(X, return_numpy=False):
@@ -217,7 +229,7 @@ def from_nested_to_2d_array(X, return_numpy=False):
 
     Returns
     -------
-     Xt : pandas DataFrame
+    Xt : pandas DataFrame
         Transformed DataFrame in tabular format
     """
     # TODO does not handle dataframes with nested series columns *and*
@@ -286,13 +298,29 @@ def from_nested_to_pdwide(obj, store=None):
     return from_nested_to_2d_array(X=obj, return_numpy=False)
 
 
+class NestedToNumpyFlat(BaseConverter):
+    """Convert a nested Panel to a flat NumPy array."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "nested_univ",
+        "mtype_to": "numpyflat",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return from_nested_to_2d_array(X=obj, return_numpy=True)
+
+
 def from_nested_to_2d_np_array(obj, store=None):
     return from_nested_to_2d_array(X=obj, return_numpy=True)
 
 
 convert_dict[("nested_univ", "pd-wide", "Panel")] = from_nested_to_pdwide
 
-convert_dict[("nested_univ", "numpyflat", "Panel")] = from_nested_to_2d_np_array
+convert_dict[("nested_univ", "numpyflat", "Panel")] = NestedToNumpyFlat()
 
 
 def from_2d_array_to_nested(
@@ -626,18 +654,31 @@ def from_multi_index_to_3d_numpy(X):
     return X_3d
 
 
-def from_multi_index_to_3d_numpy_adp(obj, store=None):
-    obj = _coerce_df_dtypes(obj)
+class PdMultiIndexToNumpy3D(BaseConverter):
+    """Convert a pandas multi-index Panel to a 3D NumPy Panel."""
 
-    res = from_multi_index_to_3d_numpy(X=obj)
-    if isinstance(store, dict):
-        store["columns"] = obj.columns
-        store["index_names"] = obj.index.names
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd-multiindex",
+        "mtype_to": "numpy3D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    return res
+    def _convert(self, obj, store=None):
+        obj = _coerce_df_dtypes(obj)
+
+        res = from_multi_index_to_3d_numpy(X=obj)
+
+        if isinstance(store, dict):
+            store["columns"] = obj.columns
+            store["index_names"] = obj.index.names
+
+        return res
 
 
-convert_dict[("pd-multiindex", "numpy3D", "Panel")] = from_multi_index_to_3d_numpy_adp
+convert_dict[("pd-multiindex", "numpy3D", "Panel")] = PdMultiIndexToNumpy3D()
 
 
 def from_3d_numpy_to_multi_index(
@@ -703,22 +744,35 @@ def from_3d_numpy_to_multi_index(
     return X_mi
 
 
-def from_3d_numpy_to_multi_index_adp(obj, store=None):
-    res = from_3d_numpy_to_multi_index(X=obj)
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == obj.shape[1]
-    ):
-        res.columns = store["columns"]
+class Numpy3DToPdMultiIndex(BaseConverter):
+    """Convert a 3D NumPy Panel to a pandas multi-index Panel."""
 
-    if isinstance(store, dict) and "index_names" in store.keys():
-        res.index.names = store["index_names"]
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy3D",
+        "mtype_to": "pd-multiindex",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    return res
+    def _convert(self, obj, store=None):
+        res = from_3d_numpy_to_multi_index(X=obj)
+
+        if (
+            isinstance(store, dict)
+            and "columns" in store.keys()
+            and len(store["columns"]) == obj.shape[1]
+        ):
+            res.columns = store["columns"]
+
+        if isinstance(store, dict) and "index_names" in store.keys():
+            res.index.names = store["index_names"]
+
+        return res
 
 
-convert_dict[("numpy3D", "pd-multiindex", "Panel")] = from_3d_numpy_to_multi_index_adp
+convert_dict[("numpy3D", "pd-multiindex", "Panel")] = Numpy3DToPdMultiIndex()
 
 
 def from_multi_index_to_nested(
@@ -779,6 +833,35 @@ def from_multi_index_to_nested(
     return x_nested
 
 
+class PdMultiIndexToNested(BaseConverter):
+    """Convert a pandas multi-index Panel to a nested Panel."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd-multiindex",
+        "mtype_to": "nested_univ",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        obj = _coerce_df_dtypes(obj)
+
+        if isinstance(store, dict):
+            store["index_names"] = obj.index.names
+
+        res = from_multi_index_to_nested(
+            multi_ind_dataframe=obj,
+            instance_index=None,
+        )
+
+        if isinstance(store, dict) and "instance_names" in store.keys():
+            res.index.names = store["instance_names"]
+
+        return res
+
+
 def from_multi_index_to_nested_adp(obj, store=None):
     obj = _coerce_df_dtypes(obj)
 
@@ -793,7 +876,7 @@ def from_multi_index_to_nested_adp(obj, store=None):
     return res
 
 
-convert_dict[("pd-multiindex", "nested_univ", "Panel")] = from_multi_index_to_nested_adp
+convert_dict[("pd-multiindex", "nested_univ", "Panel")] = PdMultiIndexToNested()
 
 
 def from_nested_to_multi_index(X, instance_index=None, time_index=None):
@@ -849,6 +932,42 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     return X_mi
 
 
+class NestedToPdMultiIndex(BaseConverter):
+    """Convert a nested Panel to a pandas multi-index Panel."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "nested_univ",
+        "mtype_to": "pd-multiindex",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        if isinstance(store, dict):
+            store["instance_names"] = obj.index.names
+
+        if isinstance(store, dict) and "index_names" in store.keys():
+            instance_index = store["index_names"][0]
+            time_index = store["index_names"][1]
+        else:
+            instance_index = obj.index.names[0]
+            ser = obj.iloc[0, 0]
+            if hasattr(ser, "index"):
+                time_index = ser.index.names[0]
+            else:
+                time_index = None
+
+        res = from_nested_to_multi_index(
+            X=obj,
+            instance_index=instance_index,
+            time_index=time_index,
+        )
+
+        return res
+
+
 def from_nested_to_multi_index_adp(obj, store=None):
     if isinstance(store, dict):
         store["instance_names"] = obj.index.names
@@ -871,7 +990,7 @@ def from_nested_to_multi_index_adp(obj, store=None):
     return res
 
 
-convert_dict[("nested_univ", "pd-multiindex", "Panel")] = from_nested_to_multi_index_adp
+convert_dict[("nested_univ", "pd-multiindex", "Panel")] = NestedToPdMultiIndex()
 
 
 def _convert_series_cell_to_numpy(cell):
@@ -920,11 +1039,23 @@ def from_nested_to_3d_numpy(X):
     return X_3d
 
 
-def from_nested_to_3d_numpy_adp(obj, store=None):
-    return from_nested_to_3d_numpy(X=obj)
+class NestedToNumpy3D(BaseConverter):
+    """Convert a nested Panel to a 3D NumPy Panel."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "nested_univ",
+        "mtype_to": "numpy3D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return from_nested_to_3d_numpy(X=obj)
 
 
-convert_dict[("nested_univ", "numpy3D", "Panel")] = from_nested_to_3d_numpy_adp
+convert_dict[("nested_univ", "numpy3D", "Panel")] = NestedToNumpy3D()
 
 
 def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
@@ -981,11 +1112,76 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
     return df
 
 
-def from_3d_numpy_to_nested_adp(obj, store=None):
-    return from_3d_numpy_to_nested(X=obj)
+class Numpy3DToNested(BaseConverter):
+    """Convert a 3D NumPy Panel to a nested Panel."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy3D",
+        "mtype_to": "nested_univ",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return from_3d_numpy_to_nested(X=obj)
 
 
-convert_dict[("numpy3D", "nested_univ", "Panel")] = from_3d_numpy_to_nested_adp
+convert_dict[("numpy3D", "nested_univ", "Panel")] = Numpy3DToNested()
+
+
+class DfListToPdMultiIndex(BaseConverter):
+    """Convert a list of pandas DataFrames to a pandas multi-index Panel."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "df-list",
+        "mtype_to": "pd-multiindex",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        n = len(obj)
+
+        mi = pd.concat(
+            obj,
+            axis=0,
+            keys=range(n),
+            names=["instances", "timepoints"],
+        )
+
+        if isinstance(store, dict) and "index_names" in store.keys():
+            mi.index.names = store["index_names"]
+
+        return mi
+
+
+class PdMultiIndexToDfList(BaseConverter):
+    """Convert a pandas multi-index Panel to a list of DataFrames."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd-multiindex",
+        "mtype_to": "df-list",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        obj = _coerce_df_dtypes(obj)
+
+        instance_index = obj.index.get_level_values(0).unique()
+
+        Xlist = [obj.loc[i].rename_axis(None) for i in instance_index]
+
+        if isinstance(store, dict):
+            store["index_names"] = obj.index.names
+
+        return Xlist
 
 
 def from_dflist_to_multiindex(obj, store=None):
@@ -999,7 +1195,7 @@ def from_dflist_to_multiindex(obj, store=None):
     return mi
 
 
-convert_dict[("df-list", "pd-multiindex", "Panel")] = from_dflist_to_multiindex
+convert_dict[("df-list", "pd-multiindex", "Panel")] = DfListToPdMultiIndex()
 
 
 def from_multiindex_to_dflist(obj, store=None):
@@ -1015,39 +1211,63 @@ def from_multiindex_to_dflist(obj, store=None):
     return Xlist
 
 
-convert_dict[("pd-multiindex", "df-list", "Panel")] = from_multiindex_to_dflist
+convert_dict[("pd-multiindex", "df-list", "Panel")] = PdMultiIndexToDfList()
 
 
-def from_dflist_to_numpy3D(obj, store=None):
-    if not isinstance(obj, list):
-        raise TypeError("obj must be a list of pd.DataFrame")
+class DfListToNumpy3D(BaseConverter):
+    """Convert a list of pandas DataFrames to a 3D NumPy Panel."""
 
-    n = len(obj[0])
-    cols = set(obj[0].columns)
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "df-list",
+        "mtype_to": "numpy3D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    for i in range(len(obj)):
-        if not n == len(obj[i]) or not set(obj[i].columns) == cols:
-            raise ValueError("elements of obj must have same length and columns")
+    def _convert(self, obj, store=None):
+        if not isinstance(obj, list):
+            raise TypeError("obj must be a list of pd.DataFrame")
 
-    nparr = np.array([X.to_numpy().transpose() for X in obj])
+        n = len(obj[0])
+        cols = set(obj[0].columns)
 
-    return nparr
+        for i in range(len(obj)):
+            if not n == len(obj[i]) or not set(obj[i].columns) == cols:
+                raise ValueError("elements of obj must have same length and columns")
 
+        nparr = np.array([X.to_numpy().transpose() for X in obj])
 
-convert_dict[("df-list", "numpy3D", "Panel")] = from_dflist_to_numpy3D
-
-
-def from_numpy3d_to_dflist(obj, store=None):
-    if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
-        raise TypeError("obj must be a 3D numpy.ndarray")
-
-    cols = _make_column_names(obj.shape[1])
-    Xlist = [pd.DataFrame(obj[i].T, columns=cols) for i in range(len(obj))]
-
-    return Xlist
+        return nparr
 
 
-convert_dict[("numpy3D", "df-list", "Panel")] = from_numpy3d_to_dflist
+convert_dict[("df-list", "numpy3D", "Panel")] = DfListToNumpy3D()
+
+
+class Numpy3DToDfList(BaseConverter):
+    """Convert a 3D NumPy Panel to a list of pandas DataFrames."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy3D",
+        "mtype_to": "df-list",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
+            raise TypeError("obj must be a 3D numpy.ndarray")
+
+        cols = _make_column_names(obj.shape[1])
+        Xlist = [pd.DataFrame(obj[i].T, columns=cols) for i in range(len(obj))]
+
+        return Xlist
+
+
+convert_dict[("numpy3D", "df-list", "Panel")] = Numpy3DToDfList()
 
 
 def from_nested_to_df_list_adp(obj, store=None):
@@ -1068,22 +1288,38 @@ def from_df_list_to_nested_adp(obj, store=None):
 convert_dict[("df-list", "nested_univ", "Panel")] = from_df_list_to_nested_adp
 
 
-def from_numpy3d_to_numpyflat(obj, store=None):
-    if not isinstance(obj, np.ndarray) or len(obj.shape) != 3:
-        raise TypeError("obj must be a 3D numpy.ndarray")
+class NumpyFlatToNumpy3D(BaseConverter):
+    """Convert a flattened NumPy Panel to a 3D NumPy Panel."""
 
-    shape = obj.shape
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpyflat",
+        "mtype_to": "numpy3D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    # store second dimension shape/length if we want to restore
-    if isinstance(store, dict):
-        store["numpy_second_dim"] = shape[1]
+    def _convert(self, obj, store=None):
+        if not isinstance(obj, np.ndarray) or len(obj.shape) != 2:
+            raise TypeError("obj must be a 2D numpy.ndarray")
 
-    obj_in_2D = obj.reshape(shape[0], shape[1] * shape[2])
+        shape = obj.shape
 
-    return obj_in_2D
+        if (
+            isinstance(store, dict)
+            and "numpy_second_dim" in store.keys()
+            and isinstance(store["numpy_second_dim"], int)
+            and shape[1] % store["numpy_second_dim"] == 0
+        ):
+            shape_1 = store["numpy_second_dim"]
+            target_shape = (shape[0], shape_1, shape[1] / shape_1)
+        else:
+            target_shape = (shape[0], 1, shape[1])
 
+        obj_in_3D = obj.reshape(target_shape)
 
-convert_dict[("numpy3D", "numpyflat", "Panel")] = from_numpy3d_to_numpyflat
+        return obj_in_3D
 
 
 def from_numpyflat_to_numpy3d(obj, store=None):
@@ -1109,7 +1345,7 @@ def from_numpyflat_to_numpy3d(obj, store=None):
     return obj_in_3D
 
 
-convert_dict[("numpyflat", "numpy3D", "Panel")] = from_numpyflat_to_numpy3d
+convert_dict[("numpyflat", "numpy3D", "Panel")] = NumpyFlatToNumpy3D()
 
 _extend_conversions(
     "numpyflat", "numpy3D", convert_dict, mtype_universe=MTYPE_LIST_PANEL
@@ -1126,15 +1362,39 @@ if _check_soft_dependencies("dask", severity="none"):
         convert_pandas_to_dask,
     )
 
-    def convert_dask_to_pd_as_panel(obj, store=None):
-        return convert_dask_to_pandas(obj)
+    class DaskToPdMultiIndex(BaseConverter):
+        """Convert a Dask Panel to a pandas multi-index Panel."""
 
-    convert_dict[("dask_panel", "pd-multiindex", "Panel")] = convert_dask_to_pd_as_panel
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "dask_panel",
+            "mtype_to": "pd-multiindex",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
 
-    def convert_pd_to_dask_as_panel(obj, store=None):
-        return convert_pandas_to_dask(obj)
+        def _convert(self, obj, store=None):
+            return convert_dask_to_pandas(obj)
 
-    convert_dict[("pd-multiindex", "dask_panel", "Panel")] = convert_pd_to_dask_as_panel
+    convert_dict[("dask_panel", "pd-multiindex", "Panel")] = DaskToPdMultiIndex()
+
+    class PdMultiIndexToDask(BaseConverter):
+        """Convert a pandas multi-index Panel to a Dask Panel."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd-multiindex",
+            "mtype_to": "dask_panel",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_to_dask(obj)
+
+    convert_dict[("pd-multiindex", "dask_panel", "Panel")] = PdMultiIndexToDask()
 
     _extend_conversions(
         "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
@@ -1146,19 +1406,39 @@ if _check_soft_dependencies("polars", severity="none"):
         convert_polars_to_pandas,
     )
 
-    def convert_polars_to_pd_as_panel(obj, store=None):
-        return convert_polars_to_pandas(obj)
+    class PolarsToPdMultiIndex(BaseConverter):
+        """Convert a Polars Panel to a pandas multi-index Panel."""
 
-    convert_dict[("polars_panel", "pd-multiindex", "Panel")] = (
-        convert_polars_to_pd_as_panel
-    )
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "polars_panel",
+            "mtype_to": "pd-multiindex",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
 
-    def convert_pd_to_polars_as_panel(obj, store=None):
-        return convert_pandas_to_polars(obj)
+        def _convert(self, obj, store=None):
+            return convert_polars_to_pandas(obj)
 
-    convert_dict[("pd-multiindex", "polars_panel", "Panel")] = (
-        convert_pd_to_polars_as_panel
-    )
+    class PdMultiIndexToPolars(BaseConverter):
+        """Convert a pandas multi-index Panel to a Polars Panel."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd-multiindex",
+            "mtype_to": "polars_panel",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_to_polars(obj)
+
+    convert_dict[("polars_panel", "pd-multiindex", "Panel")] = PolarsToPdMultiIndex()
+
+    convert_dict[("pd-multiindex", "polars_panel", "Panel")] = PdMultiIndexToPolars()
 
     _extend_conversions(
         "polars_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
@@ -1172,34 +1452,81 @@ if _check_soft_dependencies("gluonts", severity="none"):
         convert_pandasDataset_to_pandas,
     )
 
-    # Utilizing functions defined in _adapter/gluonts.py
-    def convert_gluonts_listDataset_to_pandas(obj, store=None):
-        return convert_listDataset_to_pandas(obj)
+    class PdMultiIndexToGluontsListDataset(BaseConverter):
+        """Convert a pandas multi-index Panel to a GluonTS ListDataset."""
 
-    def convert_pandas_to_gluonts_listDataset(obj, store=None):
-        return convert_pandas_to_listDataset(obj)
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd-multiindex",
+            "mtype_to": "gluonts_ListDataset_panel",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": "gluonts",
+        }
 
-    def convert_pandas_multiindex_to_gluonts_pandasDataset(obj, store=None):
-        return convert_pandas_multiindex_to_pandasDataset(obj)
+        def _convert(self, obj, store=None):
+            return convert_pandas_to_listDataset(obj)
 
-    def convert_gluonts_pandasDataset_to_pandas_multiindex(obj, store=None):
-        return convert_pandasDataset_to_pandas(obj)
+    class GluontsListDatasetToPdMultiIndex(BaseConverter):
+        """Convert a GluonTS ListDataset to a pandas multi-index Panel."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "gluonts_ListDataset_panel",
+            "mtype_to": "pd-multiindex",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": "gluonts",
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_listDataset_to_pandas(obj)
+
+    class PdMultiIndexToGluontsPandasDataset(BaseConverter):
+        """Convert a pandas multi-index Panel to a GluonTS PandasDataset."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd-multiindex",
+            "mtype_to": "gluonts_PandasDataset_panel",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": "gluonts",
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_multiindex_to_pandasDataset(obj)
+
+    class GluontsPandasDatasetToPdMultiIndex(BaseConverter):
+        """Convert a GluonTS PandasDataset to a pandas multi-index Panel."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "gluonts_PandasDataset_panel",
+            "mtype_to": "pd-multiindex",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": "gluonts",
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandasDataset_to_pandas(obj)
 
     # Storing functions in convert_dict
     convert_dict[("pd-multiindex", "gluonts_ListDataset_panel", "Panel")] = (
-        convert_pandas_to_gluonts_listDataset
+        PdMultiIndexToGluontsListDataset()
     )
 
     convert_dict[("gluonts_ListDataset_panel", "pd-multiindex", "Panel")] = (
-        convert_gluonts_listDataset_to_pandas
+        GluontsListDatasetToPdMultiIndex()
     )
 
     convert_dict[("pd-multiindex", "gluonts_PandasDataset_panel", "Panel")] = (
-        convert_pandas_multiindex_to_gluonts_pandasDataset
+        PdMultiIndexToGluontsPandasDataset()
     )
 
     convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
-        convert_gluonts_pandasDataset_to_pandas_multiindex
+        GluontsPandasDatasetToPdMultiIndex()
     )
 
     # Extending conversions
