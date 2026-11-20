@@ -96,9 +96,7 @@ The developer sided process takes place in PR made by the developer proposing th
 * **Docstrings should be updated to reflect the deprecation.** Docstrings should be updated to reflect the deprecation/change.
   This typically includes deprecation timelines, pre/post deprecation functionality.
 * **Add a TODO comment in the code for the release manager.**
-  Add a TODO comment to all pieces of code that should be removed or changed, e.g.,: :code:`# TODO 0.11.0: remove this function`.
-  Start the comment with ``TODO`` directly followed by the version, so a search for the version finds it.
-  Capitalization does not matter, e.g., ``grep -rni "todo.*0.11.0" sktime``.
+  Add a TODO comment to all pieces of code that should be removed or changed, e.g.,: :code:`TODO: remove in v0.11.0`.
   The TODO comment should describe all actions in explicit detail (e.g. removal of arguments, removal of functions or blocks of code).
   If changes need to be applied across multiple places, place multiple TODO comments.
   Ensure the result of the TODO actions is tested and does not lead to test breakage when actioned by the release manager.
@@ -378,7 +376,7 @@ that the release manager can merge.
 
     from sktime.utils.warnings import warn
 
-    # TODO <MAJOR>.<MINOR>.0:
+    # TODO (release <MAJOR>.<MINOR>.0)
     # change the default of 'parameter' to <new_default>
     # update the docstring for parameter
     class EstimatorName:
@@ -393,7 +391,7 @@ that the release manager can merge.
         """
         def __init__(self, parameter="changing_value"):
             self.parameter = parameter
-            # TODO <MAJOR>.<MINOR>.0:
+            # TODO (release <MAJOR>.<MINOR>.0)
             # change the default of 'parameter' to <new_default>
             # remove the following 'if' check
             # de-indent the following 'else' check
@@ -524,7 +522,7 @@ that the release manager can merge.
             # IMPORTANT: both params need to be written to self during change period
             self.new_parameter = new_parameter
             self.old_parameter = old_parameter
-            # TODO <MAJOR>.<MINOR>.0:
+            # TODO (release <MAJOR>.<MINOR>.0)
             # remove the 'old_parameter' argument from '__init__' signature
             # move 'new_parameter' to the position of 'old_parameter'
             # remove the following 'if' check
