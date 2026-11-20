@@ -217,6 +217,15 @@ _TIMER_S1_UPSTREAM_REFERENCE_CASES = [
         },
         id="unpadded",
     ),
+    # max(fh) = 40, so the second generation step returns 8 of 16 values
+    pytest.param(
+        132,
+        {},
+        None,
+        [2, 17, 40],
+        {2: 265.958755, 17: 267.700952, 40: 261.079743},
+        id="sparse-fh",
+    ),
 ]
 
 # native quantile forecasts of the "default" case at selected fh steps
