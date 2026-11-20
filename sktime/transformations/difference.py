@@ -168,8 +168,10 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         X_diff_orig = X_diff_seq[len(lags)]
         # Shift the differenced time series index by the last lag
         # to match the original time series index
-        # spacing of the index seen in fit, e.g., 2 for an index 0, 2, 4, ...
-        step = _index_step(X_diff_orig.index)
+        # spacing of the fit index together with the index to invert, e.g., 2
+        # for 0, 2, 4, ... followed by 16, 18. Labels that break the spacing,
+        # such as fh=[1] giving 15 after 14, fall back to a step of 1.
+        step = _index_step(X_diff_orig.index.union(X.index))
         X_ix_shift = _shift(X.index, -lag_last, step)
         # Get the original time series values for the intersecting
         # indices between the shifted index and the original index

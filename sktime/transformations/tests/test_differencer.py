@@ -362,3 +362,29 @@ def test_differencer_inverse_integer_index_with_step_out_of_sample(lags):
     y_inv = transformer.inverse_transform(yt_test)
 
     pd.testing.assert_series_equal(y_inv, y_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "fh, expected",
+    [([1], [79.0]), ([1, 2, 3], [79.0, 94.0, 109.0]), ([2, 4], [79.0, 94.0])],
+)
+def test_differencer_pipeline_integer_index_with_step(fh, expected):
+    """Test a forecasting pipeline with Differencer on an integer index with step.
+
+    On the index 0, 2, ..., 14, fh=[1] gives the label 15, which does not follow
+    the step of the fit index. The level must still be added back.
+    """
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.naive import NaiveForecaster
+
+    y = pd.Series(np.arange(1.0, 9.0) ** 2, index=pd.RangeIndex(0, 16, 2))
+    forecaster = TransformedTargetForecaster(
+        [("d", Differencer(lags=1)), ("f", NaiveForecaster())]
+    )
+    y_pred = forecaster.fit(y, fh=fh).predict()
+
+    np.testing.assert_allclose(y_pred.to_numpy(), expected)
