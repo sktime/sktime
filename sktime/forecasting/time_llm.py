@@ -289,7 +289,7 @@ class TimeLLMForecaster(BaseForecaster):
         """Return testing parameter settings for the estimator."""
         minimal_params = {
             "pred_len": 1,
-            "seq_len": 5,
+            "seq_len": 8,
             "llm_model": "TINY_RANDOM",
             "llm_layers": 1,
             "llm_dim": 1,
