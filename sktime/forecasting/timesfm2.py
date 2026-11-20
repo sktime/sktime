@@ -551,20 +551,11 @@ class TimesFM2Forecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        import torch
-
         self.model_ = self._load_model()
 
         fh, preds_idx = self._validate_predict_fh(fh)
 
-        past_values = self.context_
-        past_values = np.expand_dims(past_values, axis=0)
-        past_values = torch.from_numpy(past_values)
-        past_values = past_values.to(self.model_.dtype)
-        past_values = past_values.to(self.model_.device)
-
-        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
-        output = self.model_(past_values=past_values, **forward_kwargs)
+        output = self._forward()
 
         preds = output.mean_predictions
         preds = preds.ravel()
@@ -630,9 +621,13 @@ class TimesFM2Forecaster(BaseForecaster):
         # quantile forecasts for config.quantiles start at column 1
         quantiles_idx = np.array([quantiles.index(i) for i in alpha]) + 1
 
-        preds = self._predict_full_quantiles()
+        output = self._forward()
+
+        preds = output.full_predictions
+        preds = preds.squeeze(0)
         preds = preds[preds_idx]
         preds = preds[:, quantiles_idx]
+        preds = preds.detach().float().cpu().numpy()
 
         index = fh.to_absolute(self._cutoff)._values
         name = self.context_.name if self.context_.name is not None else 0
@@ -645,17 +640,19 @@ class TimesFM2Forecaster(BaseForecaster):
 
         return pred_quantiles
 
-    def _predict_full_quantiles(self):
-        """Run the model forward pass and return full prediction array.
+    def _forward(self):
+        """Run the model forward pass on the stored context.
 
-        Shared helper for ``_predict_quantiles`` and ``_predict_proba``.
+        Shared helper for ``_predict`` and ``_predict_quantiles``.
 
         Returns
         -------
-        preds : 2D np.ndarray of shape (horizon_length, 1 + n_quantiles)
-            Full predictions of the model. Column 0 is the point forecast,
-            column ``k`` for ``k >= 1`` is the forecast at quantile level
-            ``model.config.quantiles[k - 1]``.
+        output : transformers model output
+            Output of the TimesFM prediction model, with ``mean_predictions``
+            of shape ``(1, horizon_length)`` and ``full_predictions`` of shape
+            ``(1, horizon_length, 1 + n_quantiles)``. Column 0 of
+            ``full_predictions`` is the mean forecast, column ``k`` for
+            ``k >= 1`` is the forecast at level ``model.config.quantiles[k - 1]``.
         """
         import torch
 
@@ -666,12 +663,7 @@ class TimesFM2Forecaster(BaseForecaster):
         past_values = past_values.to(self.model_.device)
 
         forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
-        output = self.model_(past_values=past_values, **forward_kwargs)
-
-        preds = output.full_predictions
-        preds = preds.squeeze(0)
-        preds = preds.detach().float().cpu().numpy()
-        return preds
+        return self.model_(past_values=past_values, **forward_kwargs)
 
     def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
