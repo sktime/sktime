@@ -145,11 +145,12 @@ class TimeMoEForecaster(BaseForecaster):
 
     >>> from sktime.forecasting.timemoe import TimeMoEForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
     Fine-tuning of a pretrained checkpoint:
 
