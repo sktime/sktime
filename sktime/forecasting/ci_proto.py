@@ -113,13 +113,6 @@ class CIProtoForecaster(BaseForecaster):
 
         self._cur_y = update_data(self._cur_y, y)
         self._cur_X = update_data(self._cur_X, X)
-        index = self._cur_y.index
-        if isinstance(index, pd.DatetimeIndex) and self.cutoff.freq is None:
-            freq = index.freqstr
-            if freq is None and len(index) >= 3:
-                freq = pd.infer_freq(index)
-            if freq is not None:
-                self._cutoff = pd.DatetimeIndex(self.cutoff, freq=freq)
         return self
 
     def _load_model(self):
