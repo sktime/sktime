@@ -364,6 +364,12 @@ class Chronos2Forecaster(BaseForecaster):
         # (n_variates, n_quantiles, n_steps) -> (n_quantiles, n_steps, n_variates)
         values = pred_tensor.float().numpy()[:, :, in_fh].transpose(1, 2, 0)
 
+        # sort values in order of level so quantiles never cross,
+        # HistogramQPD requires monotone quantile functions
+        order = np.argsort(quantiles, kind="stable")
+        quantiles = [quantiles[i] for i in order]
+        values = np.sort(values[order], axis=0)
+
         columns = self._get_varnames()
         # rows of q_df are (quantile level, time index), see HistogramQPD docs
         row_index = pd.MultiIndex.from_product([quantiles, index])
