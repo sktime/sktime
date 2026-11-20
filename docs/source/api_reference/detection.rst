@@ -115,6 +115,14 @@ Reduction to Tabular Anomaly Detection
 
     PyODDetector
 
+.. currentmodule:: sktime.detection.reduce
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ReducerPretrainDetector
+
 Naive Baselines
 ^^^^^^^^^^^^^^^
 
