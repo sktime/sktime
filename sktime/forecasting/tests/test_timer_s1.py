@@ -200,6 +200,23 @@ _TIMER_S1_UPSTREAM_REFERENCE_CASES = [
         },
         id="no-kv-cache",
     ),
+    # 128 training values are a whole number of 16 value patches, so the
+    # model does not pad the context, unlike the 132 values above
+    pytest.param(
+        128,
+        {},
+        None,
+        _FH_48,
+        {
+            1: 255.715125,
+            2: 257.437227,
+            3: 261.235464,
+            46: 258.673888,
+            47: 254.30416,
+            48: 257.380768,
+        },
+        id="unpadded",
+    ),
 ]
 
 # native quantile forecasts of the "default" case at selected fh steps
