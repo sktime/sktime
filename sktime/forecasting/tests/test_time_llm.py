@@ -56,12 +56,12 @@ _TIME_LLM_UPSTREAM_CASES = [
 ]
 
 # Upstream runs the model in bfloat16, which keeps about 3 significant digits.
-# The same code with torch 2.2.2 and transformers 4.40.2 gives the same weights,
-# but bfloat16 kernels round differently: over the 24 reference values the
-# relative difference to torch 2.12.1 has a root mean square of 2.1e-3 and a
-# maximum of 5.1e-3. rtol is about six times the root mean square. An adapter
-# bug changes the forecasts entirely, by far more than this.
-_RTOL = 1.3e-2
+# bfloat16 CPU kernels round differently across torch versions and across the
+# instruction set torch picks for the CPU. Torch 2.2.2 vs 2.12.1 gives up to
+# 5.1e-3, the non-vectorised kernel (ATEN_CPU_CAPABILITY=default) vs AVX2 up to
+# 8.4e-3, and some Windows CI runners up to 1.4e-2. An adapter bug changes the
+# forecasts entirely, a different seed alone moves them by up to 6e-1.
+_RTOL = 5e-2
 
 
 @pytest.mark.parametrize("params,fh,expected", _TIME_LLM_UPSTREAM_CASES)
