@@ -19,7 +19,11 @@ from sklearn.pipeline import make_pipeline
 from sktime.datasets import load_airline, load_solar
 from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.compose import make_reduction
+from sktime.forecasting.compose import (
+    DirectTabularRegressionForecaster,
+    RecursiveTabularRegressionForecaster,
+    make_reduction,
+)
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.split import temporal_train_test_split
@@ -305,7 +309,7 @@ def test_equality_transfo_nontranso(regressor):
     y_train, y_test = temporal_train_test_split(y, test_size=12)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
 
-    lag_vec = [i for i in range(6, 0, -1)]
+    lag_vec = [*range(6, 0, -1)]
     kwargs = {
         "lag_feature": {
             "lag": lag_vec,
@@ -426,3 +430,36 @@ def test_timezoneaware_index():
 
     # These should give us identical predictions
     np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
+
+
+@pytest.mark.parametrize("invalid_val", [np.nan, np.inf, -np.inf])
+@pytest.mark.parametrize(
+    "forecaster_cls",
+    [
+        DirectTabularRegressionForecaster,
+        RecursiveTabularRegressionForecaster,
+    ],
+)
+def test_global_reduction_nan_inf_returns_nan(invalid_val, forecaster_cls):
+    """Test that global pooling reducer returns NaN when window contains NaN or Inf.
+
+    Fixes #11521.
+    """
+    y = pd.DataFrame({"y": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]})
+    fh = [1, 2, 3]
+
+    reducer = forecaster_cls(
+        estimator=LinearRegression(),
+        window_length=3,
+        pooling="global",
+    )
+    reducer.fit(y, fh=fh)
+
+    # Clean data returns valid forecasts
+    res_clean = reducer.predict(fh=fh)
+    assert not res_clean.isna().any().any()
+
+    # Invalid value in last window triggers NaN predictions
+    reducer._cur_y.iloc[-1, 0] = invalid_val
+    res_invalid = reducer.predict(fh=fh)
+    assert res_invalid.isna().all().all()
