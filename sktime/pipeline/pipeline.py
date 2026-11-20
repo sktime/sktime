@@ -5,7 +5,6 @@ from copy import copy, deepcopy
 
 from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
-from sktime.transformations.subset import ColumnSelect
 
 __author__ = ["benHeid"]
 __all__ = ["Pipeline"]
@@ -635,6 +634,8 @@ class Pipeline(BaseEstimator):
         return True
 
     def _create_subsetter(self, edg):
+        from sktime.transformations.subset import ColumnSelect
+
         keys = edg.split("__")[-1].split("_")
         column_select = ColumnSelect(columns=keys)
         self.add_step(column_select, edg, {"X": edg.split("__")[0]})
