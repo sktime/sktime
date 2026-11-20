@@ -77,6 +77,8 @@ from sktime.tests.test_switch import run_test_for_class
 #         "default-two-steps": (np.asarray(AIRLINE_VALUES[:-12]), 2880, 100),
 #         # context_length cuts 300 values to 96 instead of 288 (three tokens)
 #         "context-length-96": (seasonal_trend(), 96, 12),
+#         # 60 values, zero padded at the front to one token by the adapter
+#         "padded-60": (np.asarray(AIRLINE_VALUES[:60]), 2880, 12),
 #     }
 #
 #
@@ -113,6 +115,11 @@ def _seasonal_trend_series(n):
     values = 100.0 + 0.5 * t + 20.0 * np.sin(2 * np.pi * t / 12)
     index = pd.period_range("2000-01", periods=n, freq="M")
     return pd.Series(values, index=index, name="synthetic")
+
+
+def _load_airline_head():
+    """First 60 airline values, shorter than one 96 value input token."""
+    return load_airline().iloc[:60]
 
 
 def _pinned_checkpoint():
@@ -170,6 +177,21 @@ _TIMER_UPSTREAM_REFERENCE_CASES = [
             12: 231.372559,
         },
         id="context-length-96",
+    ),
+    # shorter than one input token: the adapter zero pads it at the front
+    pytest.param(
+        _load_airline_head,
+        2880,
+        list(range(1, 13)),
+        {
+            1: 192.975479,
+            2: 198.335037,
+            3: 197.476898,
+            10: 186.981628,
+            11: 182.22522,
+            12: 186.457397,
+        },
+        id="padded-60",
     ),
     # sparse fh: same generation as "default" (max(fh) = 12), values picked
     # from steps 2, 5 and 12 of that forecast
