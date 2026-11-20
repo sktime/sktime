@@ -3,6 +3,7 @@
 import logging
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pandas as pd
 
@@ -10,6 +11,11 @@ from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
+)
+from sktime.benchmarking._leaderboard import (
+    _build_leaderboard,
+    _coerce_results,
+    _directions_from_scorers,
 )
 from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
 from sktime.benchmarking._utils import _check_id_format
@@ -57,6 +63,13 @@ def _check_estimators_type(objs: dict | list | BaseEstimator) -> None:
             "One or many estimator(s) is not an initialised BaseEstimator "
             "object(s). Please instantiate the estimator(s) first."
         )
+
+
+def _same_results_path(left, right):
+    """Return whether two benchmark output paths refer to the same file."""
+    if left is None or right is None:
+        return left is None and right is None
+    return Path(left) == Path(right)
 
 
 def _get_dataset_name(dataset_loader):
@@ -132,8 +145,9 @@ class BenchmarkingResults:
     ``path`` — either from a completed output file or from crash-safe partial
     checkpoints left by an interrupted run (``{path}.parts/``).
 
-    The primary user-facing entry point is `to_df`, which returns the same
-    flat summary table produced by ``BaseBenchmark.run()``.
+    The primary user-facing entry points are `to_df`, which returns the same
+    flat summary table produced by ``BaseBenchmark.run()``, and `leaderboard`,
+    which turns that table into one row per model ordered by average rank.
 
     For structured access to individual experiments, use the ``results``
     attribute, which holds a list of `ResultObject` instances.
@@ -244,6 +258,73 @@ class BenchmarkingResults:
         if {"pred_time_mean", "fit_time_mean"}.issubset(df.columns):
             df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
         return df
+
+    def leaderboard(self, dataset=None, scorers=None, lower_is_better=None):
+        """Return one row per model, ranked within each scorer.
+
+        Ranks each model within every selected task, and averages those ranks
+        across tasks. Each scorer keeps that average in a ``<scorer>_rank``
+        column, named with the scorer. Ranks from different metrics are not
+        averaged. Rows are ordered by the first scorer.
+
+        By default every task and every scorer in the stored results is used.
+        Pass ``dataset`` to rank on one dataset, or on a chosen subset. On a
+        single task with one scorer, the order follows that task's score.
+
+        ``dataset`` matches either a dataset name — the ``[dataset=...]``
+        field of a generated task id — or a full ``validation_id``. A dataset
+        evaluated under more than one splitter contributes one task per
+        splitter.
+
+        Scorer direction (whether a lower score is better) is inferred from
+        the scorer name and the sktime metric registry. Pass
+        ``lower_is_better`` for a custom metric whose direction cannot be
+        inferred. Loaded results do not keep the original metric objects.
+
+        Parameters
+        ----------
+        dataset : str or list of str, optional (default=None)
+            Dataset name or full task id to rank on. ``None`` averages ranks
+            across every task in the results.
+        scorers : str, metric, or list thereof, optional (default=None)
+            Scorers to include. ``None`` uses every scorer in the results.
+            A metric is identified by its ``name`` or ``__name__``, which is
+            the prefix of the ``<scorer>_mean`` column.
+        lower_is_better : bool or dict of str to bool, optional (default=None)
+            Whether a lower score ranks better. A bool applies to every
+            selected scorer. A dict maps scorer name to direction and
+            overrides inference for those names. ``None`` infers the direction.
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per model. Columns are ``model_id``, then each
+            ``<scorer>_rank``, then each scorer's mean score, then
+            ``fit_time_s`` and ``predict_time_s`` when timings were recorded.
+            ``<scorer>_rank`` averages that scorer's per-task ranks. Rows are
+            ordered by the first scorer's rank.
+
+        See Also
+        --------
+        to_df : Flat results table, one row per task and model.
+        BaseBenchmark.leaderboard : Same table from a benchmark instance.
+        BaseBenchmark.run : Run the benchmark.
+
+        Examples
+        --------
+        >>> from sktime.benchmarking.benchmarks import BenchmarkingResults
+        >>> board = BenchmarkingResults("results.csv").leaderboard()  # doctest: +SKIP
+        >>> board = BenchmarkingResults("results.csv").leaderboard(  # doctest: +SKIP
+        ...     dataset="Longley",
+        ...     scorers="MeanAbsoluteError",
+        ... )
+        """
+        return _build_leaderboard(
+            self.to_df(),
+            dataset=dataset,
+            scorers=scorers,
+            lower_is_better=lower_is_better,
+        )
 
 
 class _SktimeRegistry:
@@ -359,6 +440,7 @@ class BaseBenchmark:
         self._metrics = []
 
         self._failed_experiments: list[FailedExperimentRecord] = []
+        self._results = None
 
     def add_estimator(
         self,
@@ -677,8 +759,13 @@ class BaseBenchmark:
         """
         self._check_ready_to_run()
 
-        results = BenchmarkingResults(path=results_path)
-        self._failed_experiments = []
+        results = self._prepare_results(results_path)
+        self._results = results
+        prior_failures = {
+            (failure.task_id, failure.model_id): failure
+            for failure in self._failed_experiments
+        }
+        new_failures = []
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():
             if results._contains(task_id, estimator_id) and (
@@ -692,6 +779,7 @@ class BaseBenchmark:
                 )
                 continue
 
+            prior_failures.pop((task_id, estimator_id), None)
             logger.info(f"Running validation - model: {task_id} - {estimator_id}")
             try:
                 folds = self._run_validation(task, estimator)
@@ -702,7 +790,7 @@ class BaseBenchmark:
                     exception_type=type(exc).__name__,
                     exception_message=str(exc),
                 )
-                self._failed_experiments.append(failure)
+                new_failures.append(failure)
                 logger.error(
                     "Validation failed: %s - %s: %s: %s",
                     task_id,
@@ -720,11 +808,31 @@ class BaseBenchmark:
                 )
             )
 
+        self._failed_experiments = new_failures
         self._report_failed_experiments()
+        self._failed_experiments = [*prior_failures.values(), *new_failures]
 
         if results_path is not None:
             results._save()
         return results.to_df()
+
+    def _prepare_results(self, results_path):
+        """Return the result store for this run, reusing completed experiments.
+
+        The in-memory store is shared by `run` and `leaderboard`. A later call
+        skips task-model pairs already stored there. A new ``results_path``
+        retargets where those results are written and does not discard them.
+        """
+        if self._results is None:
+            return BenchmarkingResults(path=results_path)
+
+        results = self._results
+        if results_path is not None and not _same_results_path(
+            results.path, results_path
+        ):
+            results.path = results_path
+            results._persistence = BenchmarkResultsPersistence(results.path)
+        return results
 
     def _report_failed_experiments(self):
         """Log a summary of failed task-estimator pairs from the current run."""
@@ -771,6 +879,12 @@ class BaseBenchmark:
         extension (``.json``, ``.csv``, or ``.parquet``) selects the final
         storage format; see `get_storage_backend`.
 
+        Completed experiments are kept in memory and shared with `leaderboard`.
+        A later call skips those task-model pairs instead of fitting them
+        again. ``force_rerun`` still re-executes the pairs it names. Passing
+        ``output_file`` after an in-memory run writes the cached results to
+        that file.
+
         Parameters
         ----------
         output_file : str or None, optional (default=None)
@@ -789,7 +903,9 @@ class BaseBenchmark:
         Returns
         -------
         pandas.DataFrame
-            Summary of benchmark run for all completed experiments.
+            Summary of benchmark run for all completed experiments. One row
+            per task and model. Call `leaderboard` for one row per model,
+            ordered by average rank.
 
         Raises
         ------
@@ -797,8 +913,125 @@ class BaseBenchmark:
             If the benchmark defines no experiments to run, i.e. if no
             estimators are registered, or if no tasks are registered because
             a dataset, metric or cv_splitter is missing.
+
+        See Also
+        --------
+        leaderboard : One row per model, ranked within each scorer.
         """
         return self._run(output_file, force_rerun)
+
+    def leaderboard(
+        self,
+        dataset=None,
+        scorers=None,
+        lower_is_better=None,
+        *,
+        results=None,
+    ):
+        """Return one row per model, ranked within each scorer.
+
+        Ranks each model within every selected task, and averages those ranks
+        across tasks. Each scorer keeps that average in a ``<scorer>_rank``
+        column, named with the scorer. Ranks from different metrics are not
+        averaged. Rows are ordered by the first scorer.
+
+        Calling `leaderboard` runs the benchmark when it has not already been
+        run. `run` afterwards reuses those results and does not repeat
+        completed experiments. `leaderboard` after `run` does not run the
+        benchmark again.
+
+        By default every task and every scorer is used. Pass ``dataset`` to
+        rank on one dataset, or on a chosen subset. On a single task with one
+        scorer, the order follows that task's score.
+
+        ``dataset`` matches either a dataset name — the ``[dataset=...]``
+        field of a generated task id — or a full ``validation_id``. A dataset
+        evaluated under more than one splitter contributes one task per
+        splitter.
+
+        Scorer direction (whether a lower score is better) is read from the
+        metric objects registered on this benchmark. For a results table whose
+        metrics are not registered here, the direction is inferred from the
+        scorer name and the sktime metric registry. Pass ``lower_is_better``
+        when that inference does not apply, for example a custom metric.
+
+        Parameters
+        ----------
+        dataset : str or list of str, optional (default=None)
+            Dataset name or full task id to rank on. ``None`` averages ranks
+            across every task in the results.
+        scorers : str, metric, or list thereof, optional (default=None)
+            Scorers to include. ``None`` uses every scorer in the results.
+            A metric is identified by its ``name`` or ``__name__``, which is
+            the prefix of the ``<scorer>_mean`` column.
+        lower_is_better : bool or dict of str to bool, optional (default=None)
+            Whether a lower score ranks better. A bool applies to every
+            selected scorer. A dict maps scorer name to direction and
+            overrides inference for those names. ``None`` infers the direction.
+        results : pandas.DataFrame or str, optional (default=None)
+            Results to rank. A dataframe is the table returned by `run`. A
+            string is a path to a results file written by `run`. ``None`` uses
+            the benchmark's own results, running the benchmark first when
+            those results are not already available. An explicit value is
+            ranked as given and does not run the benchmark.
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per model. Columns are ``model_id``, then each
+            ``<scorer>_rank``, then each scorer's mean score, then
+            ``fit_time_s`` and ``predict_time_s`` when timings were recorded.
+            ``<scorer>_rank`` averages that scorer's per-task ranks. Rows are
+            ordered by the first scorer's rank.
+
+        Raises
+        ------
+        ValueError
+            If the benchmark defines no experiments to run. Also if the
+            results contain no matching tasks or scorers, or a model is
+            missing a score on a selected task.
+
+        See Also
+        --------
+        run : Run the benchmark and return the flat results table.
+        BenchmarkingResults.leaderboard : Same table from a saved results file.
+
+        Examples
+        --------
+        >>> from sklearn.metrics import accuracy_score
+        >>> from sklearn.model_selection import KFold
+        >>> from sktime.benchmarking.classification import ClassificationBenchmark
+        >>> from sktime.classification.dummy import DummyClassifier
+        >>> from sktime.utils._testing.panel import make_classification_problem
+        >>> benchmark = ClassificationBenchmark()
+        >>> benchmark.add_estimator(DummyClassifier())
+        >>> benchmark.add_task(
+        ...     make_classification_problem, KFold(n_splits=2), [accuracy_score]
+        ... )
+        >>> board = benchmark.leaderboard()
+        >>> int(board.loc[0, "accuracy_score_rank"])
+        1
+        """
+        if results is None:
+            self.run()
+            frame = self._results.to_df()
+        else:
+            frame = _coerce_results(results)
+
+        directions = _directions_from_scorers(self._iter_scorers())
+        return _build_leaderboard(
+            frame,
+            dataset=dataset,
+            scorers=scorers,
+            lower_is_better=lower_is_better,
+            scorer_directions=directions,
+        )
+
+    def _iter_scorers(self):
+        """Yield metric objects registered directly or stored on tasks."""
+        yield from self._metrics
+        for task in self.tasks.entities.values():
+            yield from getattr(task, "scorers", None) or []
 
     def _run_validation(self, task: TaskObject, estimator: BaseEstimator):
         """Run validation for a single task and estimator."""
