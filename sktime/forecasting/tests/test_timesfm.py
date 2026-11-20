@@ -135,3 +135,26 @@ def test_timesfm_airline_predictions_match_upstream_reference():
             atol=1e-4,
             err_msg=f"case: {case}",
         )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimesFMForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_timesfm_single_step_fh_without_horizon_len():
+    """horizon_len=None takes the horizon from an fh with a single step."""
+    y = load_airline().iloc[:-12]
+    forecaster = TimesFMForecaster(
+        horizon_len=None,
+        repo_id=None,
+        output_patch_len=32,
+        num_layers=1,
+        model_dims=16,
+        per_core_batch_size=1,
+    )
+
+    y_pred = forecaster.fit(y, fh=[3]).predict()
+
+    assert forecaster._horizon_len == 3
+    assert len(y_pred) == 1
+    assert y_pred.index[0] == y.index[-1] + 3
