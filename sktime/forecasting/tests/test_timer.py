@@ -26,10 +26,12 @@ from sktime.tests.test_switch import run_test_for_class
 # through ``transformers.AutoModelForCausalLM`` with ``trust_remote_code=True``,
 # in a venv without sktime. The airline values are embedded in the script.
 #
-# ``TimerForecaster`` has no ``revision`` parameter, so the tests below load
-# the ``main`` revision of the checkpoint, which at the time of writing is the
-# commit above; the model code itself comes from the vendored copy in
-# ``sktime.libs.timer``, which is functionally identical to that commit.
+# ``TimerForecaster`` has no ``revision`` parameter, so the tests below
+# download the checkpoint at the commit above with ``snapshot_download`` and
+# pass the local path as ``model_name``. This also avoids parallel workers
+# racing on the repo's ``refs/main`` under ``pytest -n auto``. The model code
+# comes from the vendored copy in ``sktime.libs.timer``, which is functionally
+# identical to that commit.
 #
 # Environment: Python 3.12.13, torch 2.15.0 (CPU), transformers 4.40.1,
 # numpy 1.26.4. Two runs gave identical values; the model has no dropout and
@@ -100,7 +102,8 @@ from sktime.tests.test_switch import run_test_for_class
 #         assert forecast.shape == (horizon,)
 #         print(name, forecast[:3].tolist(), forecast[-3:].tolist())
 
-_TIMER_MODEL_NAME = "thuml/timer-base-84m"
+_TIMER_REPO = "thuml/timer-base-84m"
+_TIMER_REVISION = "70077a71acce1b4c00d98332fcaabc694255d8e5"
 _TIMER_SYNTHETIC_LENGTH = 300
 
 
@@ -110,6 +113,13 @@ def _seasonal_trend_series(n):
     values = 100.0 + 0.5 * t + 20.0 * np.sin(2 * np.pi * t / 12)
     index = pd.period_range("2000-01", periods=n, freq="M")
     return pd.Series(values, index=index, name="synthetic")
+
+
+def _pinned_checkpoint():
+    """Local path of the checkpoint at the pinned revision."""
+    from huggingface_hub import snapshot_download
+
+    return snapshot_download(_TIMER_REPO, revision=_TIMER_REVISION)
 
 
 def _load_airline_train():
@@ -163,7 +173,7 @@ def test_timer_predictions_match_upstream_reference(
     y_train = load_series()
     fh = np.arange(1, horizon + 1)
     forecaster = TimerForecaster(
-        model_name=_TIMER_MODEL_NAME,
+        model_name=_pinned_checkpoint(),
         context_length=context_length,
         device="cpu",
     )
