@@ -150,3 +150,35 @@ def test_invalid_aggfuncs(forecasters, aggfunc):
     forecaster.fit(y, fh=[1, 2])
     with pytest.raises(ValueError, match=r"not recognized"):
         forecaster.predict()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("aggfunc", ["mean", "median"])
+@pytest.mark.parametrize("weights", [None, [1, 2]])
+def test_column_order_preserved(aggfunc, weights):
+    """Check that predict keeps the column order of y.
+
+    Before the fix, the variables were aggregated with a sorted groupby, so
+    predict returned the columns in alphabetical order. Positional access to the
+    predictions then silently read the wrong variable.
+    """
+    y = make_forecasting_problem(n_columns=3)
+    y.columns = ["c", "a", "b"]
+    forecasters = [
+        ("naive", NaiveForecaster()),
+        ("mean", NaiveForecaster(strategy="mean")),
+    ]
+    forecaster = EnsembleForecaster(forecasters, aggfunc=aggfunc, weights=weights)
+    forecaster.fit(y, fh=[1, 2, 3])
+    y_pred = forecaster.predict()
+
+    assert list(y_pred.columns) == ["c", "a", "b"]
+
+    # each column holds the ensemble forecast of the variable of the same name
+    for col in y.columns:
+        y_pred_col = EnsembleForecaster(forecasters, aggfunc=aggfunc, weights=weights)
+        y_pred_col = y_pred_col.fit(y[[col]], fh=[1, 2, 3]).predict()
+        np.testing.assert_allclose(y_pred[col].to_numpy(), y_pred_col[col].to_numpy())
