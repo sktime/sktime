@@ -150,6 +150,7 @@ class FlowStateForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
+        "serialization:skip": ("model",),
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_flowstate"],
         # Shorthands
@@ -186,16 +187,6 @@ class FlowStateForecaster(BaseForecaster):
         self.device = device
         self.model = None
         super().__init__()
-
-    def __getstate__(self):
-        """Get state for pickling."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Set state for unpickling."""
-        self.__dict__.update(state)
 
     def __post_init__(self):
         """Post-initialization setup."""
@@ -254,7 +245,7 @@ class FlowStateForecaster(BaseForecaster):
         return self
 
     def _run(self, pred_len):
-        if self.model is None:
+        if not hasattr(self, "model") or self.model is None:
             self.model = self._load_model()
         self.model.eval()
         past = torch.tensor(

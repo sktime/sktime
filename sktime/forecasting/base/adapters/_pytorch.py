@@ -56,6 +56,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
         "tests:libs": ["sktime.forecasting.base.adapters._pytorch"],
+        "serialization:native_artifacts": ("network",),
     }
 
     def __init__(
@@ -86,6 +87,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         Initializes:
 
         * self.network: the neural network model, via self._build_network(net_predlen)
+        * self._network_pred_len_: prediction length used to build ``self.network``
         * self._criterion: the loss criterion, via self._instantiate_criterion()
         * self._optimizer: the optimizer, via self._instantiate_optimizer()
 
@@ -99,7 +101,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         Reference to self.network
         """
         if not hasattr(self, "network") or self.network is None:
+            self._network_pred_len_ = net_predlen
             self.network = self._build_network(net_predlen)
+        else:
+            self._network_pred_len_ = getattr(self.network, "pred_len", net_predlen)
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -211,6 +216,24 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         self._store_pretrain_metadata(y, pred_len)
 
         return self
+
+    def _create_torch_artifact(self, name):
+        """Construct the fitted network architecture for deserialization."""
+        if name != "network":
+            raise ValueError(f"Unknown torch artifact {name!r}.")
+
+        pred_len = getattr(self, "_network_pred_len_", None)
+        if pred_len is None:
+            pred_len = getattr(self, "pred_len", None)
+        if pred_len is None:
+            pred_len = getattr(self, "_fh_length", None)
+        if pred_len is None:
+            raise RuntimeError(
+                f"{type(self).__name__} did not store the prediction length used "
+                "to construct its fitted torch network."
+            )
+
+        return self._build_network(pred_len)
 
     def _pretrain_update(self, y, X=None, fh=None):
         """Update pretrained network with additional panel data.

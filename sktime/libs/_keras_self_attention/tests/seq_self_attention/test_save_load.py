@@ -1,5 +1,6 @@
 import os
 import tempfile
+from copy import deepcopy
 
 import numpy as np
 import pytest
@@ -57,3 +58,19 @@ class TestSaveLoad(TestMaskShape):
         )
         model.summary()
         assert model is not None
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.libs._keras_self_attention")
+    or not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="Execute tests iff anything in the module has changed",
+)
+def test_deepcopy_without_custom_objects():
+    """Registered attention layers survive Keras model deepcopy."""
+    inputs = keras.layers.Input((4, 2))
+    outputs = SeqSelfAttention(name="Attention")(inputs)
+    model = keras.Model(inputs=inputs, outputs=outputs)
+
+    copied_model = deepcopy(model)
+
+    assert isinstance(copied_model.get_layer("Attention"), SeqSelfAttention)

@@ -90,11 +90,6 @@ class T0Forecaster(BaseForecaster):
     ignore_deps : bool, optional, default=False
         If True, dependency checks are skipped.
 
-    Attributes
-    ----------
-    model_ : t0.T0Forecaster
-        The underlying T0 model used for forecasting.
-
     References
     ----------
     .. [1] https://github.com/theforecastingcompany/tfc-t0
@@ -199,8 +194,6 @@ class T0Forecaster(BaseForecaster):
         self.license_accepted = license_accepted
         self.ignore_deps = ignore_deps
 
-        self.model_ = None
-
         super().__init__()
 
     def __dynamic_tags__(self):
@@ -234,17 +227,6 @@ class T0Forecaster(BaseForecaster):
 
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    def __getstate__(self):
-        """Return state for pickling, excluding the unpickleable model."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_"):
-            state["model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
-
     def _get_model_kwargs(self):
         """Collect arguments that uniquely identify a loaded model instance."""
         return {
@@ -262,11 +244,6 @@ class T0Forecaster(BaseForecaster):
             key=self._get_unique_key(),
             t0_kwargs=self._get_model_kwargs(),
         ).load_from_checkpoint()
-
-    def _ensure_model_loaded(self):
-        """Reload the model if needed, e.g. after unpickling."""
-        if not hasattr(self, "model_") or self.model_ is None:
-            self.model_ = self._load_model()
 
     @classmethod
     def print_license(cls):
@@ -327,7 +304,7 @@ class T0Forecaster(BaseForecaster):
         self : reference to self
         """
         self._check_license()
-        self.model_ = self._load_model()
+        self._load_model()
 
         context = y
         if self.context_length is not None and context.shape[0] > self.context_length:
@@ -336,6 +313,7 @@ class T0Forecaster(BaseForecaster):
         # T0 expects context as (n_series, n_timesteps); each y column is a series
         self.context_ = context.values.T
         self._y_index_names = y.index.names
+        self._cur_X = X
         return self
 
     def _predict(self, fh, X):
@@ -449,7 +427,7 @@ class T0Forecaster(BaseForecaster):
         """
         import torch
 
-        self._ensure_model_loaded()
+        model = self._load_model()
 
         horizon = int(max(fh.to_relative(self.cutoff)))
 
@@ -468,7 +446,7 @@ class T0Forecaster(BaseForecaster):
         else:
             rng_context = torch.random.fork_rng(devices=[])
 
-        sig = inspect.signature(self.model_.predict)
+        sig = inspect.signature(model.predict)
         if "quantile_levels" in sig.parameters:
             predict_kwargs["quantile_levels"] = quantiles
         else:
@@ -477,7 +455,7 @@ class T0Forecaster(BaseForecaster):
         with rng_context:
             if self._random_state is not None:
                 torch.manual_seed(self._random_state)
-            out = self.model_.predict(context, horizon=horizon, **predict_kwargs)
+            out = model.predict(context, horizon=horizon, **predict_kwargs)
 
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
@@ -501,7 +479,7 @@ class T0Forecaster(BaseForecaster):
         y : sktime time series in ``y_inner_mtype`` format
             New observations to append to the context.
         X : sktime time series in ``X_inner_mtype`` format, optional
-            New exogenous observations (ignored here, handled by base class).
+            New exogenous observations, appended to the stored exogenous data.
         update_params : bool, optional (default=True)
             Ignored; included for interface compatibility.
 
@@ -509,6 +487,8 @@ class T0Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from sktime.datatypes import update_data
+
         new_vals = y.values.T  # shape (n_series, n_new_timesteps)
         self.context_ = np.concatenate([self.context_, new_vals], axis=1)
 
@@ -518,6 +498,8 @@ class T0Forecaster(BaseForecaster):
         ):
             self.context_ = self.context_[:, -self.context_length :]
 
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         return self
 
     def _build_future_covariates(self, X, n_series, context_len, horizon):
@@ -525,7 +507,7 @@ class T0Forecaster(BaseForecaster):
 
         T0 requires covariates spanning the context window and the horizon, i.e.
         shape ``(n_series, n_covariates, context_len + horizon)``. The context part
-        is taken from the exogenous data seen in ``fit`` (``self._X``), the horizon
+        is taken from the exogenous data seen in ``fit`` (``self._cur_X``), the horizon
         part from the exogenous data ``X`` passed to ``predict``.
 
         Returns ``None`` if no exogenous data is available.
@@ -535,14 +517,14 @@ class T0Forecaster(BaseForecaster):
 
         import torch
 
-        if self._X is None:
+        if self._cur_X is None:
             raise ValueError(
                 "X was not provided in fit but is provided in predict. "
                 "To use future covariates, provide past covariate values "
                 "in fit as well."
             )
 
-        past = self._X.values[-context_len:]  # (context_len, n_covariates)
+        past = self._cur_X.values[-context_len:]  # (context_len, n_covariates)
         future = X.values[:horizon]  # (horizon, n_covariates)
         covariates = np.concatenate([past, future], axis=0)  # (ctx+horizon, n_cov)
 
