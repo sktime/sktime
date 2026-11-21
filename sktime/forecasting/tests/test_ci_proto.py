@@ -1,16 +1,19 @@
 """Golden-output regression tests for CIProtoForecaster.
 
-Reference values come from continuousintelligence 0.1.1, using the pinned
+Reference values come from continuousintelligence 0.2.0, using the pinned
 ci-proto checkpoint on CPU. The standalone upstream scripts are included below.
 Estimator interface conformance is covered by check_estimator.
 
-The checkpoint enables bfloat16 inference. CPU kernels on different runners
-can differ by roughly one bfloat16 rounding step, even on the same checkpoint.
-Use an absolute tolerance of 0.01 for the unit-scale covariate forecasts and
-one passenger for the upstream integer-rounded airline forecast. These bounds
-cover the observed CI differences (at most 0.0076 and 1, respectively), while
-still detecting the missing-calendar regression (an eight-passenger error).
+The golden tests use a local copy of the pinned bundle with only the TTA
+bfloat16 option disabled. This keeps inference in float32 across CPU runners,
+without modifying the cached Hub bundle or the adapter's default precision.
+Allow 1e-5 absolute error for float32 quantiles; the upstream integer-rounded
+airline output is compared exactly.
 """
+
+import json
+import shutil
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -27,7 +30,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 REVISION = "ee3031351a151e3f6febf8c62b53e6ea1008bef6"
-# Regenerate with continuousintelligence==0.1.1, without using this adapter:
+# Regenerate with continuousintelligence==0.2.0, without using this adapter:
 #
 # import continuousintelligence as ci
 # import numpy as np
@@ -35,10 +38,25 @@ REVISION = "ee3031351a151e3f6febf8c62b53e6ea1008bef6"
 # import torch
 # from sktime.datasets import load_airline
 #
-# model = ci.load_model(
-#     "ContinuousIntelligence/ci-proto", device="cpu",
+# import json
+# import shutil
+# import tempfile
+# from pathlib import Path
+# from huggingface_hub import snapshot_download
+#
+# source = Path(snapshot_download(
+#     "ContinuousIntelligence/ci-proto",
 #     revision="ee3031351a151e3f6febf8c62b53e6ea1008bef6",
-# )
+#     allow_patterns=["model.ckpt", "tta.json", "config.json"],
+# ))
+# temporary = tempfile.TemporaryDirectory()
+# bundle = Path(temporary.name)
+# for name in ("model.ckpt", "config.json"):
+#     shutil.copyfile(source / name, bundle / name)
+# tta = json.loads((source / "tta.json").read_text())
+# tta["bfloat16"] = False
+# (bundle / "tta.json").write_text(json.dumps(tta))
+# model = ci.load_model(bundle, device="cpu")
 # y = load_airline().iloc[:-12]
 # dates = pd.period_range(y.index[0], periods=len(y) + 3, freq="M").to_timestamp()
 # output = model.forecast(
@@ -47,7 +65,7 @@ REVISION = "ee3031351a151e3f6febf8c62b53e6ea1008bef6"
 #     freq=dates.freqstr,
 # )
 # print(output[0, 4].tolist())
-EXPECTED_AIRLINE = [406.0, 392.0, 463.0]
+EXPECTED_AIRLINE = [407.0, 393.0, 464.0]
 # After the imports and model loading above, generate the covariate reference:
 #
 # rng = np.random.default_rng(0)
@@ -62,8 +80,8 @@ EXPECTED_AIRLINE = [406.0, 392.0, 463.0]
 # )
 # print(output[:, [0, 4, 8]][:, :, [0, 3]].permute(2, 0, 1).reshape(2, 6).tolist())
 EXPECTED_COVARIATES = [
-    [-1.25473404, -0.21862656, 0.86096776, -1.19476199, 0.14691001, 1.41560102],
-    [-1.33659160, -0.21385482, 0.90504491, -1.17592812, 0.21965551, 1.52107024],
+    [-1.25685549, -0.21628445, 0.86663765, -1.19733560, 0.15227956, 1.42215526],
+    [-1.33360040, -0.21045212, 0.91063613, -1.16978467, 0.22383423, 1.52267277],
 ]
 # To reproduce an update without new X, continue the upstream script above:
 #
@@ -76,18 +94,39 @@ EXPECTED_COVARIATES = [
 # )
 # print(output[:, [0, 4, 8]][:, :, [0, 3]].permute(2, 0, 1).reshape(2, 6).tolist())
 EXPECTED_UPDATED_WITHOUT_X = [
-    [-1.26103079, -0.22571039, 0.84837437, -1.23619628, 0.11606968, 1.39676738],
-    [-1.34918499, -0.22079106, 0.90504491, -1.20982897, 0.20541248, 1.53237057],
+    [-1.26547229, -0.22646487, 0.85412353, -1.23830259, 0.11583567, 1.39634502],
+    [-1.35507655, -0.22106907, 0.90434432, -1.20543289, 0.20470309, 1.52476454],
 ]
 
 
+@pytest.fixture(scope="module")
+def float32_bundle(tmp_path_factory):
+    """Copy the pinned bundle and disable reduced-precision inference."""
+    from huggingface_hub import snapshot_download
+
+    source = Path(
+        snapshot_download(
+            "ContinuousIntelligence/ci-proto",
+            revision=REVISION,
+            allow_patterns=["model.ckpt", "tta.json", "config.json"],
+        )
+    )
+    bundle = tmp_path_factory.mktemp("ci_proto_float32")
+    for name in ("model.ckpt", "config.json"):
+        shutil.copyfile(source / name, bundle / name)
+    tta = json.loads((source / "tta.json").read_text())
+    tta["bfloat16"] = False
+    (bundle / "tta.json").write_text(json.dumps(tta))
+    return str(bundle)
+
+
 @pytest.mark.parametrize("datetime_index", [False, True])
-def test_ci_proto_airline_matches_source_reference(datetime_index):
+def test_ci_proto_airline_matches_source_reference(datetime_index, float32_bundle):
     """The median forecast matches the upstream airline forecast."""
     y = load_airline().iloc[:-12]
     if datetime_index:
         y.index = y.index.to_timestamp()
-    forecaster = CIProtoForecaster(device="cpu", revision=REVISION)
+    forecaster = CIProtoForecaster(model_path=float32_bundle, device="cpu")
     if datetime_index:
         forecaster.fit(y.iloc[:-1])
         latest = y.iloc[-1:].copy()
@@ -99,7 +138,7 @@ def test_ci_proto_airline_matches_source_reference(datetime_index):
     prediction = forecaster.predict(fh=fh)
 
     np.testing.assert_allclose(
-        prediction.to_numpy().ravel(), EXPECTED_AIRLINE, rtol=0, atol=1
+        prediction.to_numpy().ravel(), EXPECTED_AIRLINE, rtol=0, atol=0
     )
 
 
@@ -115,7 +154,7 @@ def test_ci_proto_airline_matches_source_reference(datetime_index):
     ],
 )
 def test_ci_proto_quantiles_with_covariates_match_source_reference(
-    update_params, remember_data, extra_future_steps, update_covariates
+    update_params, remember_data, extra_future_steps, update_covariates, float32_bundle
 ):
     """Sparse marginal quantiles match upstream with mixed covariates."""
     rng = np.random.default_rng(0)
@@ -130,7 +169,7 @@ def test_ci_proto_quantiles_with_covariates_match_source_reference(
         X_future = pd.concat(
             [X_future, pd.DataFrame({"known": [0.0, 0.0]}, index=[36, 37])]
         )
-    forecaster = CIProtoForecaster(device="cpu", revision=REVISION)
+    forecaster = CIProtoForecaster(model_path=float32_bundle, device="cpu")
     forecaster.set_config(remember_data=remember_data)
     if update_params is None:
         forecaster.fit(y, X=X)
@@ -148,5 +187,5 @@ def test_ci_proto_quantiles_with_covariates_match_source_reference(
         quantiles.to_numpy(),
         EXPECTED_COVARIATES if update_covariates else EXPECTED_UPDATED_WITHOUT_X,
         rtol=0,
-        atol=0.01,
+        atol=1e-5,
     )
