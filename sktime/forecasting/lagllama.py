@@ -10,6 +10,52 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
 
+def _offset_to_period_freq(freq):
+    """Convert pandas offset frequency alias to a Period-compatible alias."""
+    _offset_to_period = {
+        "MS": "M",
+        "ME": "M",
+        "QS": "Q",
+        "QE": "Q",
+        "QS-OCT": "Q",
+        "YS": "Y",
+        "AS": "Y",
+        "YE": "Y",
+        "AE": "Y",
+    }
+    if freq is None:
+        return None
+    if freq in _offset_to_period:
+        return _offset_to_period[freq]
+
+    offset, separator, month = freq.partition("-")
+    if separator and offset in ("YS", "AS", "QS", "YE", "AE", "QE"):
+        months = (
+            "JAN",
+            "FEB",
+            "MAR",
+            "APR",
+            "MAY",
+            "JUN",
+            "JUL",
+            "AUG",
+            "SEP",
+            "OCT",
+            "NOV",
+            "DEC",
+        )
+        end_month = month.upper()
+        if end_month not in months:
+            return freq
+        if offset in ("YS", "AS", "QS"):
+            end_month = months[(months.index(end_month) - 1) % 12]
+
+        period_freq = "Y" if offset in ("YS", "AS", "YE", "AE") else "Q"
+        return period_freq if end_month == "DEC" else f"{period_freq}-{end_month}"
+
+    return freq
+
+
 @_multiton
 class _CachedLagLlama:
     """Cached LagLlama predictor, ensuring one instance per unique configuration.
@@ -956,11 +1002,13 @@ class LagLlamaForecaster(BaseForecaster):
         -----
         Uses only first 3 values of the index to infer the frequency.
         As `freq=None` is returned in case of multiindex timepoints.
-
         """
         if isinstance(index, pd.PeriodIndex):
             return index.freq
-        return pd.infer_freq(index[:3])
+        if hasattr(index, "freq") and index.freq is not None:
+            return _offset_to_period_freq(index.freqstr)
+        freq = pd.infer_freq(index[:3]) if len(index) >= 3 else None
+        return _offset_to_period_freq(freq)
 
     def _extend_df(self, df, fh):
         """Extend the input dataframe up to the timepoints that need to be predicted.
@@ -1004,10 +1052,15 @@ class LagLlamaForecaster(BaseForecaster):
                 freq=index.freq,
             )[1:]
         else:
+            date_freq = (
+                index.freq
+                if hasattr(index, "freq") and index.freq is not None
+                else (pd.infer_freq(index[:3]) if len(index) >= 3 else None)
+            )
             pred_index = pd.date_range(
                 self.cutoff[0],
                 periods=max_step + 1,
-                freq=self.infer_freq(index),
+                freq=date_freq,
             )[1:]
 
         if isinstance(df.index, pd.MultiIndex):
