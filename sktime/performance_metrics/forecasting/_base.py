@@ -298,45 +298,56 @@ class BaseForecastingErrorMetric(BaseMetric):
               of shape ``(n_levels, y_true.columns)`` if ``multioutput="raw_values"``.
               metric is applied per level, row averaging (yes/no) as in ``multioutput``.
         """  # noqa: E501
-        multioutput = self.multioutput
-        multilevel = self.multilevel
+        multioutput = kwargs.pop("multioutput", self.multioutput)
+        multilevel = kwargs.pop("multilevel", self.multilevel)
 
-        # Input checks and conversions
-        (
-            y_true_inner,
-            y_pred_inner,
-            y_true_schema,
-            y_pred_schema,
-            multioutput,
-            multilevel,
-            kwargs,
-        ) = self._check_ys(y_true, y_pred, multioutput, multilevel, **kwargs)
+        orig_multioutput = self.multioutput
+        orig_multilevel = self.multilevel
+        try:
+            self.multioutput = multioutput
+            self.multilevel = multilevel
 
-        kwargs = self._apply_sample_weight_to_kwargs(
-            y_true=y_true_inner,
-            y_pred=y_pred_inner,
-            **kwargs,
-        )
+            # Input checks and conversions
+            (
+                y_true_inner,
+                y_pred_inner,
+                y_true_schema,
+                y_pred_schema,
+                multioutput,
+                multilevel,
+                kwargs,
+            ) = self._check_ys(y_true, y_pred, multioutput, multilevel, **kwargs)
 
-        requires_vectorization = y_true_schema is not None
-        if not requires_vectorization:
-            # pass to inner function
-            out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
-        else:
-            out_df = self._evaluate_vectorized(
-                y_true=(y_true_inner, y_true_schema),
-                y_pred=(y_pred_inner, y_pred_schema),
+            kwargs = self._apply_sample_weight_to_kwargs(
+                y_true=y_true_inner,
+                y_pred=y_pred_inner,
                 **kwargs,
             )
 
-        if _is_average(multilevel) and not _is_average(multioutput):
-            out_df = _coerce_to_1d_numpy(out_df)
-        if _is_average(multilevel) and _is_average(multioutput):
-            out_df = _coerce_to_scalar(out_df)
-        if not _is_average(multilevel):
-            out_df = _coerce_to_df(out_df)
+            requires_vectorization = y_true_schema is not None
+            if not requires_vectorization:
+                # pass to inner function
+                out_df = self._evaluate(
+                    y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+                )
+            else:
+                out_df = self._evaluate_vectorized(
+                    y_true=(y_true_inner, y_true_schema),
+                    y_pred=(y_pred_inner, y_pred_schema),
+                    **kwargs,
+                )
 
-        return out_df
+            if _is_average(multilevel) and not _is_average(multioutput):
+                out_df = _coerce_to_1d_numpy(out_df)
+            if _is_average(multilevel) and _is_average(multioutput):
+                out_df = _coerce_to_scalar(out_df)
+            if not _is_average(multilevel):
+                out_df = _coerce_to_df(out_df)
+
+            return out_df
+        finally:
+            self.multioutput = orig_multioutput
+            self.multilevel = orig_multilevel
 
     def _evaluate(self, y_true, y_pred, **kwargs):
         """Evaluate the desired metric on given inputs.
@@ -544,47 +555,56 @@ class BaseForecastingErrorMetric(BaseMetric):
               index and columns equal to those of ``y_true``;
               i,j-th entry is metric at time i, at variable j
         """  # noqa: E501
-        multioutput = self.multioutput
-        multilevel = self.multilevel
+        multioutput = kwargs.pop("multioutput", self.multioutput)
+        multilevel = kwargs.pop("multilevel", self.multilevel)
 
-        # Input checks and conversions
-        (
-            y_true_inner,
-            y_pred_inner,
-            y_true_schema,
-            y_pred_schema,
-            multioutput,
-            multilevel,
-            kwargs,
-        ) = self._check_ys(y_true, y_pred, multioutput, multilevel, **kwargs)
+        orig_multioutput = self.multioutput
+        orig_multilevel = self.multilevel
+        try:
+            self.multioutput = multioutput
+            self.multilevel = multilevel
 
-        kwargs = self._apply_sample_weight_to_kwargs(
-            y_true=y_true_inner,
-            y_pred=y_pred_inner,
-            **kwargs,
-        )
+            # Input checks and conversions
+            (
+                y_true_inner,
+                y_pred_inner,
+                y_true_schema,
+                y_pred_schema,
+                multioutput,
+                multilevel,
+                kwargs,
+            ) = self._check_ys(y_true, y_pred, multioutput, multilevel, **kwargs)
 
-        requires_vectorization = y_true_schema is not None
-        if not requires_vectorization:
-            # pass to inner function
-            out_df = self._evaluate_by_index(
-                y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
-            )
-        else:
-            out_df = self._evaluate_by_index_vectorized(
-                y_true=(y_true_inner, y_true_schema),
-                y_pred=(y_pred_inner, y_pred_schema),
+            kwargs = self._apply_sample_weight_to_kwargs(
+                y_true=y_true_inner,
+                y_pred=y_pred_inner,
                 **kwargs,
             )
 
-            if multilevel in ["uniform_average", "uniform_average_time"]:
-                out_df = out_df.groupby(level=-1).mean()
+            requires_vectorization = y_true_schema is not None
+            if not requires_vectorization:
+                # pass to inner function
+                out_df = self._evaluate_by_index(
+                    y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+                )
+            else:
+                out_df = self._evaluate_by_index_vectorized(
+                    y_true=(y_true_inner, y_true_schema),
+                    y_pred=(y_pred_inner, y_pred_schema),
+                    **kwargs,
+                )
 
-        if isinstance(multioutput, str) and multioutput == "raw_values":
-            out_df = _coerce_to_df(out_df)
-        else:
-            out_df = _coerce_to_series(out_df)
-        return out_df
+                if multilevel in ["uniform_average", "uniform_average_time"]:
+                    out_df = out_df.groupby(level=-1).mean()
+
+            if isinstance(multioutput, str) and multioutput == "raw_values":
+                out_df = _coerce_to_df(out_df)
+            else:
+                out_df = _coerce_to_series(out_df)
+            return out_df
+        finally:
+            self.multioutput = orig_multioutput
+            self.multilevel = orig_multilevel
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.

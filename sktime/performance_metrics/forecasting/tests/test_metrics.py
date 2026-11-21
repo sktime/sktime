@@ -792,3 +792,42 @@ def test_default_evaluate_by_index_with_sample_weight():
 
     by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_name",
+    ["MeanAbsoluteError", "MeanSquaredError", "MedianAbsoluteError"],
+)
+def test_metric_kwargs_multioutput_override(metric_name):
+    """Test overriding multioutput dynamically in evaluate and evaluate_by_index."""
+    import sktime.performance_metrics.forecasting as metrics_module
+
+    metric_cls = getattr(metrics_module, metric_name)
+    y_true = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [2.0, 3.0, 4.0]})
+    y_pred = pd.DataFrame({"a": [1.5, 2.5, 3.5], "b": [1.0, 2.0, 3.0]})
+
+    metric = metric_cls()
+    assert metric.multioutput == "uniform_average"
+
+    # evaluate with multioutput override
+    raw_eval = metric.evaluate(y_true, y_pred, multioutput="raw_values")
+    raw_expected = metric_cls(multioutput="raw_values").evaluate(y_true, y_pred)
+    assert np.allclose(raw_eval, raw_expected)
+
+    # __call__ with multioutput override
+    raw_call = metric(y_true, y_pred, multioutput="raw_values")
+    assert np.allclose(raw_call, raw_expected)
+
+    # evaluate_by_index with multioutput override
+    by_index_eval = metric.evaluate_by_index(y_true, y_pred, multioutput="raw_values")
+    by_index_expected = metric_cls(multioutput="raw_values").evaluate_by_index(
+        y_true, y_pred
+    )
+    pd.testing.assert_frame_equal(by_index_eval, by_index_expected)
+
+    # check original instance parameters remain unchanged
+    assert metric.multioutput == "uniform_average"
