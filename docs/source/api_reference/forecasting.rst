@@ -777,6 +777,14 @@ Domain agnostic foundation models
 
     TabbyForecaster
 
+.. currentmodule:: sktime.forecasting.simons
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SimonsForecaster
+
 .. currentmodule:: sktime.forecasting.tafsut
 
 .. autosummary::
