@@ -2781,12 +2781,20 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
         y_plus_preds = self._cur_y
         y_pred_list = []
 
+        # self.fh.freq is an offset alias (e.g. "ME") for PeriodIndex data, which
+        # asfreq rejects; the period alias of the index (e.g. "M") is used instead
+        asfreq_freq = self.fh.freq if hasattr(self.fh, "freq") else None
+        if asfreq_freq is not None:
+            y_time_index = get_time_index(self._cur_y)
+            if isinstance(y_time_index, pd.PeriodIndex):
+                asfreq_freq = y_time_index.freqstr
+
         for _ in y_lags_no_gaps:
-            if hasattr(self.fh, "freq") and self.fh.freq is not None:
+            if asfreq_freq is not None:
                 y_plus_preds = apply_method_per_series(
                     y_plus_preds,
                     "asfreq",
-                    self.fh.freq,
+                    asfreq_freq,
                     how="start",
                 )
             Xt = lagger_y_to_X.transform(y_plus_preds)
