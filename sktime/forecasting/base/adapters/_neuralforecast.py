@@ -12,6 +12,7 @@ import pandas
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.datetime import _to_offset_compat
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
@@ -391,6 +392,12 @@ class _NeuralForecastAdapter(BaseForecaster):
                 )
             else:  # B2.2.2: equispaced integers
                 self._freq = int(diffs[-1])  # converts numpy.int64 to int
+
+        # ``PeriodIndex.freqstr`` reports period aliases such as "M" or "Y-DEC",
+        # which pandas 3 no longer accepts as offset aliases - normalize once here,
+        # so that both ``pandas`` and ``neuralforecast`` receive a valid alias
+        if isinstance(self._freq, str):
+            self._freq = _to_offset_compat(self._freq).freqstr
 
         if isinstance(y_time_index, pandas.PeriodIndex):
             self._is_PeriodIndex = True
