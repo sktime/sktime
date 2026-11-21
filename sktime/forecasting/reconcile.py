@@ -343,7 +343,7 @@ class ReconcilerForecaster(BaseForecaster):
             return self
 
         # update self.residuals_
-        # bug in self.forecaster_.predict_residuals() for heir data
+        # Predict before updating so new exogenous rows are still out of sample.
         fh_resid = ForecastingHorizon(
             y.index.get_level_values(-1).unique(), is_relative=False
         )
