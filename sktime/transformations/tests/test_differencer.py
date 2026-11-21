@@ -314,3 +314,77 @@ def test_dropna_pipeline():
     # Predict
     y_pred = pipe_yX.predict(fh=[1], X=X.iloc[-1:, :])
     assert len(y_pred) == 1
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("lags", [1, 2, [1, 1], [1, 2]])
+@pytest.mark.parametrize(
+    "index",
+    [
+        pd.RangeIndex(0, 24, 2),
+        pd.RangeIndex(10, 70, 5),
+        pd.Index(np.arange(0, 24, 2)),
+    ],
+)
+def test_differencer_inverse_integer_index_with_step(lags, index):
+    """Test that inverse_transform inverts transform on integer index with step.
+
+    Failure case of bug #11860, where the inverse was all nan or wrong values
+    if the integer index did not have step 1, e.g., 0, 2, 4.
+    """
+    y = pd.Series(np.arange(1.0, len(index) + 1) ** 2, index=index)
+
+    transformer = Differencer(lags=lags)
+    yt = transformer.fit_transform(y)
+    y_inv = transformer.inverse_transform(yt)
+
+    pd.testing.assert_series_equal(y_inv, y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("lags", [1, 2, [1, 2]])
+def test_differencer_inverse_integer_index_with_step_out_of_sample(lags):
+    """Test inverse_transform on unseen data, integer index with step other than 1.
+
+    Covers the same failure case as #11860, for data after the end of the fit data.
+    """
+    y = pd.Series(np.arange(1.0, 13.0) ** 2, index=pd.RangeIndex(0, 24, 2))
+    y_train, y_test = y.iloc[:8], y.iloc[8:]
+
+    transformer = Differencer(lags=lags).fit(y_train)
+    yt_test = transformer.transform(y_test)
+    y_inv = transformer.inverse_transform(yt_test)
+
+    pd.testing.assert_series_equal(y_inv, y_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "fh, expected",
+    [([1], [79.0]), ([1, 2, 3], [79.0, 94.0, 109.0]), ([2, 4], [79.0, 94.0])],
+)
+def test_differencer_pipeline_integer_index_with_step(fh, expected):
+    """Test a forecasting pipeline with Differencer on an integer index with step.
+
+    On the index 0, 2, ..., 14, fh=[1] gives the label 15, which does not follow
+    the step of the fit index. The level must still be added back.
+    """
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.naive import NaiveForecaster
+
+    y = pd.Series(np.arange(1.0, 9.0) ** 2, index=pd.RangeIndex(0, 16, 2))
+    forecaster = TransformedTargetForecaster(
+        [("d", Differencer(lags=1)), ("f", NaiveForecaster())]
+    )
+    y_pred = forecaster.fit(y, fh=fh).predict()
+
+    np.testing.assert_allclose(y_pred.to_numpy(), expected)
