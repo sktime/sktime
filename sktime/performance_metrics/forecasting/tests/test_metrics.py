@@ -770,6 +770,36 @@ def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_maep_evaluate_by_index_single_observation():
+    """Test MAE% evaluate_by_index with a single observation (n=1)."""
+    from sktime.performance_metrics.forecasting import MeanAbsoluteErrorPercentage
+
+    metric = MeanAbsoluteErrorPercentage()
+    y_true = pd.Series([2.0])
+    y_pred = pd.Series([2.5])
+
+    res = metric.evaluate_by_index(y_true, y_pred)
+    assert isinstance(res, pd.Series)
+    assert np.allclose(res.to_numpy(), [0.25])
+    assert np.allclose(res.to_numpy(), [metric.evaluate(y_true, y_pred)])
+
+    # multivariate test with n=1
+    y_true_mv = pd.DataFrame({"A": [2.0], "B": [4.0]})
+    y_pred_mv = pd.DataFrame({"A": [2.5], "B": [5.0]})
+    res_mv = metric.evaluate_by_index(y_true_mv, y_pred_mv)
+    expected_mv = (0.25 + 0.25) / 2
+    assert np.allclose(res_mv.to_numpy(), [expected_mv])
+
+    metric_raw = MeanAbsoluteErrorPercentage(multioutput="raw_values")
+    res_raw = metric_raw.evaluate_by_index(y_true_mv, y_pred_mv)
+    assert isinstance(res_raw, pd.DataFrame)
+    assert np.allclose(res_raw.to_numpy(), [[0.25, 0.25]])
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if tested module has changed.",
 )
 def test_default_evaluate_by_index_with_sample_weight():
