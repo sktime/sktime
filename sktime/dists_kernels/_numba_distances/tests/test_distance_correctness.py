@@ -2,6 +2,9 @@
 
 Compare the distance calculations on the 1D and 2D (d,m) format input against the
 results generated with tsml, in distances.tests.TestDistances.
+
+Constrained TWE fixtures use the corrected boundary initialization from #6182.
+Zero-window TWE values are also verified against the diagonal matching formula.
 """
 
 __author__ = ["chrisholder", "TonyBagnall", "fkiraly"]
@@ -46,7 +49,8 @@ unit_test_distances = {
     "edr": [1.0, 0.58333, 0.125],
     "ddtw": [80806.0, 76289.0625, 76289.0625],
     "wddtw": [38144.53125, 19121.4927, 1.34957],
-    "twe": [242.001, 628.0029999999999, 3387.044],
+    # 零窗口只允许对角线匹配, 受限路径的距离不能小于无约束距离。
+    "twe": [4536.0, 3414.014, 3387.044],
     "squared": [384147.0],
 }
 basic_motions_distances = {
@@ -59,7 +63,7 @@ basic_motions_distances = {
     "lcss": [1.0, 0.26, 0.05],
     "ddtw": [297.18771, 160.48649, 160.29823],
     "wddtw": [80.149117, 1.458858, 0.0],
-    "twe": [1.325876246546281, 14.759114523578294, 218.21301289250758],
+    "twe": [338.48421620184274, 218.21301289250758, 218.21301289250758],
     "squared": [757.259719],
 }
 
