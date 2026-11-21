@@ -114,35 +114,75 @@ class HilbertTransformer(BaseTransformer):
                 f"`N` ({self.N}) must be greater than or equal to signal length ({n})."
             )
 
-        result = {}
+        # SciPy preserves the precision of each single-channel FFT. Combining
+        # mixed-precision columns into one ndarray would upcast some channels,
+        # changing the original output dtypes and numerical results.
+        if df.dtypes.nunique() > 1:
+            return pd.concat(
+                [self._transform(df.iloc[:, [i]]) for i in range(df.shape[1])],
+                axis=1,
+            )
 
-        for col in df.columns:
-            arr = df[col].to_numpy()
+        # Bound temporary FFT and phase arrays for wide multivariate input.
+        # Small inputs still use one batched transform; wider ones are
+        # processed in chunks and written directly into the final output.
+        output_type = self.output_type
+        channel_count = df.shape[1]
+        if channel_count == 0:
+            return pd.DataFrame(index=df.index)
 
-            # compute the analytic signal; trim back to original length
-            # in case N was specified larger than n
-            z = hilbert(arr, N=self.N, axis=0)[:n]
+        fft_length = self.N if self.N is not None else n
+        batch_size = max(1, min(channel_count, 32_768 // max(fft_length, 1)))
+        feature_count = 3 if output_type == "all" else 1
+        values = None
 
-            envelope = np.abs(z)
-            phase = np.angle(z)
-            if self.unwrap_phase:
-                phase = np.unwrap(phase)
+        for start in range(0, channel_count, batch_size):
+            stop = min(start + batch_size, channel_count)
+            if start == 0 and stop == channel_count:
+                chunk = df.to_numpy()
+            else:
+                chunk = df.iloc[:, start:stop].to_numpy()
+            analytic = hilbert(chunk, N=self.N, axis=0)[:n]
 
-            if self.output_type == "envelope":
-                result[col] = envelope
-            elif self.output_type == "quadrature":
-                result[col] = np.imag(z)
-            elif self.output_type == "phase":
-                result[col] = phase
-            elif self.output_type == "frequency":
-                result[col] = np.gradient(phase) * self.fs / (2 * np.pi)
-            elif self.output_type == "all":
-                freq = np.gradient(phase) * self.fs / (2 * np.pi)
-                result[f"{col}_envelope"] = envelope
-                result[f"{col}_phase"] = phase
-                result[f"{col}_frequency"] = freq
+            if output_type == "quadrature":
+                block = analytic.imag
+            elif output_type == "envelope":
+                block = np.abs(analytic)
+            else:
+                phase = np.angle(analytic)
+                if self.unwrap_phase:
+                    phase = np.unwrap(phase, axis=0)
 
-        out = pd.DataFrame(result, index=df.index)
+                if output_type == "phase":
+                    block = phase
+                else:
+                    frequency = np.gradient(phase, axis=0) * self.fs / (2 * np.pi)
+                    if output_type == "frequency":
+                        block = frequency
+                    else:
+                        envelope = np.abs(analytic)
+                        stacked = np.stack((envelope, phase, frequency), axis=2)
+                        block = stacked.reshape(n, -1)
+
+            if start == 0 and stop == channel_count:
+                values = block
+            else:
+                if values is None:
+                    values = np.empty(
+                        (n, channel_count * feature_count), dtype=block.dtype
+                    )
+                values[:, start * feature_count : stop * feature_count] = block
+
+        if output_type == "all":
+            columns = [
+                f"{col}_{feature}"
+                for col in df.columns
+                for feature in ("envelope", "phase", "frequency")
+            ]
+        else:
+            columns = df.columns
+
+        out = pd.DataFrame(values, index=df.index, columns=columns)
 
         # if the input was a Series and we didn't fan out into multiple
         # columns, return a Series to keep things consistent
