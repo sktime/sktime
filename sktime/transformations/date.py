@@ -136,7 +136,7 @@ class DateTimeFeatures(BaseTransformer):
         * second_of_minute
             0-based offset to 00:00:00
         * millisecond_of_second
-            0-based offset to 00:00:00.0000
+            0-based offset into the current second, in milliseconds (0-999)
         * is_weekend
             1 indicates weekend, 0 indicates it is not a weekend
         * year (special case with no lower frequency).
@@ -381,7 +381,8 @@ def _calendar_dummies(x, funcs):
         df.loc[(df["quarter"] == 1) & (df["week"] < 52), "qweek"] = 0
         cd = df["week"] - df["qweek"] + 1
     elif funcs == "millisecond":
-        cd = date_sequence.microsecond * 1000
+        # pandas exposes microseconds (0-999999), not milliseconds
+        cd = date_sequence.microsecond // 1000
     elif funcs == "day_of_quarter":
         quarter = date_sequence.quarter
         quarter_start = pd.DatetimeIndex(
