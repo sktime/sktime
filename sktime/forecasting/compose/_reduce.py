@@ -1892,7 +1892,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
 
     Parameters
     ----------
-    target_date : a list of dates
+    target_date : list of dates, pd.Index, or absolute ForecastingHorizon
         this will be correspond to the new timepoints index to be created in the
         forecasting dataframe
     origin_df : a pandas Series or Dataframe
@@ -1909,13 +1909,26 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     -------
     A pandas dataframe or series
     """
-    if not isinstance(target_date, ForecastingHorizon):
-        ix = pd.Index(target_date)
-        fh = ForecastingHorizon(ix, is_relative=False)
+    if isinstance(target_date, ForecastingHorizon):
+        fh = target_date.to_absolute(cutoff=None)
     else:
-        fh = target_date.to_absolute()
+        fh = ForecastingHorizon(pd.Index(target_date), is_relative=False)
 
-    index = fh.get_expected_pred_idx(origin_df)
+    if isinstance(origin_df.index, pd.MultiIndex):
+        # Retain frequency compatibility checks without inspecting each instance.
+        fh.freq = origin_df.index.levels[-1]
+        # Dates are absolute: no per-instance cutoff or mtype checks are needed.
+        # Repeat only observed instance keys, not the product of hierarchy levels.
+        instances = origin_df.index.droplevel(-1).unique()
+        dates = fh.to_pandas()
+        arrays = [
+            instances.get_level_values(level).repeat(len(dates))
+            for level in range(instances.nlevels)
+        ]
+        arrays.append(dates.take(np.tile(np.arange(len(dates)), len(instances))))
+        index = pd.MultiIndex.from_arrays(arrays, names=origin_df.index.names)
+    else:
+        index = fh.get_expected_pred_idx(origin_df)
 
     if isinstance(origin_df, pd.Series):
         columns = [origin_df.name]
