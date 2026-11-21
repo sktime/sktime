@@ -223,6 +223,36 @@ def test_inverse_train_data_fill_zero(lags, index_type):
     _assert_array_almost_equal(result, y)
 
 
+lags_length_short = [
+    pytest.param(lags, n, id=f"lags={lags}-n={n}")
+    for lags in [[1, 12], [1, 5], [2, 5], [1, 1, 3]]
+    for n in range(sum(lags) + 1, sum(lags) + lags[-1] + 2)
+]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("lags, n", lags_length_short)
+@pytest.mark.parametrize("na_handling", ["keep_na", "fill_zero"])
+@pytest.mark.parametrize("index_type", ["int", "period"])
+def test_inverse_train_data_short_series(lags, n, na_handling, index_type):
+    """Test inverse_transform on train data shorter than sum(lags) + lags[-1].
+
+    The values needed to invert the last lag are the first sum(lags) values of
+    the train data differenced at the preceding lags. If the train data is short,
+    these are not all at the index of X shifted by the last lag.
+    """
+    y = y_airline.iloc[:n]
+    if index_type == "int":
+        y = y.reset_index(drop=True)
+    diff = Differencer(lags=lags, na_handling=na_handling).fit(y)
+    Xt = diff.transform(y)
+    result = diff.inverse_transform(Xt)
+    _assert_array_almost_equal(result, y.loc[Xt.index])
+
+
 @pytest.mark.skipif(
     not run_test_for_class(Differencer),
     reason="run test only if softdeps are present and incrementally (if requested)",
