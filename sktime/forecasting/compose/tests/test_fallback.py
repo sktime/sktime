@@ -9,16 +9,19 @@ forecasting process.
 
 __author__ = ["ninedigits"]
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose import EnsembleForecaster, FallbackForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils.estimators import MockUnivariateForecasterLogger
 
 
 class ForecastingError(Exception):
@@ -764,3 +767,145 @@ def test_forecastbylevel_nan_predict():
     y_pred_expected = forecaster2.predict()
 
     pd.testing.assert_frame_equal(y_pred_expected, y_pred_actual)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("index_type", ["integer", "datetime", "period"])
+@pytest.mark.parametrize("absolute_fh", [False, True])
+@pytest.mark.parametrize("remember_data", [False, True])
+@pytest.mark.parametrize("update_params", [False, True])
+@pytest.mark.parametrize("method", ["update", "update_predict_single"])
+def test_fallback_after_update_uses_current_history(
+    index_type, absolute_fh, remember_data, update_params, method
+):
+    """A backup must forecast from the updated observations and cutoff, #11807."""
+    if index_type == "integer":
+        index = pd.RangeIndex(6)
+    elif index_type == "datetime":
+        index = pd.date_range("2020-01-01", periods=6, freq="D")
+    else:
+        index = pd.period_range("2020-01", periods=6, freq="M")
+    y = pd.Series([1.0, 2.0, 3.0, 100.0, np.nan], index=index[:5], name="y")
+    forecaster = FallbackForecaster(
+        [
+            ("primary", NaiveForecaster(strategy="mean", window_length=1)),
+            ("backup", NaiveForecaster(strategy="last")),
+        ],
+        nan_predict_policy="raise",
+    ).set_config(remember_data=remember_data)
+    forecaster.fit(y.iloc[:3], fh=[1])
+    fh = ForecastingHorizon(index[5:], is_relative=False) if absolute_fh else [1]
+
+    if method == "update":
+        forecaster.update(y.iloc[3:], update_params=update_params)
+        actual = forecaster.predict(fh=fh)
+    else:
+        actual = forecaster.update_predict_single(
+            y.iloc[3:], fh=fh, update_params=update_params
+        )
+
+    expected = NaiveForecaster(strategy="last").fit(y).predict(fh=fh)
+    pd.testing.assert_series_equal(actual, expected)
+    assert forecaster.current_name_ == "backup"
+    assert forecaster.current_forecaster_.cutoff.equals(forecaster.cutoff)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("remember_data", [False, True])
+def test_fallback_after_update_preserves_exogenous_history(remember_data):
+    """Later candidates see all batches of y and X after intervening failures."""
+    y = pd.Series(np.arange(7, dtype=float), name="y")
+    X = pd.DataFrame({"x": np.arange(8, dtype=float)})
+    forecaster = FallbackForecaster(
+        [
+            ("primary", DummyForecaster(raise_at="predict")),
+            ("fit_failure", DummyForecaster(raise_at="fit")),
+            ("predict_failure", DummyForecaster(raise_at="predict")),
+            ("backup", MockUnivariateForecasterLogger()),
+        ]
+    ).set_config(remember_data=remember_data)
+    forecaster.fit(y.iloc[:3], X=X.iloc[:3], fh=[1])
+    forecaster.update(y.iloc[3:5], X=X.iloc[3:5])
+    forecaster.update(y.iloc[5:], X=X.iloc[5:7])
+    actual = forecaster.predict(X=X.iloc[7:])
+
+    assert forecaster.current_name_ == "backup"
+    fit_method, fit_args = forecaster.current_forecaster_.log[0]
+    assert fit_method == "_fit"
+    pd.testing.assert_series_equal(fit_args["y"], y)
+    pd.testing.assert_frame_equal(fit_args["X"], X.iloc[:7])
+    pd.testing.assert_series_equal(actual, pd.Series([10], index=[7]))
+    assert [
+        failure["forecaster_name"] for failure in forecaster.exceptions_raised_.values()
+    ] == ["primary", "fit_failure", "predict_failure"]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("update_params", [False, True])
+@pytest.mark.parametrize("method", ["update", "update_predict_single"])
+def test_fallback_after_update_forwards_active_update(update_params, method):
+    """Updating the history must still update the active candidate exactly once."""
+    y = pd.Series(np.arange(5, dtype=float), name="y")
+    X = pd.DataFrame({"x": np.arange(6, dtype=float)})
+    forecaster = FallbackForecaster([MockUnivariateForecasterLogger()]).fit(
+        y.iloc[:3], X=X.iloc[:3], fh=[1]
+    )
+    if method == "update":
+        forecaster.update(y.iloc[3:], X=X.iloc[3:5], update_params=update_params)
+        forecaster.predict(X=X.iloc[5:])
+    else:
+        forecaster.update_predict_single(
+            y.iloc[3:], X=X.iloc[3:], update_params=update_params
+        )
+
+    updates = [
+        args for name, args in forecaster.current_forecaster_.log if name == "_update"
+    ]
+    assert len(updates) == 1
+    assert updates[0]["update_params"] is update_params
+    pd.testing.assert_series_equal(updates[0]["y"], y.iloc[3:])
+    pd.testing.assert_frame_equal(
+        updates[0]["X"], X.iloc[3:5] if method == "update" else X.iloc[3:]
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FallbackForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("update_params", [False, True])
+def test_fallback_after_update_switches_again(update_params):
+    """Keep history current through updates before and after a model switch."""
+    y = pd.Series([1.0, 2.0, 3.0], name="y")
+    forecaster = FallbackForecaster(
+        [
+            ("primary", NaiveForecaster(strategy="mean", window_length=1)),
+            ("middle", NaiveForecaster(strategy="mean", window_length=2)),
+            ("last", NaiveForecaster(strategy="last")),
+        ],
+        nan_predict_policy="raise",
+    ).fit(y, fh=[1])
+
+    batches = [
+        pd.Series([10.0, np.nan], index=[3, 4], name="y"),
+        pd.Series([20.0, np.nan, np.nan], index=[5, 6, 7], name="y"),
+        pd.Series([30.0], index=[8], name="y"),
+    ]
+    for batch, expected_name, expected_value in zip(
+        batches, ["middle", "last", "last"], [10.0, 20.0, 30.0]
+    ):
+        forecaster.update(batch, update_params=update_params)
+        actual = forecaster.predict()
+        pd.testing.assert_series_equal(
+            actual, pd.Series([expected_value], index=[batch.index[-1] + 1], name="y")
+        )
+        assert forecaster.current_name_ == expected_name
