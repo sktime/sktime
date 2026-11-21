@@ -9,8 +9,8 @@ How to use this implementation template to implement a new estimator:
 - make a copy of the template in a suitable location, give it a descriptive name.
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
-- do not write to reserved variables: is_fitted, _is_fitted, _X, _y, classes_,
-    n_classes_, fit_time_, _class_dictionary, _threads_to_use, _tags, _tags_dynamic
+- do not write to reserved variables: is_fitted, _is_fitted, _X, _y,
+    fit_time_, _threads_to_use, _tags, _tags_dynamic
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -21,12 +21,11 @@ How to use this implementation template to implement a new estimator:
 
 Mandatory methods to implement:
     fitting                 - _fit(self, X, y)
-    predicting classes      - _predict(self, X)
+    predicting targets      - _predict(self, X)
 
 Optional methods to implement:
     data conversion and capabilities tags - _tags
     fitted parameter inspection           - _get_fitted_params()
-    predicting class probabilities        - _predict_proba(self, X)
 
 Testing - required for sktime test framework and check_estimator usage:
     get default parameters for test instance(s) - get_test_params()
@@ -53,9 +52,9 @@ from sktime.regression.base import BaseRegressor
 
 # todo: change class name and write docstring
 class MyTimeSeriesRegressor(BaseRegressor):
-    """Custom time series classifier. todo: write docstring.
+    """Custom time series regressor. todo: write docstring.
 
-    todo: describe your custom time series classifier here
+    todo: describe your custom time series regressor here
 
     Parameters
     ----------
@@ -103,10 +102,15 @@ class MyTimeSeriesRegressor(BaseRegressor):
         "capability:unequal_length": False,
         "capability:missing_values": False,
         "capability:train_estimate": False,
-        "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
-        "capability:class_weight": False,  # ability to handle class weights
+        "capability:categorical_in_X": True,
+        "capability:pretrain": False,
+        # property:randomness = does the estimator behave deterministically or randomly?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # capability:random_state = does the estimator have a random_state parameter?
+        "capability:random_state": False,
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -117,6 +121,7 @@ class MyTimeSeriesRegressor(BaseRegressor):
         # todo: write any hyper-parameters and components to self
         self.parama = parama
         self.paramb = paramb
+
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._paramc
         self.paramc = paramc
@@ -124,31 +129,45 @@ class MyTimeSeriesRegressor(BaseRegressor):
         # leave this as is
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
-        # if writes derived values to self, should *not* overwrite self.paramc etc
-        # instead, write to self._paramc, self._newparam (starting with _)
-        # example of handling conditional parameters or mutable defaults:
+        # do not put anything else in __init__
+        # use __dynamic_tags__ for dynamic tag setting
+        # use __post_init__ for validation and lightweight setup.
+
+        # todo: add if there is dynamic tag setting logic, otherwise delete this method
+
+    def __dynamic_tags__(self):
+        """Set tag values conditional on constructor parameters."""
+
+        # Example:
+        # if self.parama == 42:
+        #     self.set_tags(**{"capability:missing_values": True})
+
+        # Example for a component:
+        # self.clone_tags(
+        #     self.component_estimator,
+        #     ["capability:missing_values"],
+        # )
+
+    # todo: add post-init logic here, otherwise delete this method
+    def __post_init__(self):
+        """Perform parameter validation and lightweight initialization.
+
+        Significant computation and memory-intensive operations should be
+        performed in _fit, not here.
+        """
+        # todo: add parameter validation here
+
         if self.paramc is None:
             from sktime.somewhere import MyOtherEstimator
 
             self._paramc = MyOtherEstimator(foo=42)
         else:
-            # estimators should be cloned to avoid side effects
-            self._paramc = paramc.clone()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
+            # Clone estimators to avoid shared mutable state.
+            self._paramc = self.paramc.clone()
 
     # todo: implement this, mandatory
     def _fit(self, X, y):
-        """Fit time series classifier to training data.
+        """Fit time series regressor to training data.
 
         private _fit containing the core logic, called from fit
 
@@ -168,10 +187,10 @@ class MyTimeSeriesRegressor(BaseRegressor):
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
             1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
-            class labels for fitting
-            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
-            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
+            or 2D iterable, of shape [n_instances, n_outputs]
+            target values for fitting
+            if self.get_tag("capability:multioutput") = False, guaranteed to be 1D
+            if self.get_tag("capability:multioutput") = True, guaranteed to be 2D
 
         Returns
         -------
@@ -209,48 +228,11 @@ class MyTimeSeriesRegressor(BaseRegressor):
         -------
         y : should be of mtype in self.get_tag("y_inner_mtype")
             1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
+            or 2D iterable, of shape [n_instances, n_outputs]
             predicted target values
             indices correspond to instance indices in X
-            if self.get_tag("capaility:multioutput") = False, should be 1D
-            if self.get_tag("capaility:multioutput") = True, should be 2D
-        """
-
-        # implement here
-        # IMPORTANT: avoid side effects to X
-
-    # todo: consider implementing this, optional
-    # if you do not implement it, then the default _predict_proba will be called.
-    # the default simply calls predict and sets probas to 0 or 1.
-    def _predict_proba(self, X):
-        """Predicts labels probabilities for sequences in X.
-
-        private _predict_proba containing the core logic, called from predict_proba
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-
-        Parameters
-        ----------
-        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
-            pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
-
-        Returns
-        -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
-            1st dimension indices correspond to instance indices in X
-            2nd dimension indices correspond to possible labels (integers)
-            (i, j)-th entry is predictive probability that i-th instance is of class j
+            if self.get_tag("capability:multioutput") is False, should be 1D
+            if self.get_tag("capability:multioutput") is True, should be 2D
         """
 
         # implement here
@@ -295,9 +277,7 @@ class MyTimeSeriesRegressor(BaseRegressor):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            Reserved values for classifiers:
-                "results_comparison" - used for identity testing in some classifiers
-                    should contain parameter settings comparable to "TSC bakeoff"
+            No reserved parameter-set names are required for regressors.
 
         Returns
         -------
@@ -319,8 +299,8 @@ class MyTimeSeriesRegressor(BaseRegressor):
         #
         # The parameter_set argument is not used for most automated, module level tests.
         #   It can be used in custom, estimator specific tests, for "special" settings.
-        #   For classification, this is also used in tests for reference settings,
-        #       such as published in benchmarking studies, or for identity testing.
+        #   For regression, custom parameter sets may be used for reference settings
+        #   or identity testing where appropriate.
         # A parameter dictionary must be returned *for all values* of parameter_set,
         #   i.e., "parameter_set not available" errors should never be raised.
         #
