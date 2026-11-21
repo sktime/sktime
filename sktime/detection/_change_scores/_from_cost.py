@@ -67,9 +67,10 @@ class ChangeScore(BaseIntervalScorer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
+        from sktime.detection.costs._l1_cost import L1Cost
         from sktime.detection.costs._l2_cost import L2Cost
 
-        return [{"cost": L2Cost()}]
+        return [{"cost": L2Cost()}, {"cost": L1Cost()}]
 
 
 def to_change_score(scorer):
