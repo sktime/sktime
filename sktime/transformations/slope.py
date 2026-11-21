@@ -72,7 +72,7 @@ class SlopeTransformer(BaseTransformer):
 
         self._check_parameters(n_timepoints)
 
-        Xt = pd.DataFrame()
+        Xt = pd.DataFrame(index=X.index)
 
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
