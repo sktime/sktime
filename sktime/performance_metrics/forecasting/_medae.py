@@ -136,6 +136,7 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
         multioutput = self.multioutput
 
         raw_values = (y_true - y_pred).abs()
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         if isinstance(multioutput, str):
             if multioutput == "raw_values":
