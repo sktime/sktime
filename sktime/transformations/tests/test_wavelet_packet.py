@@ -86,3 +86,17 @@ def test_haar_wavelet_energy_conservation():
     total_node_energy = result.iloc[0].sum()
     original_energy = np.sum(x**2)
     np.testing.assert_allclose(total_node_energy, original_energy, rtol=1e-5)
+
+def test_coefficients_preserves_dataframe_index():
+    """Test that DataFrame index is preserved when output_feature='coefficients'."""
+    dates = pd.date_range("2024-01-01", periods=16, freq="D")
+    df = pd.DataFrame(
+        {"a": np.arange(16, dtype=float), "b": np.arange(16, dtype=float)},
+        index=dates,
+    )
+    res = WaveletPacketTransformer(
+        level=2, output_feature="coefficients"
+    ).fit_transform(df)
+
+    assert isinstance(res, pd.DataFrame)
+    assert (res.index == df.index).all()
