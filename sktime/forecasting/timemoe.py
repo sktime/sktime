@@ -649,8 +649,8 @@ class _CachedTimeMoE:
             if not _check_soft_dependencies("timemoe", severity="none"):
                 raise ImportError(
                     "To use TimeMoE with use_source_package=True, "
-                    "you must install the TimeMoE package from "
-                    "https://github.com/Time-MoE/Time-MoE"
+                    "you must install the TimeMoE package via: "
+                    "`pip install git+https://github.com/Time-MoE/Time-MoE`"
                 )
             from timemoe.models.modeling_timemoe import TimeMoeForPrediction
 

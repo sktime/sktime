@@ -992,7 +992,7 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
             "skpro to be present in the python environment, "
             "for distribution objects to represent distributional forecasts. "
             "To silence this message, ensure skpro is installed in the environment "
-            "when calling forecasters' predict_proba."
+            "via `pip install skpro` when calling forecasters' predict_proba."
         )
         non_default_pred_proba = self._has_implementation_of("_predict_proba")
         skpro_present = _check_soft_dependencies("skpro", severity="none")

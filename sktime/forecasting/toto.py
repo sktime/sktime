@@ -153,15 +153,15 @@ class TotoForecaster(BaseForecaster):
         self.samples_per_batch = samples_per_batch
         self.use_memory_efficient_attention = use_memory_efficient_attention
         if self.use_memory_efficient_attention:
-            if _check_soft_dependencies("xformers", severity="warning"):
-                self.set_tags(python_dependencies=["torch", "xformers", "accelerate"])
-            else:
-                raise ImportError(
-                    """
+            _check_soft_dependencies("xformers", severity="error", obj=self)
+            self.set_tags(python_dependencies=["torch", "xformers", "accelerate"])
+        else:
+            raise ImportError(
+                """
                     xformers is required for memory efficient attention.
                     Refer to https://github.com/facebookresearch/xformers
                     """
-                )
+            )
         self.stabilize_with_global = stabilize_with_global
         self.scale_factor_exponent = scale_factor_exponent
         self.prediction_type = prediction_type
