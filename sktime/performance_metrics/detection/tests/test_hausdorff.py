@@ -31,3 +31,24 @@ def test_hausdorff():
     # closest locs are 1, 1, 5, 5, 5
     # absolute distance is max(0, 1, 0, 37, 38) = 38
     assert loss2 == 38
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DirectedHausdorff),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_hausdorff_empty_pred():
+    """Test that DirectedHausdorff returns 0.0 when y_pred has no detections.
+
+    When a model predicts no events, np.max on an empty array would crash with
+    ValueError. The fix returns 0.0 (vacuously, no predicted point deviates),
+    consistent with DirectedChamfer which uses np.sum (also 0.0 on empty).
+    """
+    y_pred = pd.DataFrame({"ilocs": pd.array([], dtype="int64")})
+    y_true = pd.DataFrame({"ilocs": [0, 2, 3]})
+
+    metric = DirectedHausdorff()
+
+    loss = metric(y_true, y_pred)
+    assert isinstance(loss, float)
+    assert loss == 0.0
