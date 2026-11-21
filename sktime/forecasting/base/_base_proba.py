@@ -155,11 +155,6 @@ class BaseProbaForecaster(BaseForecaster):
             **kwargs,
         )
 
-        # Concatenate distributions
-        # The distributions need to be combined with proper indexing
-        if len(dist_list) == 1:
-            return dist_list[0]
-
         # Concatenate distributions with proper hierarchical indexing
         pred_dist = self._concat_distributions_hierarchical(dist_list, yschema)
 
@@ -186,9 +181,6 @@ class BaseProbaForecaster(BaseForecaster):
 
         if len(dist_list) == 0:
             raise ValueError("Cannot concatenate empty list of distributions")
-
-        if len(dist_list) == 1:
-            return dist_list[0]
 
         dist_class = type(dist_list[0])
         if not all(type(dist) is dist_class for dist in dist_list):
@@ -358,60 +350,37 @@ class BaseProbaForecaster(BaseForecaster):
             Concatenated empirical distribution with proper hierarchical index.
         """
         dist_class = type(dist_list[0])
-
-        spl_dfs = []
-        combined_indices = []
-
         instance_names = self._get_instance_names_from_row_idx(row_idx)
+        combined_spl = pd.concat(
+            [dist.spl for dist in dist_list], keys=row_idx, names=instance_names
+        )
+        # Concatenation prepends outer keys; the sample level must stay first.
+        sample_level = len(instance_names)
+        order = (
+            [sample_level]
+            + list(range(sample_level))
+            + list(range(sample_level + 1, combined_spl.index.nlevels))
+        )
+        combined_spl = combined_spl.reorder_levels(order)
+        full_index = pd.concat(
+            [pd.DataFrame(index=dist.index) for dist in dist_list],
+            keys=row_idx,
+            names=instance_names,
+        ).index
 
-        for i, dist in enumerate(dist_list):
-            spl = dist.spl
-            instance_idx = row_idx[i]
+        weights = None
+        if any(dist.weights is not None for dist in dist_list):
+            weights = pd.concat(
+                [
+                    dist.weights
+                    if dist.weights is not None
+                    else pd.Series(1.0, index=dist.spl.index)
+                    for dist in dist_list
+                ],
+                keys=row_idx,
+                names=instance_names,
+            ).reorder_levels(order)
 
-            if isinstance(spl.index, pd.MultiIndex):
-                sample_level = spl.index.get_level_values(0)
-                time_level = spl.index.get_level_values(-1)
-
-                if isinstance(instance_idx, tuple):
-                    new_tuples = [
-                        (s,) + instance_idx + (t,)
-                        for s, t in zip(sample_level, time_level)
-                    ]
-                else:
-                    new_tuples = [
-                        (s, instance_idx, t) for s, t in zip(sample_level, time_level)
-                    ]
-
-                spl_sample_name = spl.index.names[0]
-                spl_time_name = spl.index.names[-1]
-                new_names = [spl_sample_name] + instance_names + [spl_time_name]
-
-                new_spl_index = pd.MultiIndex.from_tuples(new_tuples, names=new_names)
-            else:
-                new_spl_index = spl.index
-
-            new_spl = spl.copy()
-            new_spl.index = new_spl_index
-            spl_dfs.append(new_spl)
-
-            dist_index = dist.index
-            if isinstance(instance_idx, tuple):
-                new_dist_tuples = [instance_idx + (t,) for t in dist_index]
-            else:
-                new_dist_tuples = [(instance_idx, t) for t in dist_index]
-
-            time_name = dist_index.name if dist_index.name is not None else "time"
-
-            new_dist_index = pd.MultiIndex.from_tuples(
-                new_dist_tuples,
-                names=instance_names + [time_name],
-            )
-            combined_indices.append(new_dist_index)
-
-        combined_spl = pd.concat(spl_dfs, axis=0)
-
-        # Concatenate indices using pd.concat (MultiIndex.append is deprecated)
-        full_index = pd.concat([idx.to_frame() for idx in combined_indices]).index
-
-        columns = dist_list[0].columns
-        return dist_class(spl=combined_spl, index=full_index, columns=columns)
+        params = dist_list[0].get_params(deep=False)
+        params.update(spl=combined_spl, weights=weights, index=full_index)
+        return dist_class(**params)

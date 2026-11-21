@@ -30,6 +30,115 @@ def _make_probabilistic_regressor():
     not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
     reason="skpro required, and run only if forecaster changed",
 )
+@pytest.mark.parametrize("pooling", ["local", "panel", "global"])
+@pytest.mark.parametrize(
+    "hierarchy_levels", [(1, 1), (1, 2), (2, 2), (2, 1, 2), (1, 1, 2)]
+)
+@pytest.mark.parametrize("index_type", ["range", "period", "datetime"])
+def test_predict_proba_preserves_hierarchy(pooling, hierarchy_levels, index_type):
+    """Reconstruct singleton and nested panels without losing labels (#11848)."""
+    from itertools import product
+
+    from sklearn.tree import DecisionTreeRegressor
+    from skpro.regression.delta import DeltaPointRegressor
+
+    keys = list(product(*[range(n) for n in hierarchy_levels]))
+    if index_type == "range":
+        index = pd.RangeIndex(8, name="time")
+    elif index_type == "period":
+        index = pd.period_range("2020-01", periods=8, freq="M", name="time")
+    else:
+        index = pd.date_range("2020-01-01", periods=8, freq="D", name="time")
+    y = pd.concat(
+        [
+            pd.DataFrame({"demand": (i + 1) * 10.0, "cost": i + 1.0}, index=index)
+            for i in range(len(keys))
+        ],
+        keys=keys,
+        names=[f"level_{i}" for i in range(len(hierarchy_levels))],
+    )
+    f = MCRecursiveProbaReductionForecaster(
+        DeltaPointRegressor(DecisionTreeRegressor(random_state=0)),
+        pooling=pooling,
+        window_length=2,
+        n_samples=3,
+        random_state=0,
+    ).fit(y)
+    point = f.predict(fh=[1, 2])
+    dist = f.predict_proba(fh=[1, 2])
+
+    pd.testing.assert_index_equal(dist.index, point.index)
+    pd.testing.assert_frame_equal(dist.mean(), point)
+    pd.testing.assert_index_equal(dist.var().index, point.index)
+    np.testing.assert_allclose(dist.var().to_numpy(), 0)
+    pd.testing.assert_frame_equal(
+        dist.quantile(alpha=[0.25, 0.5, 0.75]),
+        f.predict_quantiles(fh=[1, 2], alpha=[0.25, 0.5, 0.75]),
+    )
+    assert dist.spl.index.is_unique
+    pd.testing.assert_index_equal(dist.spl.index.droplevel(0).unique(), point.index)
+    for _, sample in dist.sample(n_samples=2).groupby(level=0, sort=False):
+        pd.testing.assert_frame_equal(sample.droplevel(0), point)
+
+
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
+@pytest.mark.parametrize("n_panels", [1, 2])
+@pytest.mark.parametrize("weighted", [True, False])
+@pytest.mark.parametrize("time_indep", [True, False])
+def test_empirical_reconstruction_preserves_parameters(n_panels, weighted, time_indep):
+    """Adding outer levels must preserve weighted means and distribution settings."""
+    from skpro.distributions import Empirical
+
+    from sktime.forecasting.base._base_proba import BaseProbaForecaster
+
+    inner_index = pd.MultiIndex.from_product(
+        [["a", "b"], [8, 9]], names=["store", "time"]
+    )
+    sample_index = pd.MultiIndex.from_product(
+        [[0, 1], ["a", "b"], [8, 9]], names=["draw", "store", "time"]
+    )
+    panels = pd.Index(["north", "south"][:n_panels], name="region")
+    distributions = []
+    expected_values = []
+    for i in range(n_panels):
+        spl = pd.DataFrame(
+            {"demand": np.tile(np.arange(4.0), 2) + np.repeat([0, 10], 4) + i * 100},
+            index=sample_index,
+        )
+        # A weighted first panel and unweighted second panel also exercise mixing.
+        weights = None
+        if weighted and i == 0:
+            weights = pd.Series(np.repeat([1.0, 3.0], 4), index=sample_index)
+        distributions.append(
+            Empirical(
+                spl,
+                weights=weights,
+                time_indep=time_indep,
+                index=inner_index,
+            )
+        )
+        offset = 7.5 if weights is not None else 5.0
+        expected_values.extend(np.arange(4.0) + offset + i * 100)
+
+    combined = BaseProbaForecaster()._concat_empirical_distributions(
+        distributions, panels
+    )
+    expected_index = pd.MultiIndex.from_product(
+        [panels, ["a", "b"], [8, 9]], names=["region", "store", "time"]
+    )
+    pd.testing.assert_index_equal(combined.index, expected_index)
+    np.testing.assert_allclose(combined.mean()["demand"], expected_values)
+    assert combined.time_indep == time_indep
+    assert combined.spl.index.names == ["draw", "region", "store", "time"]
+
+
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_basic_fit_predict():
     """Test basic fit and predict returns correct output type and shape."""
     y = load_airline()
