@@ -13,7 +13,7 @@ from skbase.utils.stdout_mute import StdoutMute
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _multiton, _MultitonPretrainMixin
 from sktime.utils.warnings import warn
 
 torch = _safe_import("torch")
@@ -33,7 +33,7 @@ _FREQUENCY_TOKEN_MAP = {
 }
 
 
-class TinyTimeMixerForecaster(BaseForecaster):
+class TinyTimeMixerForecaster(_MultitonPretrainMixin, BaseForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
@@ -922,6 +922,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     ):
         self.model_path = model_path
         self.revision = revision
+        self._revision = revision
         self.device = device
         self.freq = freq
         self._freq = None
@@ -938,6 +939,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
         self.padding_mask = padding_mask
+        self._multiton_key = None
         super().__init__()
 
         if self.broadcasting:
@@ -947,6 +949,33 @@ class TinyTimeMixerForecaster(BaseForecaster):
                     "X_inner_mtype": "pd.DataFrame",
                 }
             )
+
+    def _get_multiton_cache_class(self):
+        """Return the TinyTimeMixer cache-entry class."""
+        return _CachedTinyTimeMixer
+
+    def _get_loading_param_key(self):
+        """Return the TinyTimeMixer loading-param key."""
+        key = {
+            "model_path": self.model_path,
+            "revision": self._revision,
+            "device": self.device,
+            "config": self._config,
+            "fit_strategy": self.fit_strategy,
+            "use_source_package": self.use_source_package,
+        }
+        return str(sorted(key.items()))
+
+    def _get_multiton_cache_kwargs(self):
+        """Return kwargs needed to construct a TinyTimeMixer cache entry."""
+        return {
+            "model_path": self.model_path,
+            "revision": self._revision,
+            "device": self.device,
+            "user_config": self._config,
+            "use_source_package": self.use_source_package,
+            "fit_strategy": self.fit_strategy,
+        }
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -1141,6 +1170,22 @@ class TinyTimeMixerForecaster(BaseForecaster):
         # Get the model
         self.model_ = trainer.model
 
+    def _load_model(self):
+        """Load or retrieve the TinyTimeMixer cached model."""
+        if hasattr(self, "model_") and self.model_ is not None:
+            return self.model_
+
+        self.model_ = _CachedTinyTimeMixer(
+            key=self._get_unique_key(),
+            model_path=self.model_path,
+            revision=self._revision,
+            device=self.device,
+            user_config=self._config,
+            use_source_package=self.use_source_package,
+            fit_strategy=self.fit_strategy,
+        ).load()
+        return self.model_
+
     def _resolve_freq(self, y, fh=None):
         freq = self.freq or getattr(fh, "freq", None) or _infer_index_frequency(y.index)
         freq_token = _map_frequency_token(freq)
@@ -1167,8 +1212,10 @@ class TinyTimeMixerForecaster(BaseForecaster):
             horizon_len=horizon_len,
         )
 
-    def _get_unique_key(self):
+    def _get_loading_param_key(self):
         """Build cache key for the multiton model loader."""
+        if getattr(self, "_multiton_key", None) is not None:
+            return self._multiton_key
         key = {
             "model_path": self.model_path,
             "revision": self._revision,

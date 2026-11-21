@@ -14,10 +14,10 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _multiton, _MultitonPretrainMixin
 
 
-class SundialForecaster(BaseForecaster):
+class SundialForecaster(_MultitonPretrainMixin, BaseForecaster):
     """Sundial forecaster via Hugging Face ``transformers``.
 
     This forecaster wraps Sundial [1]_, [2]_, [3]_ and exposes forecasting
@@ -215,8 +215,32 @@ class SundialForecaster(BaseForecaster):
         self.training_args = training_args
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
+        self._multiton_key = None
 
         super().__init__()
+
+    def _get_multiton_cache_class(self):
+        """Return the Sundial cache-entry class."""
+        return _CachedSundial
+
+    def _get_multiton_cache_kwargs(self):
+        """Return loading parameters used to construct a Sundial cache entry."""
+        return {
+            "model_path": self.model_path,
+            "config": self.config,
+            "device": self.device,
+            "dtype": self.dtype,
+        }
+
+    def _get_loading_param_key(self):
+        """Build the non-detached loading-param cache key."""
+        key = {
+            "model_path": self.model_path,
+            "config": self.config,
+            "device": self.device,
+            "dtype": self.dtype,
+        }
+        return str(sorted(key.items()))
 
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain forecaster on panel/global data (first batch).
@@ -561,16 +585,6 @@ class SundialForecaster(BaseForecaster):
         ).load()
 
         return self.model_
-
-    def _get_unique_key(self):
-        """Build cache key for the multiton model loader."""
-        key = {
-            "model_path": self.model_path,
-            "config": self.config,
-            "device": self.device,
-            "dtype": self.dtype,
-        }
-        return str(sorted(key.items()))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
