@@ -792,3 +792,20 @@ def test_default_evaluate_by_index_with_sample_weight():
 
     by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if tested module has changed.",
+)
+def test_sample_weight_is_weighted_average():
+    """sample_weight should give a weighted average, not sum(w * err) / n."""
+    from sktime.performance_metrics.forecasting import MeanAbsoluteError
+
+    y_true = np.array([1.0, 2.0, 3.0, 4.0])
+    y_pred = np.array([2.0, 2.0, 3.0, 8.0])
+    w = np.array([1.0, 1.0, 1.0, 5.0])
+
+    res = MeanAbsoluteError()(y_true, y_pred, sample_weight=w)
+
+    assert np.isclose(res, np.average(np.abs(y_true - y_pred), weights=w))
