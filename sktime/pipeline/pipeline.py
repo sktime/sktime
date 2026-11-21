@@ -4,6 +4,7 @@ import warnings
 from copy import copy, deepcopy
 
 from sktime.base import BaseEstimator
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.pipeline.step import Step
 from sktime.transformations.subset import ColumnSelect
 
@@ -349,7 +350,7 @@ class Pipeline(BaseEstimator):
             # if a skobject is already cloned, that the cloned skobject is used
             unique_id = self._get_unique_id(skobject)
             if unique_id not in model_dict:
-                model_dict[unique_id] = skobject.clone()
+                model_dict[unique_id] = _clone_at(skobject, "pretrained")
             cloned_skobject = model_dict[unique_id]
 
             input_steps = {}

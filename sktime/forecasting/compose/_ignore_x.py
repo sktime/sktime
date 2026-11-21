@@ -3,6 +3,7 @@
 
 __author__ = ["fkiraly"]
 
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
@@ -82,7 +83,7 @@ class IgnoreX(_DelegatedForecaster):
         IMPORTANT: no significant compute or memory use should happen in __post_init__,
         memory and compute intensive operations should be in _fit, not __post_init__.
         """
-        self.forecaster_ = self.forecaster.clone()
+        self.forecaster_ = _clone_at(self.forecaster, "pretrained")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
