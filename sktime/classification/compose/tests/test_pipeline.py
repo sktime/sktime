@@ -96,3 +96,25 @@ def test_missing_unequal_tag_inference():
     assert not c2.get_tag("capability:unequal_length")
     assert c3.get_tag("capability:missing_values")
     assert not c4.get_tag("capability:missing_values")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.classification", "sktime.dists_kernels"]),
+    reason="run test only if classification or distances code has changed",
+)
+def test_classifier_pipeline_empty_transformers():
+    """Test ClassifierPipeline with empty transformers list.
+
+    Fixes #11759.
+    """
+    from sktime.classification.dummy import DummyClassifier
+
+    RAND_SEED = 42
+    y = _make_classification_y(n_instances=10, random_state=RAND_SEED)
+    X = _make_panel_X(n_instances=10, n_timepoints=20, random_state=RAND_SEED, y=y)
+    X_test = _make_panel_X(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
+
+    clf_pipe = ClassifierPipeline(classifier=DummyClassifier(), transformers=[])
+    clf_pipe.fit(X, y)
+    y_pred = clf_pipe.predict(X_test)
+    assert len(y_pred) == 5

@@ -183,7 +183,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     @property
     def _steps(self):
-        return self._check_estimators(self.transformers) + [
+        return self._check_estimators(self.transformers, allow_empty=True) + [
             self._coerce_estimator_tuple(self.classifier)
         ]
 
@@ -527,7 +527,7 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     @property
     def _steps(self):
-        return self._check_estimators(self.transformers) + [
+        return self._check_estimators(self.transformers, allow_empty=True) + [
             self._coerce_estimator_tuple(self.classifier)
         ]
 

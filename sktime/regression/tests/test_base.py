@@ -420,3 +420,21 @@ def test_save_estimator_using_cloudpickle(foo):
         assert est.foo(2) == loaded_est.foo(2)
     else:
         assert est.foo == loaded_est.foo
+
+
+def test_regressor_pipeline_empty_transformers():
+    """Test RegressorPipeline with empty transformers list.
+
+    Fixes #11759.
+    """
+    from sktime.regression.compose import RegressorPipeline
+
+    RAND_SEED = 42
+    X = _make_panel(n_instances=10, n_timepoints=20, random_state=RAND_SEED)
+    y = _make_regression_y(n_instances=10, random_state=RAND_SEED)
+    X_test = _make_panel(n_instances=5, n_timepoints=20, random_state=RAND_SEED)
+
+    reg_pipe = RegressorPipeline(regressor=DummyRegressor(), transformers=[])
+    reg_pipe.fit(X, y)
+    y_pred = reg_pipe.predict(X_test)
+    assert len(y_pred) == 5

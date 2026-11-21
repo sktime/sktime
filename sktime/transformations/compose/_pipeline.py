@@ -153,6 +153,23 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
 
         # abbreviate for readability
         ests = self.steps_
+        if len(ests) == 0:
+            from sktime.transformations.compose._id import Id
+
+            self.clone_tags(Id())
+            self.set_tags(
+                **{
+                    "fit_is_empty": True,
+                    "capability:inverse_transform": True,
+                    "transform-returns-same-time-index": True,
+                    "capability:missing_values": True,
+                    "capability:unequal_length": True,
+                    "requires_X": True,
+                    "requires_y": False,
+                }
+            )
+            return
+
         first_trafo = ests[0][1]
 
         # input mtype and input type are as of the first estimator
@@ -237,6 +254,8 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
             raise TypeError(msg)
 
         estimator_tuples = self._get_estimator_tuples(estimators, clone_ests=True)
+        if len(estimator_tuples) == 0:
+            return []
         names, estimators = zip(*estimator_tuples)
 
         # validate names
@@ -537,6 +556,8 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         Uses the self.steps_ attribute, assumes it is initialized already.
         """
         ests = self.steps_
+        if len(ests) == 0:
+            return "Series"
         est_list = [x[1] for x in ests]
         inp_dim = self._to_dim(est_list[0].get_tag("scitype:transform-input"))
         out_dim = inp_dim
