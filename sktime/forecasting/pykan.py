@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Dummy forecasters."""
+"""Forecasting with Kolmogorov-Arnold networks."""
 
 __author__ = ["benheid"]
 
@@ -21,17 +21,21 @@ class PyKANForecaster(BaseForecaster):
 
     Parameters
     ----------
-    hidden_layers : tuple, optional (default=(1, 1))
-        The number of hidden layers in the network.
-    input_layer_size : int, optional (default=2)
-        The size of the input layer.
-    k : int, optional (default=3)
-        The number of nearest neighbors to consider.
-    grids : np.array, optional (default=np.array([2, 3]))
-        The grid sizes to use in the model.
-    model_params : dict, optional (default={"k": 2})
-        The parameters to pass to the model. See pykan documentation for more details.
-    fit_params : dict, optional (default={"steps": 1})
+    hidden_layers : tuple of int, default=(5,)
+        Width of each hidden layer, e.g., ``(5,)`` is one five-neuron layer.
+        The default is a small network without successive one-neuron bottlenecks.
+    input_layer_size : int or None, default=None
+        Number of lagged target observations per training example. If None,
+        use up to 10 lags, reduced when needed so both the training and
+        validation partitions contain at least two complete forecast windows.
+        This is a starting point; tune it to the series' dependence structure.
+    grids : array-like of int or None, default=None
+        Grid sizes used in successive training stages. None uses ``[2, 3]``.
+    model_params : dict or None, default=None
+        Parameters passed to KAN. None uses ``{"k": 2}``, where ``k`` is the
+        spline order. See pykan documentation for more details.
+    fit_params : dict or None, default=None
+        None uses ``{"steps": 20}`` per grid, rather than a one-step smoke fit.
         The parameters to pass to the fit method. See pykan documentation
         for more details.
     val_size : float, optional (default=0.5)
@@ -78,8 +82,8 @@ class PyKANForecaster(BaseForecaster):
 
     def __init__(
         self,
-        hidden_layers=(1, 1),
-        input_layer_size=2,
+        hidden_layers=(5,),
+        input_layer_size=None,
         grids=None,
         model_params=None,
         fit_params=None,
@@ -94,7 +98,7 @@ class PyKANForecaster(BaseForecaster):
         self.model_params = model_params
         self._model_params = model_params if model_params is not None else {"k": 2}
         self.fit_params = fit_params
-        self._fit_params = fit_params if fit_params is not None else {"steps": 1}
+        self._fit_params = fit_params if fit_params is not None else {"steps": 20}
         self.device = device
         super().__init__()
 
@@ -131,30 +135,48 @@ class PyKANForecaster(BaseForecaster):
         import torch
         from kan import KAN
 
+        from sktime.utils.validation import is_int
+
         self._cur_y = y
         self._cur_X = X
 
         PyTorchTrainDataset = _get_dataset_class()
 
         output_size = max(fh.to_relative(self.cutoff)._values)
+        y_train, y_test = temporal_train_test_split(y, test_size=self.val_size)
+        available_lags = min(len(y_train), len(y_test)) - output_size
+        if self.input_layer_size is None:
+            self._input_layer_size = min(10, available_lags - 1)
+        else:
+            self._input_layer_size = self.input_layer_size
+        if not is_int(self._input_layer_size) or self._input_layer_size < 1:
+            raise ValueError(
+                "input_layer_size must be a positive integer, or None with enough "
+                "data for at least one lag and two forecast windows in both "
+                "training and validation partitions."
+            )
+        if self._input_layer_size >= available_lags:
+            raise ValueError(
+                "input_layer_size plus the maximum forecast horizon must not "
+                "reach either the training or validation partition length, "
+                "so each partition has at least two training examples. "
+                "Use fewer lags, adjust val_size, or provide more observations."
+            )
         if X is not None:
             y_train, y_test, X_train, X_test = temporal_train_test_split(
                 y, X=X, test_size=(self.val_size)
             )
             ds_train = PyTorchTrainDataset(
-                y_train, self.input_layer_size, output_size, X=X_train
+                y_train, self._input_layer_size, output_size, X=X_train
             )
             ds_test = PyTorchTrainDataset(
-                y_test, self.input_layer_size, output_size, X=X_test
+                y_test, self._input_layer_size, output_size, X=X_test
             )
-            self._input_layer_size = (
-                self.input_layer_size + X_train.shape[1] * output_size
-            )
+            model_input_size = self._input_layer_size + X_train.shape[1] * output_size
         else:
-            y_train, y_test = temporal_train_test_split(y, test_size=(self.val_size))
-            ds_train = PyTorchTrainDataset(y_train, self.input_layer_size, output_size)
-            ds_test = PyTorchTrainDataset(y_test, self.input_layer_size, output_size)
-            self._input_layer_size = self.input_layer_size
+            ds_train = PyTorchTrainDataset(y_train, self._input_layer_size, output_size)
+            ds_test = PyTorchTrainDataset(y_test, self._input_layer_size, output_size)
+            model_input_size = self._input_layer_size
         train_input = [ds_train[i][0] for i in range(len(ds_train))]
         train_target = [ds_train[i][1] for i in range(len(ds_train))]
         test_input = [ds_test[i][0] for i in range(len(ds_test))]
@@ -173,18 +195,18 @@ class PyKANForecaster(BaseForecaster):
         self.train_losses = []
         self.test_losses = []
 
-        self._layer_sizes = [self._input_layer_size, *self.hidden_layers, output_size]
+        self._layer_sizes = [model_input_size, *self.hidden_layers, output_size]
         for i in range(len(self._grids)):
             if i == 0:
                 model = KAN(
-                    width=self._layer_sizes,
+                    width=self._layer_sizes.copy(),
                     grid=self._grids[i],
                     device=self.device,
                     **self._model_params,
                 )
             if i != 0:
                 model = KAN(
-                    width=self._layer_sizes,
+                    width=self._layer_sizes.copy(),
                     grid=self._grids[i],
                     device=self.device,
                     **self._model_params,
@@ -229,7 +251,9 @@ class PyKANForecaster(BaseForecaster):
         import torch
         from kan import KAN
 
-        model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
+        model = KAN(
+            width=self._layer_sizes.copy(), grid=self._best_grid, **self._model_params
+        )
         model.load_state_dict(self._state_dict)
         if X is not None:
             input_ = torch.cat(
@@ -276,7 +300,7 @@ class PyKANForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         params = [
-            {},  # default parameters
+            {"fit_params": {"steps": 1}},  # exercise defaults without a long fit
             {
                 "grids": [2, 3],
                 "model_params": {"k": 2},
