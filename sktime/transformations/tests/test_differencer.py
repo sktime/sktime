@@ -314,3 +314,17 @@ def test_dropna_pipeline():
     # Predict
     y_pred = pipe_yX.predict(fh=[1], X=X.iloc[-1:, :])
     assert len(y_pred) == 1
+
+
+@pytest.mark.parametrize("lags", [1, 2, [1, 2]])
+@pytest.mark.parametrize(
+    "index",
+    [pd.RangeIndex(0, 12, 2), pd.Index([0, 2, 4, 6, 8, 10])],
+)
+def test_differencer_inverse_transform_stepped_integer_index(lags, index):
+    """Test Differencer.inverse_transform with integer indexes having step != 1 (#11860)."""
+    y = pd.Series([1.0, 4.0, 9.0, 16.0, 25.0, 36.0], index=index)
+    d = Differencer(lags=lags)
+    yt = d.fit_transform(y)
+    y_inv = d.inverse_transform(yt)
+    pd.testing.assert_series_equal(y_inv, y)

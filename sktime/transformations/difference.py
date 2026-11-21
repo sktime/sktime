@@ -98,8 +98,13 @@ def _shift(ix, periods):
     """Shift pandas index by periods."""
     if isinstance(ix, (pd.DatetimeIndex, pd.PeriodIndex, pd.TimedeltaIndex)):
         return ix.shift(periods)
-    else:
-        return ix + periods
+    if isinstance(ix, pd.RangeIndex):
+        return ix + periods * ix.step
+    if len(ix) >= 2 and pd.api.types.is_integer_dtype(ix.dtype):
+        diffs = ix.to_series().diff().dropna()
+        if (diffs == diffs.iloc[0]).all():
+            return ix + periods * int(diffs.iloc[0])
+    return ix + periods
 
 
 def _inverse_diff(X, lags, X_diff_seq=None):
