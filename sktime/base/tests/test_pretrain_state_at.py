@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import numpy as np
+import pandas as pd
 import pytest
 from skbase.base import BaseObject
 from skbase.base._clone_plugins import _CloneSkbase
@@ -18,12 +19,12 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 
 
-def _make_pretrained_dummy():
+def _make_pretrained_dummy(strategy="mean"):
     """Return a pretrained DummyGlobalForecaster."""
     y_panel = _make_hierarchical(
         hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1
     )
-    return DummyGlobalForecaster().pretrain(y_panel)
+    return DummyGlobalForecaster(strategy=strategy).pretrain(y_panel)
 
 
 def test_clone_at_delegates_to_estimator():
@@ -231,3 +232,112 @@ def test_clone_at_new_passes_state_through_non_capable_composite():
     assert blank.foo == "keep me"
     assert blank.inner.state == "new"
     assert not hasattr(blank.inner, "global_mean_")
+
+
+def test_clone_at_shares_pretrained_attributes_reference():
+    """Clones share references to pretrained attributes to prevent memory explosion."""
+    forecaster = _make_pretrained_dummy(strategy="mean_by_index")
+
+    cloned = _clone_at(forecaster, "pretrained")
+    assert cloned is not forecaster
+    assert cloned.state == "pretrained"
+    assert getattr(cloned, "_has_shared_pretrained_attrs", False) is True
+    assert getattr(forecaster, "_has_shared_pretrained_attrs", False) is True
+    # Reference sharing check for non-scalar pretrained attribute
+    assert cloned.mean_by_index_ is forecaster.mean_by_index_
+
+
+def test_pretrain_mutation_detaches_shared_pretrained_attributes():
+    """Mutating operations detach shared pretrained attributes via copy-on-write."""
+    forecaster = _make_pretrained_dummy(strategy="mean_by_index")
+    original_mean_by_index = forecaster.mean_by_index_
+
+    cloned = _clone_at(forecaster, "pretrained")
+    assert cloned.mean_by_index_ is original_mean_by_index
+
+    # Pretrain clone on different panel data
+    y_panel_new = _make_hierarchical(
+        hierarchy_levels=(2,), min_timepoints=5, max_timepoints=5, n_columns=1
+    )
+    cloned.pretrain(y_panel_new)
+
+    assert cloned._has_shared_pretrained_attrs is False
+    assert cloned.mean_by_index_ is not original_mean_by_index
+    assert forecaster.mean_by_index_ is original_mean_by_index
+
+
+def test_grid_search_multiclone_memory_footprint():
+    """Simulated grid-search clone sweep verifies all clones share memory."""
+    forecaster = _make_pretrained_dummy(strategy="mean_by_index")
+    clones = [_clone_at(forecaster, "pretrained") for _ in range(10)]
+
+    for c in clones:
+        assert c is not forecaster
+        assert c.mean_by_index_ is forecaster.mean_by_index_
+        assert c._has_shared_pretrained_attrs is True
+
+
+def test_clone_at_pretrained_fit_isolation():
+    """Verify clones fitted on different data are isolated."""
+    f = _make_pretrained_dummy(strategy="last")
+
+    c1 = _clone_at(f, "pretrained")
+    c2 = _clone_at(f, "pretrained")
+
+    y1 = _make_series(n_timepoints=15)
+    y2 = _make_series(n_timepoints=15) * 2.0
+
+    c1.fit(y1, fh=[1])
+    c2.fit(y2, fh=[1])
+
+    # Pretrained base forecaster remains unfitted and untouched
+    assert not f.is_fitted
+    assert f.state == "pretrained"
+    assert not hasattr(f, "last_value_")
+
+    # Clones are fitted and independent
+    assert c1.is_fitted and c2.is_fitted
+    assert c1.state == "fitted" and c2.state == "fitted"
+    assert c1.last_value_ is not c2.last_value_
+    assert c1.last_value_ != c2.last_value_
+
+    # Forecasts are independent
+    pred1 = c1.predict()
+    pred2 = c2.predict()
+    assert not (pred1 == pred2).all()
+
+    # Pretrained attributes remain shared and consistent
+    assert c1.global_mean_ == f.global_mean_ == c2.global_mean_
+
+
+def test_clone_at_pretrained_fit_inplace_mutation_isolation():
+    """Verify in-place mutation on clone after fit does not mutate base or sibling."""
+    forecaster = _make_pretrained_dummy(strategy="mean_by_index")
+    original_series = forecaster.mean_by_index_.copy()
+
+    c1 = _clone_at(forecaster, "pretrained")
+    c2 = _clone_at(forecaster, "pretrained")
+
+    # Before fit, reference is shared
+    assert c1.mean_by_index_ is forecaster.mean_by_index_
+    assert c2.mean_by_index_ is forecaster.mean_by_index_
+
+    y1 = _make_series(n_timepoints=15)
+    c1.fit(y1, fh=[1])
+
+    # Calling fit detaches c1 via copy-on-write
+    assert c1._has_shared_pretrained_attrs is False
+    assert c1.mean_by_index_ is not forecaster.mean_by_index_
+
+    # Simulate in-place mutation on c1's pretrained attribute
+    c1.mean_by_index_.iloc[0, 0] = 99999.0
+
+    # Base estimator and sibling c2 are completely protected
+    pd.testing.assert_frame_equal(forecaster.mean_by_index_, original_series)
+    assert forecaster.mean_by_index_.iloc[0, 0] != 99999.0
+    assert c2.mean_by_index_.iloc[0, 0] != 99999.0
+
+    # Refit on c1 restores clean pretrained state via _reset_at("pretrained")
+    y2 = _make_series(n_timepoints=15) * 1.5
+    c1.fit(y2, fh=[1])
+    assert c1.is_fitted
