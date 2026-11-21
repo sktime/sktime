@@ -146,7 +146,10 @@ class MeanDetectionOffset(BaseDetectionMetric):
 
         # a time index gives a TimedeltaIndex, which has a mean in time units,
         # a plain numeric Index has no mean method, so go through numpy
-        if _is_time_index(X.index):
+        if isinstance(X.index, pd.PeriodIndex):
+            freq_n = getattr(X.index.freq, "n", 1)
+            return float(np.mean([x.n for x in offset]) / freq_n)
+        elif _is_time_index(X.index):
             return float(offset.mean() / pd.Timedelta(1, unit=self.time_unit))
         return float(np.mean(offset.to_numpy()))
 
