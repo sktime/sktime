@@ -175,6 +175,11 @@ class MeanAbsoluteErrorPercentage(BaseForecastingErrorMetricFunc):
 
         n = abs_err.shape[0]
 
+        if n == 1:
+            pseudo_values = abs_err / y_true.abs()
+            pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+            return self._handle_multioutput(pseudo_values, self.multioutput)
+
         num_mean = abs_err.mean()
         denom_mean = y_true.mean()
 
