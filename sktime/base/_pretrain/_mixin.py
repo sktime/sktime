@@ -109,8 +109,9 @@ class _PretrainMixin:
     def _pretrain_and_track(self, **kwargs):
         """Run ``_pretrain`` or ``_pretrain_update``, track new attributes.
 
-        Calls ``_pretrain`` if the estimator is in state ``"new"``, otherwise
-        ``_pretrain_update``. Public attributes ending in ``"_"`` that are
+        Clears fitted state while preserving pretrained attributes, then calls
+        ``_pretrain`` if the state is ``"new"``, otherwise ``_pretrain_update``.
+        Public attributes ending in ``"_"`` that are
         created by the call are appended to ``self._pretrained_attrs``, and the
         state is set to ``"pretrained"``.
 
@@ -124,10 +125,11 @@ class _PretrainMixin:
         -------
         self : reference to self
         """
+        if self._state == "fitted":
+            self._reset_at("pretrained")
         prior_attrs = {
             a for a in dir(self) if a.endswith("_") and not a.startswith("_")
         }
-
         if self._state == "new":
             self._pretrain(**kwargs)
         else:
