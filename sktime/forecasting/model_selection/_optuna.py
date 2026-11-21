@@ -5,10 +5,12 @@ from collections.abc import Iterable, Mapping
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.model_selection import check_cv
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection._base import BaseGridSearch, _fit_and_score
+from sktime.utils.dependencies import _isinstance_by_name
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.warnings import warn
 
@@ -114,7 +116,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
     sampler : Optuna sampler, optional (default=None)
-        e.g. optuna.samplers.TPESampler(seed=42)
+        e.g. optuna.samplers.TPESampler(seed=42).
+        Using ``optuna.samplers.CmaEsSampler`` requires the optional ``cmaes``
+        package, which can be installed with ``pip install cmaes``.
 
     Attributes
     ----------
@@ -220,6 +224,10 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         n_evals=100,
         sampler=None,
     ):
+        self.param_grid = param_grid
+        self.n_evals = n_evals
+        self.sampler = sampler
+
         super().__init__(
             forecaster=forecaster,
             scoring=scoring,
@@ -232,10 +240,6 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             update_behaviour=update_behaviour,
             error_score=error_score,
         )
-        self.param_grid = param_grid
-        self.n_evals = n_evals
-        self.sampler = sampler
-
         warn(
             "ForecastingOptunaSearchCV is experimental, and interfaces may change. "
             "User feedback and suggestions for future development "
@@ -245,7 +249,17 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             stacklevel=2,
         )
 
+    def __dynamic_tags__(self):
+        """Declare the additional dependency only for the CMA-ES sampler."""
+        if _isinstance_by_name(self.sampler, "CmaEsSampler"):
+            from optuna.samplers import CmaEsSampler
+
+            if isinstance(self.sampler, CmaEsSampler):
+                self.set_tags(python_dependencies=["optuna", "cmaes"])
+
     def _fit(self, y, X=None, fh=None):
+        # The base dependency check considers class tags, not instance tags.
+        _check_soft_dependencies(self.get_tag("python_dependencies"), obj=self)
         cv = check_cv(self.cv)
         scoring = check_scoring(self.scoring, obj=self)
         scoring_name = f"test_{scoring.name}"
@@ -324,8 +338,6 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from skbase.utils.dependencies import _check_soft_dependencies
-
         from sktime.forecasting.naive import NaiveForecaster
 
         if not _check_soft_dependencies("optuna", severity="none"):
