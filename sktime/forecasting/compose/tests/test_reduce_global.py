@@ -37,6 +37,35 @@ if _check_soft_dependencies("scikit-learn<1.0", severity="none"):
     from sklearn.experimental import enable_hist_gradient_boosting  # noqa: F401
 
 
+@pytest.mark.parametrize("strategy", ["direct", "recursive"])
+def test_custom_transformer_with_explicit_window_length(strategy):
+    """A user-supplied window supports transformers without truncate_start."""
+    from sktime.transformations.lag import Lag
+    from sktime.transformations.summarize import WindowSummarizer
+
+    y = pd.Series(np.arange(20, dtype=float), name="y")
+    forecaster = make_reduction(
+        LinearRegression(),
+        strategy=strategy,
+        pooling="global",
+        window_length=1,
+        transformers=[Lag(lags=1, index_out="original")],
+    )
+    reference = make_reduction(
+        LinearRegression(),
+        strategy=strategy,
+        pooling="global",
+        window_length=None,
+        transformers=[WindowSummarizer(lag_feature={"lag": [1]}, n_jobs=1)],
+    )
+    fh = [1, 2, 3]
+    predictions = forecaster.fit(y, fh=fh).predict()
+
+    pd.testing.assert_series_equal(predictions, reference.fit(y, fh=fh).predict())
+    assert predictions.index.equals(pd.RangeIndex(20, 23))
+    assert predictions.iloc[0] == pytest.approx(20.0)
+
+
 @pytest.fixture
 def y_dict():
     """Dictionary of dataframes for tests."""
