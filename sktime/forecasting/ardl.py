@@ -205,6 +205,7 @@ class ARDL(_StatsModelsAdapter):
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?

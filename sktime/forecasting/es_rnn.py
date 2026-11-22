@@ -134,6 +134,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
+        "category": ["statistical", "deep_learning"],
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
