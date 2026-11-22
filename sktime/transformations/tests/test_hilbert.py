@@ -67,3 +67,35 @@ def test_hilbert_numerical_sine_quadrature():
     expected = -np.cos(t)
     mae = np.mean(np.abs(quad.to_numpy()[20:-20] - expected[20:-20]))
     assert mae < 0.05
+
+def test_hilbert_length_1_frequency_and_all():
+    """Length-1 inputs should return 0.0 frequency without ValueError."""
+    s = pd.Series([2.5], name="val")
+
+    t_freq = HilbertTransformer(output_type="frequency")
+    res_freq = t_freq.fit_transform(s)
+    assert isinstance(res_freq, pd.Series)
+    assert len(res_freq) == 1
+    assert res_freq.iloc[0] == 0.0
+
+    t_all = HilbertTransformer(output_type="all")
+    res_all = t_all.fit_transform(s)
+    assert isinstance(res_all, pd.DataFrame)
+    assert res_all.shape == (1, 3)
+    assert res_all["val_frequency"].iloc[0] == 0.0
+    assert res_all["val_envelope"].iloc[0] == 2.5
+
+
+def test_hilbert_empty_input():
+    """Empty inputs should return empty Series/DataFrame without error."""
+    s = pd.Series([], dtype=float, name="val")
+
+    for ot in ["envelope", "phase", "quadrature", "frequency"]:
+        res = HilbertTransformer(output_type=ot).fit_transform(s)
+        assert isinstance(res, pd.Series)
+        assert len(res) == 0
+
+    res_all = HilbertTransformer(output_type="all").fit_transform(s)
+    assert isinstance(res_all, pd.DataFrame)
+    assert len(res_all) == 0
+    assert set(res_all.columns) == {"val_envelope", "val_phase", "val_frequency"}
