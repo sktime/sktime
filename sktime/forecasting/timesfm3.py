@@ -144,6 +144,14 @@ class TimesFM3Forecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_timesfm3"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "timesfm_3": (
+                'TimesFM3Forecaster(model_path="google/timesfm-3.0-pytorch", '
+                "license_accepted=True)"
+            ),
+        },
     }
 
     def __init__(
@@ -269,14 +277,14 @@ class TimesFM3Forecaster(BaseForecaster):
         known); fit-time columns absent from the predict-time ``X`` are
         past-only.
         """
-        if self._X is None:
+        if self._cur_X is None:
             if X is not None:
                 raise ValueError(
                     "Exogenous `X` was provided in predict but none was provided "
                     "in fit."
                 )
             return [], []
-        fit_cols = list(self._X.columns)
+        fit_cols = list(self._cur_X.columns)
         predict_cols = [] if X is None else list(X.columns)
         unknown = set(predict_cols) - set(fit_cols)
         if unknown:
@@ -310,6 +318,8 @@ class TimesFM3Forecaster(BaseForecaster):
         self._check_license()
         self._load_model()
         self._y_index_names = y.index.names
+        self._cur_y = y
+        self._cur_X = X
         return self
 
     def _build_future_exog(self, X, past_future_cols, horizon):
@@ -331,12 +341,12 @@ class TimesFM3Forecaster(BaseForecaster):
 
         past_only = None
         if past_only_cols:
-            past_only = self._X.loc[y_ctx.index, past_only_cols].values.T
+            past_only = self._cur_X.loc[y_ctx.index, past_only_cols].values.T
             past_only = past_only.astype(np.float32)
 
         past_future = None
         if past_future_cols:
-            past = self._X.loc[y_ctx.index, past_future_cols].values.T
+            past = self._cur_X.loc[y_ctx.index, past_future_cols].values.T
             future = X_future[past_future_cols].values.T
             past_future = np.concatenate([past, future], axis=1).astype(np.float32)
 
@@ -355,7 +365,8 @@ class TimesFM3Forecaster(BaseForecaster):
         horizon = int(max(fh.to_relative(self.cutoff)))
 
         max_len = forecaster.global_context
-        y_ctx = self._y.iloc[-max_len:] if len(self._y) > max_len else self._y
+        _y = self._cur_y
+        y_ctx = _y.iloc[-max_len:] if len(_y) > max_len else _y
 
         past_only_cols, past_future_cols = self._partition_exog_columns(X)
         self._validate_variate_limit(
