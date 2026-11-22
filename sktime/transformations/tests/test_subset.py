@@ -8,7 +8,6 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline, load_longley
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.subset import ColumnSelect, IndexSubset
 
@@ -71,6 +70,9 @@ def test_columnselect_int():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_columnselect_as_first_step_in_transformedtargetforecaster():
+    """Test that ColumnSelect works as the first step in TransformedTargetForecaster."""
+    from sktime.forecasting.naive import NaiveForecaster
+
     y = load_longley()[1][["GNP", "UNEMP"]]
     fc = ColumnSelect(["GNP"]) * NaiveForecaster()
     fc.fit(y)

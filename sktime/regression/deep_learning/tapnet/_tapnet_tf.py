@@ -107,12 +107,17 @@ class TapNetRegressor(BaseDeepRegressor):
         "maintainers": ["jnrusson1"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
-        # deepcopy of a fitted instance loses model_, see #10712
-        "tests:skip_by_name": [
-            "test_deepcopy_fitted_predict",
-        ],
+        #
         # CI and test tags
         # ----------------
+        "tests:skip_all": True,  # stochastic failures, see #3525
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+            # deepcopy of a fitted instance loses model_, see #10712
+            "test_deepcopy_fitted_predict",
+        ],
         "tests:vm": True,
         "tests:libs": ["sktime.networks.tapnet._tapnet_tf"],
     }

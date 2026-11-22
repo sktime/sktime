@@ -23,7 +23,7 @@ def test_clearsky_trafo_vals():
     """Tests clear sky trafo with and without missing values and period index."""
     y = load_solar(api_version=None)
     # only take every 4H for quickness
-    y = y.asfreq("4H")
+    y = y.asfreq("4h")
     cs_model = ClearSky()
     y_trafo = cs_model.fit_transform(y)
 

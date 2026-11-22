@@ -196,16 +196,22 @@ def _stomp_self(ts, m):
 class MatrixProfileFeatures(BaseTransformer):
     """Return the matrix profile and index profile for each time series of a dataset.
 
-    Transforms a time series to a feature vector containing the matrix profile
-    and index profile for each time series.
+    Transforms a panel of time series to feature vectors containing the matrix
+    profile for each series.
 
-    Example of use:
-    # Xt = MatrixProfileFeatures(m).transform(X)
-    X, a pandas DataFrame, is the the dataset.
-    m, an integer, is the desired subsequence length to be used.
-    Xt is the transformed X, i.e., a pandas DataFrame with the same number
-    of rows as X, but each row has the matrix profile for the
-    corresponding time series.
+    Parameters
+    ----------
+    m : int, default=10
+        Desired subsequence length used to compute the matrix profile.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.matrix_profile import MatrixProfileFeatures
+    >>> X, _ = load_unit_test(return_X_y=True)
+    >>> Xt = MatrixProfileFeatures(m=10).fit_transform(X)
+    >>> Xt.shape[0] == X.shape[0]
+    True
     """
 
     _tags = {

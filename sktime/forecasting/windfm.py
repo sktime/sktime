@@ -16,6 +16,20 @@ from sktime.utils.singleton import _multiton
 from sktime.utils.warnings import warn
 
 
+def _resolve_device(device):
+    """Resolve automatic device selection while preserving explicit values."""
+    if device != "auto":
+        return device
+
+    import torch
+
+    if torch.cuda.is_available():
+        return "cuda"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 class WindFMForecaster(BaseForecaster):
     """WindFM zero-shot forecaster for wind power data.
 
@@ -35,7 +49,8 @@ class WindFMForecaster(BaseForecaster):
         The default is the WindFM-Tokenizer checkpoint [5]_. The released
         WindFM-Tokenizer-robust is also available [6]_.
     device : str, default="cpu"
-        Device used for model and tokenizer inference.
+        Device used for model and tokenizer inference. ``"auto"`` selects CUDA,
+        then MPS, then CPU.
     columns : list of str or None, default=None
         Optional mapping from columns in ``X`` to WindFM weather covariates.
         If provided, it must contain five entries ordered as ``"wind_speed"``,
@@ -142,6 +157,7 @@ class WindFMForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "X-y-must-have-same-index": True,
@@ -165,6 +181,19 @@ class WindFMForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.windfm"],
         "tests:specific": ["sktime.forecasting.tests.test_windfm"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "windfm": (
+                'WindFMForecaster(model_path="NeoQuasar/WindFM", '
+                'tokenizer_path="NeoQuasar/WindFM-Tokenizer", deterministic=True)'
+            ),
+            "windfm_robust": (
+                'WindFMForecaster(model_path="NeoQuasar/WindFM-robust", '
+                'tokenizer_path="NeoQuasar/WindFM-Tokenizer-robust", '
+                "deterministic=True)"
+            ),
+        },
     }
 
     _target_col = "power"
@@ -199,6 +228,10 @@ class WindFMForecaster(BaseForecaster):
         self.deterministic = deterministic
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._device = _resolve_device(self.device)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -353,7 +386,7 @@ class WindFMForecaster(BaseForecaster):
         return WindFMPredictor(
             self.model_,
             self.tokenizer_,
-            device=self.device,
+            device=self._device,
             max_context=self.max_context_,
             clip=self.clip,
         )
@@ -448,7 +481,7 @@ class WindFMForecaster(BaseForecaster):
             key=self._get_unique_key(),
             model_path=self.model_path,
             tokenizer_path=self.tokenizer_path,
-            device=self.device,
+            device=self._device,
         ).load()
 
         return tokenizer, model
@@ -458,7 +491,7 @@ class WindFMForecaster(BaseForecaster):
         key = {
             "model_path": self.model_path,
             "tokenizer_path": self.tokenizer_path,
-            "device": self.device,
+            "device": self._device,
         }
         return str(sorted(key.items()))
 

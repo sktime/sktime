@@ -130,3 +130,31 @@ def test_DynamicFactor_with_exogenous_variables():
     compare_predictions_against_statsmodels(
         sktime_point_predictions, sktime_interval_predictions, statsmodels_predictions
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DynamicFactor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_DynamicFactor_with_integer_index():
+    """Check DynamicFactor with a non-zero-based integer index, see #11111.
+
+    statsmodels 0.15 no longer accepts a plain integer index, so the adapter
+    must coerce it to a ``pd.RangeIndex`` also for multivariate data.
+    """
+    import numpy as np
+    import pandas as pd
+
+    np.random.seed(13455)
+    y = pd.DataFrame(
+        np.random.rand(30, 2) + 1.0,
+        columns=TARGET_COLUMNS,
+        index=pd.Index(np.arange(5, 35)),
+    )
+
+    forecaster = DynamicFactor(k_factors=K_FACTORS, factor_order=FACTOR_ORDER)
+    forecaster.fit(y)
+    y_pred = forecaster.predict(fh=[1, 2, 3])
+
+    assert y_pred.shape == (3, 2)
+    pd.testing.assert_index_equal(y_pred.index, pd.Index([35, 36, 37]))
