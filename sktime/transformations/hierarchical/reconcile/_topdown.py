@@ -46,7 +46,7 @@ class TopdownReconciler(_ReconcilerTransformer):
     >>> y = _make_hierarchical()
     >>> pipe = TopdownReconciler() * NaiveForecaster()
     >>> pipe = pipe.fit(y)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
+    >>> y_pred = pipe.predict(fh=3)
 
     References
     ----------
