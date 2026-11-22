@@ -76,7 +76,7 @@ class DWTTransformer(BaseTransformer):
         # Get information about the dataframe
         col_names = X.columns
 
-        Xt = pd.DataFrame()
+        Xt = pd.DataFrame(index=X.index)
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
             arr = convert(
