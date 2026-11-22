@@ -109,3 +109,28 @@ def test_all_nan_blueprints_still_raise():
 
     with pytest.raises(RuntimeError, match="No blueprint succeeded"):
         forecaster.fit(y, fh=[1, 2, 3])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(AutoResearchForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_nan_score_is_reported_as_failed():
+    """A nan score must be a failure in history, ranking and summary."""
+    y = load_airline()[:60]
+    forecaster = _make_forecaster([NAN_BLUEPRINT, GOOD_BLUEPRINT])
+    forecaster.fit(y, fh=[1, 2, 3])
+
+    nan_result = next(
+        r for r in forecaster.blueprint_history_ if r["name"] == "nan_blueprint"
+    )
+    assert nan_result["error"] is not None
+
+    ranked = forecaster._build_ranked_history()
+    assert "#1 Score=" in ranked
+    assert "nan" not in ranked.split("FAILED")[0]
+    assert "FAILED  nan_blueprint" in ranked
+
+    summary = forecaster.summary()
+    assert summary["name"].iloc[0] == "good_blueprint"
+    assert summary.loc[summary["name"] == "nan_blueprint", "score"].isna().all()
