@@ -3,6 +3,7 @@
 """Unit tests of Imputer functionality."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datatypes import get_examples
@@ -129,3 +130,49 @@ def test_imputer_forecaster_y():
 
     transformer.fit(X=X, y=y)
     transformer.transform(X=X, y=y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("value", [0.0, 5.0, -3.0, 1.5])
+@pytest.mark.parametrize("n_observed", [1, 2])
+def test_random_imputer_constant_observations(value, n_observed):
+    """A random imputer fills a zero-width range with its only observed value."""
+    index = pd.date_range("2024-01-01", periods=n_observed + 2)
+    series = pd.Series([np.nan, *([value] * n_observed), np.nan], index=index)
+    original = series.copy()
+
+    result = Imputer(method="random", random_state=0).fit_transform(series)
+
+    expected = pd.Series(value, index=index)
+    pd.testing.assert_series_equal(result, expected)
+    pd.testing.assert_series_equal(series, original)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_random_imputer_constant_and_varying_columns():
+    """Handle constant columns independently while retaining random sampling."""
+    frame = pd.DataFrame(
+        {
+            "constant": [5.0, np.nan, np.nan, 5.0],
+            "complete": [2.0, 2.0, 2.0, 2.0],
+            "varying": [1.0, np.nan, np.nan, 10.0],
+        },
+        index=pd.date_range("2024-01-01", periods=4),
+    )
+    original = frame.copy()
+
+    result = Imputer(method="random", random_state=7).fit_transform(frame)
+
+    expected = frame.copy()
+    expected["constant"] = 5.0
+    expected.loc[expected.index[1:3], "varying"] = np.random.RandomState(7).randint(
+        1, 10, size=2
+    )
+    pd.testing.assert_frame_equal(result, expected)
+    pd.testing.assert_frame_equal(frame, original)
