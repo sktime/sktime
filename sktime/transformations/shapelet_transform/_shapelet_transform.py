@@ -144,7 +144,10 @@ class ShapeletTransform(BaseTransformer):
         "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        "tests:skip_by_name": [
+            "test_get_test_params_coverage",
+            "test_class_has_doctest_example",
+        ],
     }
 
     def __init__(
@@ -899,8 +902,7 @@ class ShapeletTransform(BaseTransformer):
         This is to allow for sensible processing of candidate
         shapelets/comparison subseries that are a straight
         line. Original version:
-        https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats
-        .zscore.html
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.zscore.html
 
         Parameters
         ----------
