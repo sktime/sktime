@@ -1038,12 +1038,128 @@ class _ScaledMetricTags:
     }
 
 
+def _dynamic_metric_with_params(param_names, defaults):
+    """Create a subclass of _DynamicForecastingErrorMetric with extra params.
+
+    The generated subclass exposes ``param_names`` as additional ``__init__``
+    parameters, with default values given by ``defaults``, stores them as
+    attributes of the same name, and passes their current values to the
+    metric function on evaluation. This keeps the ``scikit-learn``
+    compatibility contract: parameters are obtained from the ``__init__``
+    signature, so ``get_params``, ``set_params`` and ``clone`` work as usual.
+    """
+    from inspect import Parameter, Signature
+
+    reserved = {
+        "func",
+        "name",
+        "multioutput",
+        "multilevel",
+        "lower_is_better",
+        "by_index",
+        "y_true",
+        "y_pred",
+        "self",
+    }
+    for param_name in param_names:
+        if not param_name.isidentifier() or param_name in reserved:
+            raise ValueError(
+                f"invalid additional parameter name for make_forecasting_scorer: "
+                f"{param_name!r}"
+            )
+
+    base_params = [
+        Parameter("func", Parameter.POSITIONAL_OR_KEYWORD),
+        Parameter("name", Parameter.POSITIONAL_OR_KEYWORD, default=None),
+        Parameter(
+            "multioutput", Parameter.POSITIONAL_OR_KEYWORD, default="uniform_average"
+        ),
+        Parameter(
+            "multilevel", Parameter.POSITIONAL_OR_KEYWORD, default="uniform_average"
+        ),
+        Parameter("lower_is_better", Parameter.POSITIONAL_OR_KEYWORD, default=True),
+        Parameter("by_index", Parameter.POSITIONAL_OR_KEYWORD, default=False),
+    ]
+    extra_params = [
+        Parameter(param_name, Parameter.KEYWORD_ONLY, default=defaults[param_name])
+        for param_name in param_names
+    ]
+    init_signature = Signature(
+        [Parameter("self", Parameter.POSITIONAL_OR_KEYWORD)]
+        + base_params
+        + extra_params
+    )
+
+    def __init__(
+        self,
+        func,
+        name=None,
+        multioutput="uniform_average",
+        multilevel="uniform_average",
+        lower_is_better=True,
+        by_index=False,
+        **kwargs,
+    ):
+        for param_name in param_names:
+            setattr(self, param_name, kwargs.pop(param_name, defaults[param_name]))
+        if kwargs:
+            raise TypeError(f"unexpected keyword arguments: {sorted(kwargs.keys())}")
+        _DynamicForecastingErrorMetric.__init__(
+            self,
+            func,
+            name=name,
+            multioutput=multioutput,
+            multilevel=multilevel,
+            lower_is_better=lower_is_better,
+            by_index=by_index,
+        )
+
+    __init__.__signature__ = init_signature
+
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        for param_name in param_names:
+            kwargs.setdefault(param_name, getattr(self, param_name))
+        return _DynamicForecastingErrorMetric._evaluate(self, y_true, y_pred, **kwargs)
+
+    cls_name = "_DynamicForecastingErrorMetric_" + "_".join(param_names)
+    cls = type(
+        cls_name,
+        (_DynamicForecastingErrorMetric,),
+        {
+            "__init__": __init__,
+            "_evaluate": _evaluate,
+            "__module__": __name__,
+            "__qualname__": cls_name,
+            "__doc__": (
+                "Dynamic forecasting error metric with additional "
+                f"parameters: {', '.join(param_names)}.\n\n"
+                "Example\n"
+                "-------\n"
+                ">>> from sklearn.metrics import mean_tweedie_deviance\n"
+                ">>> from sktime.performance_metrics.forecasting import (\n"
+                "...     make_forecasting_scorer,\n"
+                "... )\n"
+                ">>>\n"
+                ">>> scorer = make_forecasting_scorer(\n"
+                "...     mean_tweedie_deviance, power=1.5\n"
+                "... )\n"
+                ">>> scorer.get_params()['power']\n"
+                "1.5\n"
+            ),
+        },
+    )
+    # register in the module namespace so instances can be pickled
+    globals()[cls_name] = cls
+    return cls
+
+
 def make_forecasting_scorer(
     func,
     name=None,
     greater_is_better=False,
     multioutput="uniform_average",
     multilevel="uniform_average",
+    **kwargs,
 ):
     """Create a metric class from a metric function.
 
@@ -1083,16 +1199,34 @@ def make_forecasting_scorer(
         * If ``'raw_values'``,
           does not average errors across levels, hierarchy is retained.
 
+    **kwargs : additional keyword arguments
+        Additional parameters of ``func``, e.g., ``power=1.5`` for
+        ``mean_tweedie_deviance``. Each additional parameter is exposed as an
+        ``__init__`` parameter of the returned metric, with the passed value
+        as its default, and is passed to ``func`` on evaluation. The
+        parameters can therefore be inspected and changed through
+        ``get_params`` and ``set_params``, and are carried by ``clone``.
+
     Returns
     -------
     scorer:
         Metric class that can be used as forecasting scorer.
     """
     lower_is_better = not greater_is_better
-    return _DynamicForecastingErrorMetric(
+    if not kwargs:
+        return _DynamicForecastingErrorMetric(
+            func,
+            name=name,
+            multioutput=multioutput,
+            multilevel=multilevel,
+            lower_is_better=lower_is_better,
+        )
+    metric_cls = _dynamic_metric_with_params(list(kwargs.keys()), dict(kwargs))
+    return metric_cls(
         func,
         name=name,
         multioutput=multioutput,
         multilevel=multilevel,
         lower_is_better=lower_is_better,
+        **kwargs,
     )
