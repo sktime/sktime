@@ -566,6 +566,32 @@ def test_theilu2_class():
     ):
         metric_sp4.evaluate_by_index(y_true, y_pred, y_train=y_train_short)
 
+    # --- sp > len(y_true) but len(y_train) >= sp (Issue #11920) ---
+    y_train_long = np.arange(24, dtype=float)
+    y_true_short = np.array([24.0, 25.0, 26.0])
+    y_pred_short = np.array([23.8, 25.1, 25.9])
+    metric_sp12 = TheilU2(sp=12)
+    res_sp12 = metric_sp12(y_true_short, y_pred_short, y_train=y_train_long)
+    assert np.isfinite(res_sp12)
+    assert res_sp12 > 0
+
+    # --- evaluate_by_index with n=1 (Issue #11920) ---
+    y_true_1 = pd.Series([24.0], index=[0])
+    y_pred_1 = pd.Series([23.8], index=[0])
+    by_idx_1 = metric.evaluate_by_index(
+        y_true_1, y_pred_1, y_train=pd.Series(y_train_long)
+    )
+    assert not np.isnan(by_idx_1.iloc[0])
+    assert np.allclose(
+        by_idx_1.iloc[0], metric(y_true_1, y_pred_1, y_train=pd.Series(y_train_long))
+    )
+
+    # --- invalid sp <= 0 raises ValueError ---
+    with pytest.raises(
+        ValueError, match="Seasonal periodicity sp must be an integer >= 1"
+    ):
+        TheilU2(sp=0)(y_true, y_pred, y_train=y_train)
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
