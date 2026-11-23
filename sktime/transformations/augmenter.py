@@ -97,14 +97,15 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         from scipy.stats import norm
 
         if self.scale in self._allowed_statistics:
-            scale = self.scale(X)
+            scale = np.std(X.values, axis=0) if self.scale == np.std else self.scale(X)
         elif isinstance(self.scale, (int, float)):
             scale = self.scale
         else:
             raise TypeError(
                 "Type of parameter 'scale' must be a non-negative float value."
             )
-        return X[0] + norm.rvs(0, scale, size=len(X), random_state=self.random_state)
+        noise = norm.rvs(0, scale, size=X.shape, random_state=self.random_state)
+        return pd.DataFrame(X.values + noise, index=X.index, columns=X.columns)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
