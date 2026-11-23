@@ -65,6 +65,7 @@ Deep learning
     cnn.CNNRegressorTorch
     cntc.CNTCRegressor
     cntc.CNTCRegressorTorch
+    convtimenet.ConvTimeNetRegressor
     convtran.ConvTranRegressorTorch
     fcn.FCNRegressor
     fcn.FCNRegressorTorch
