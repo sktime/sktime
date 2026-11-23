@@ -282,8 +282,9 @@ class BoxCoxTransformer(BaseTransformer):
 
         if enforce_positive:
             X_sign = np.sign(X)
+            X = np.abs(X)
 
-        Xt = boxcox(np.abs(X), lambda_)
+        Xt = boxcox(X, lambda_)
 
         if enforce_positive:
             Xt = Xt * X_sign
