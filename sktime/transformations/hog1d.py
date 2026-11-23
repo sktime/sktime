@@ -108,7 +108,7 @@ class HOG1DTransformer(BaseTransformer):
         # Check the parameters are appropriate
         self._check_parameters(num_atts)
 
-        df = pd.DataFrame()
+        df = pd.DataFrame(index=X.index)
 
         for x in col_names:
             # Convert one of the columns in the dataframe to a numpy array
