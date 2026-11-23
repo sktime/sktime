@@ -43,12 +43,23 @@ class _PretrainMixin:
         the pretrained attributes are copied to the clone. Estimators without
         the ``capability:pretrain`` tag are cloned as usual.
 
+        Plugins defined by parent classes are retained, and come after
+        ``_PretrainedCloner`` in the returned list.
+
         Returns
         -------
         list
-            List containing ``_PretrainedCloner`` plugin class.
+            List of clone plugin classes, ``_PretrainedCloner`` first, followed
+            by the plugins of the parent classes, if any.
         """
-        return [_PretrainedCloner]
+        get_parent_plugins = getattr(super(), "_get_clone_plugins", None)
+        parent_plugins = (get_parent_plugins() if get_parent_plugins else None) or []
+        parent_plugins = [
+            p
+            for p in parent_plugins
+            if not (isinstance(p, type) and issubclass(p, _PretrainedCloner))
+        ]
+        return [_PretrainedCloner, *parent_plugins]
 
     @property
     def _is_fitted(self):
@@ -304,9 +315,11 @@ class _PretrainMixin:
               attributes when present; without pretrained state this
               degrades to a blank clone.
             * ``"new"``: blank clone in post-init state, bypassing the
-              pretrained-state clone plugin. Only this estimator's own
-              plugin is bypassed; pretrained state held by component
-              estimators is governed by their own clone behavior.
+              pretrained-state clone plugin ``_PretrainedCloner``. All other
+              clone plugins from ``_get_clone_plugins`` still apply. As in
+              ``clone``, the plugins are also used for components, so
+              pretrained state held by component estimators is dropped as
+              well, and the target state applies to the whole estimator tree.
 
         Returns
         -------
@@ -318,9 +331,20 @@ class _PretrainMixin:
             If ``state`` is not one of ``"pretrained"``, ``"new"``.
         """
         _check_target_state(state)
-        if not self._has_pretrain_capability() or state == "pretrained":
+        if state == "pretrained":
             return self.clone()
-        self_clone = _clone(self, base_cls=BaseObject)
+        # Deliberately no early fallback on the capability tag here:
+        # composites are usually not pretrain capable themselves, but must
+        # still pass the target state on to capable components.
+        # For estimator trees without any pretrain-capable node, the result is
+        # identical to ``clone``, since ``_PretrainedCloner`` only applies to
+        # pretrain-capable estimators.
+        clone_plugins = [
+            plugin
+            for plugin in (self._get_clone_plugins() or [])
+            if not (isinstance(plugin, type) and issubclass(plugin, _PretrainedCloner))
+        ]
+        self_clone = _clone(self, base_cls=BaseObject, clone_plugins=clone_plugins)
         if self.get_config()["check_clone"]:
             _check_clone(original=self, clone=self_clone)
         return self_clone
