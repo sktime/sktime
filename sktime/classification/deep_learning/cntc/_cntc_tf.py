@@ -187,6 +187,8 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         from tensorflow import keras
 
+        self._set_seed()
+
         metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 

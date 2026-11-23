@@ -112,7 +112,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "capability:class_weight": True,
         # testing configuration
         # ---------------------
-        "tests:skip_by_name": ["test_fit_idempotent"],
         "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
         "tests:vm": True,
     }
@@ -199,6 +198,8 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         output : a compiled Keras Model
         """
         from tensorflow import keras
+
+        self._set_seed()
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 

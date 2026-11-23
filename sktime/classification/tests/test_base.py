@@ -550,6 +550,32 @@ def test_deep_estimator_full(optimizer):
     assert full_dummy.__dict__ == deserialized_full.__dict__
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_deep_classifier_random_state_reproducible():
+    """Check that fitting twice with the same random_state gives the same model.
+
+    Failure case of #3616: ``tf.random.set_seed`` alone left keras 3 initializers
+    and shuffling unseeded, so two fits differed.
+    """
+    from sktime.classification.deep_learning.cnn import CNNClassifier
+
+    X, y = make_classification_problem(n_instances=10, n_timepoints=20)
+    params = {"n_epochs": 2, "batch_size": 4, "avg_pool_size": 4}
+
+    probas = [
+        CNNClassifier(random_state=42, **params).fit(X, y).predict_proba(X)
+        for _ in range(2)
+    ]
+    np.testing.assert_array_equal(probas[0], probas[1])
+
+    # random_state=None must still fit, without seeding
+    CNNClassifier(random_state=None, **params).fit(X, y)
+
+
 DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]
 
 

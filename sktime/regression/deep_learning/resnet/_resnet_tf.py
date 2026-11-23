@@ -137,10 +137,9 @@ class ResNetRegressor(BaseDeepRegressor):
         -------
         output : a compiled Keras Model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         self.optimizer_ = (
             keras.optimizers.Adam(learning_rate=0.01)

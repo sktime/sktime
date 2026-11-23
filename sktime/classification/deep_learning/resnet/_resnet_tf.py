@@ -70,12 +70,8 @@ class ResNetClassifier(BaseDeepClassifier):
         "python_dependencies": ["tensorflow"],
         # estimator type handled by parent class
         # known ResNetClassifier sporafic failures, see #3954
-        # fails due to #3954 or #3616
+        # fails due to #3954
         "tests:skip_all": True,
-        # `test_fit_idempotent` fails with `AssertionError`, see #3616
-        "tests:skip_by_name": [
-            "test_fit_idempotent",
-        ],
         "tests:libs": ["sktime.networks.resnet._resnet_tf"],
     }
 
@@ -143,10 +139,9 @@ class ResNetClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         self.optimizer_ = (
             keras.optimizers.Adam(learning_rate=0.01)
