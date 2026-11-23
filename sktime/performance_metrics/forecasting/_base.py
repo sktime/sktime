@@ -651,8 +651,13 @@ class BaseForecastingErrorMetric(BaseMetric):
             )
         else:
             out_series = pd.Series(index=y_true.index, dtype="float64")
+        if n == 0:
+            return out_series
         try:
             x_bar = self.evaluate(y_true, y_pred, **kwargs)
+            if n == 1:
+                out_series.iloc[0] = x_bar
+                return out_series
             for i in range(n):
                 idx = y_true.index[i]
                 kwargs_i = kwargs.copy()

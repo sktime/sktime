@@ -792,3 +792,38 @@ def test_default_evaluate_by_index_with_sample_weight():
 
     by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if tested module has changed.",
+)
+def test_default_evaluate_by_index_length_1_and_empty():
+    """Default evaluate_by_index must handle n=1 and n=0 without ValueError (#11923)."""
+    from sktime.performance_metrics.forecasting import MeanLinexError
+
+    metric = MeanLinexError()
+    y_true_1 = pd.Series([1.0], index=[10])
+    y_pred_1 = pd.Series([1.2], index=[10])
+
+    res_1 = metric.evaluate_by_index(y_true_1, y_pred_1)
+    assert len(res_1) == 1
+    assert res_1.index.equals(y_true_1.index)
+    assert np.allclose(res_1.iloc[0], metric.evaluate(y_true_1, y_pred_1))
+
+    # Test multioutput="raw_values"
+    metric_raw = MeanLinexError(multioutput="raw_values")
+    y_true_2d = pd.DataFrame({"a": [1.0], "b": [2.0]}, index=[10])
+    y_pred_2d = pd.DataFrame({"a": [1.2], "b": [2.1]}, index=[10])
+    res_2d = metric_raw.evaluate_by_index(y_true_2d, y_pred_2d)
+    assert res_2d.shape == (1, 2)
+    assert res_2d.index.equals(y_true_2d.index)
+    assert np.allclose(
+        res_2d.iloc[0].to_numpy(), metric_raw.evaluate(y_true_2d, y_pred_2d)
+    )
+
+    # Test empty n=0
+    y_true_0 = pd.Series([], dtype=float)
+    y_pred_0 = pd.Series([], dtype=float)
+    res_0 = metric.evaluate_by_index(y_true_0, y_pred_0)
+    assert len(res_0) == 0
