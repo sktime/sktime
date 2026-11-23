@@ -9,8 +9,10 @@ import itertools
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.linear_model import LinearRegression
 
 from sktime.datatypes import get_examples
+from sktime.forecasting.compose import DirectReductionForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.lag import Lag
 from sktime.utils._testing.series import _make_series
@@ -136,3 +138,41 @@ def test_lag_fit_transform_column_names(X, index_out, lags):
 
     elif isinstance(Xt, pd.Series):
         assert Xt.name is None
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Lag),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("freq", ["MS", "QS", "YS", "ME"])
+def test_lag_extend_start_anchored_freq(freq):
+    """Test Lag extend output preserves start-anchored frequencies."""
+    y = pd.Series(
+        range(6),
+        index=pd.date_range("2000-01-01", periods=6, freq=freq),
+    )
+
+    Xt = Lag(1, index_out="extend").fit_transform(y)
+
+    expected = pd.date_range(y.index[0], periods=7, freq=freq)
+    assert Xt.index.equals(expected)
+
+
+def test_direct_reduction_start_anchored_freq():
+    """Test direct reduction prediction has an MS forecast index."""
+    y = pd.Series(
+        np.arange(60),
+        index=pd.date_range("2000-01-01", periods=60, freq="MS"),
+    )
+    fh = [1, 2, 3]
+
+    forecaster = DirectReductionForecaster(
+        estimator=LinearRegression(),
+        window_length=5,
+    )
+    forecaster.fit(y, fh=fh)
+    y_pred = forecaster.predict()
+
+    expected = pd.date_range(y.index[-1], periods=4, freq="MS")[1:]
+    assert len(y_pred) == 3
+    assert y_pred.index.equals(expected)
