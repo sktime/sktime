@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "shubham5080"]
 
 import numpy as np
 import pandas as pd
@@ -232,14 +232,17 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
     """
 
     _tags = {
+        "authors": ["mloning", "shubham5080"],
         "fit_is_empty": False,
         "capability:multivariate": False,
+        "capability:unequal_length": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        # equal-length interval ops; RandomIntervalSegmenter converts in _fit
+        "X_inner_mtype": "numpy3D",
         "y_inner_mtype": "pd_Series_Table",  # and for y?
         # CI and test flags
         # -----------------
@@ -266,19 +269,21 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
         Parameters
         ----------
-        X : pandas DataFrame of shape [n_samples, n_features]
-            Input data
+        X : np.ndarray of shape [n_instances, n_features, n_timepoints]
+            Input panel in numpy3D format
         y : pandas Series, shape (n_samples, ...), optional
             Targets for supervised learning.
 
         Returns
         -------
-        self : RandomIntervalSegmenter
+        self : RandomIntervalFeatureExtractor
             This estimator
         """
         # We use composition rather than inheritance here, because this transformer
         # has a different transform type (returns tabular) compared to the
         # RandomIntervalSegmenter (returns panel).
+        # Segmenter accepts pd.DataFrame / pd-multiindex; its fit converts from
+        # numpy3D via the BaseTransformer mtype machinery.
         self._interval_segmenter = RandomIntervalSegmenter(
             self.n_intervals, self.min_length, self.max_length, self.random_state
         )
@@ -297,8 +302,8 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas.DataFrame of shape [n_instances, n_features]
-            Nested dataframe with time-series in cells.
+        X : np.ndarray of shape [n_instances, n_features, n_timepoints]
+            Panel in numpy3D format.
 
         Returns
         -------
@@ -312,7 +317,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         X = convert_to(X, "numpy3D")
 
         # Check that the input is of the same shape as the one passed
-        # during fit.
+        # during fit. shape[1] is n_features / n_channels for numpy3D.
         if X.shape[1] != self.input_shape_[1]:
             raise ValueError(
                 "Number of columns of input is different from what was seen in `fit`"
