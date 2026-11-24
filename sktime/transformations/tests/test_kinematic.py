@@ -80,3 +80,17 @@ def test_kinematic_stationary_trajectory(dtype):
     with np.errstate(invalid="ignore", divide="ignore"):
         actual = KinematicFeatures().fit_transform(X)
     assert_frame_equal(actual, expected, check_exact=True)
+
+
+@pytest.mark.parametrize("features", ["acc_abs", ["v_abs", "acc_abs"]])
+def test_kinematic_invalid_feature_name(features):
+    """Reject unknown features instead of silently returning incomplete output."""
+    with pytest.raises(ValueError, match="features must contain only values"):
+        KinematicFeatures(features=features)
+
+
+@pytest.mark.parametrize("features", [1, {"v_abs"}])
+def test_kinematic_invalid_features_type(features):
+    """Reject unsupported feature selector types with an informative error."""
+    with pytest.raises(ValueError, match="features must be a str, list or tuple"):
+        KinematicFeatures(features=features)

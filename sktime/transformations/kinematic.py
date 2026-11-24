@@ -84,12 +84,24 @@ class KinematicFeatures(BaseTransformer):
     # todo: add any hyper-parameters and components to constructor
     def __init__(self, features=None):
         self.features = features
+        valid_features = ["v", "v_abs", "a", "a_abs", "curv"]
         if features is None:
             self._features = ["v_abs", "a_abs", "curv"]
         elif isinstance(features, str):
             self._features = [features]
+        elif isinstance(features, (list, tuple)):
+            self._features = list(features)
         else:
-            self._features = features
+            raise ValueError("features must be a str, list or tuple")
+
+        invalid_features = [
+            feature for feature in self._features if feature not in valid_features
+        ]
+        if invalid_features:
+            raise ValueError(
+                f"features must contain only values from {valid_features}, "
+                f"but found {invalid_features}"
+            )
 
         super().__init__()
 
