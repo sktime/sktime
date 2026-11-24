@@ -3,7 +3,6 @@
 import numpy as np
 import pandas as pd
 
-from sktime.libs.vmdpy import VMD
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["DaneLyttinen", "vrcarva", "danferns"]
@@ -172,7 +171,9 @@ class VmdTransformer(BaseTransformer):
 
     def _fit(self, X, y=None):
         if self.K is None:
-            K = self.__runVMDUntilCoefficientThreshold(X.to_numpy())
+            from sktime.libs.vmdpy import VMD
+
+            K = self.__runVMDUntilCoefficientThreshold(X.to_numpy(), VMD)
         else:
             K = self.K
         self.fit_column_names = X.columns
@@ -180,6 +181,8 @@ class VmdTransformer(BaseTransformer):
         return self
 
     def _transform(self, X, y=None):
+        from sktime.libs.vmdpy import VMD
+
         return_dec = self.returned_decomp
         values = X.values
         u, u_hat, omega = VMD(
@@ -209,7 +212,7 @@ class VmdTransformer(BaseTransformer):
                 f"Unknown return_decomp parameter: {return_dec}"
             )
 
-    def __runVMDUntilCoefficientThreshold(self, data):
+    def __runVMDUntilCoefficientThreshold(self, data, VMD):
         K = 1
         data = data.flatten()
         if len(data) % 2 == 1:
