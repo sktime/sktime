@@ -9,7 +9,6 @@ from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -102,6 +101,7 @@ class EnbPIForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": ["benheid"],
         "python_dependencies": ["tsbootstrap>=0.1.0"],
         "capability:multivariate": False,  # which y are fine? False/True
@@ -215,6 +215,8 @@ class EnbPIForecaster(BaseForecaster):
         )
 
     def _predict_interval(self, fh, X, coverage):
+        from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
+
         preds = []
         for forecaster in self.forecasters:
             preds.append(forecaster.predict(fh=fh, X=X).values)

@@ -98,6 +98,7 @@ class AuroraForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": [
             "Faakhir30",
             # Aurora authors:

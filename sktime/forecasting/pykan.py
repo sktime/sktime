@@ -58,6 +58,7 @@ class PyKANForecaster(BaseForecaster):
         "python_dependencies": ["pykan", "torch", "matplotlib", "tqdm"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
