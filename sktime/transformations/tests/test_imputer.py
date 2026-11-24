@@ -129,3 +129,19 @@ def test_imputer_forecaster_y():
 
     transformer.fit(X=X, y=y)
     transformer.transform(X=X, y=y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_imputer_drift_with_custom_missing_value():
+    """Test that custom missing values are removed before fitting the forecaster."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    y.iloc[3] = np.inf
+
+    y_imputed = Imputer(missing_values=[np.inf]).fit_transform(y)
+
+    assert np.isfinite(y_imputed.to_numpy()).all()
