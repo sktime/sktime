@@ -122,3 +122,17 @@ def check_if_dataframes_are_equal(df1, df2):
         return True
     except AssertionError:
         return False
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(PAA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_paa_preserves_instance_index():
+    """Test that the instance index of the input is kept."""
+    X = _make_nested_from_array(np.ones(12), n_instances=3, n_columns=1)
+    X.index = ["a", "b", "c"]
+
+    res = PAA(num_intervals=4).fit_transform(X)
+
+    assert list(res.index) == ["a", "b", "c"]
