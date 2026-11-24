@@ -130,7 +130,7 @@ def test_forecastx_attrib_broadcast():
     model = ForecastX(NaiveForecaster(), NaiveForecaster())
 
     model_1 = model.clone()
-    model_1.fit(df[["c"]], X=df[["d", "e"]], fh=[1, 2, 3])
+    model_1.fit(df[["c"]], X=df[["d", "e"]], fh=3)
 
     assert not hasattr(model_1, "forecaster_X_")
 
@@ -139,7 +139,7 @@ def test_forecastx_attrib_broadcast():
     assert model_1.forecaster_y_.is_fitted
 
     model_2 = model.clone()
-    model_2.fit(df[["c", "d"]], X=df[["e"]], fh=[1, 2, 3])
+    model_2.fit(df[["c", "d"]], X=df[["e"]], fh=3)
 
     assert not hasattr(model_2, "forecaster_X_")
 
@@ -160,7 +160,7 @@ def test_forecastx_skip_forecaster_X_fitting_logic():
 
     y, X = load_longley()
 
-    fh = [1, 2, 3]
+    fh = 3
 
     model_supporting_exogenous = YfromX(LinearRegression())
     model_ignoring_exogenous = NaiveForecaster()
@@ -241,7 +241,7 @@ def test_forecastx_flow_known_unknown_columns(
 
     y, X = load_longley()
 
-    fh = [1, 2]
+    fh = 2
 
     y_train_val, y_test, X_train_val, X_test = temporal_train_test_split(
         y, X, test_size=max(fh)
@@ -294,7 +294,7 @@ def test_forecastx_exog_for_forecaster_x():
 
     y, X = load_longley()
 
-    fh = [1, 2, 3]
+    fh = 3
 
     model_supporting_exogenous = YfromX(LinearRegression())
 
@@ -347,7 +347,7 @@ def test_use_of_passed_unknown_X(predict_behaviour_option: str) -> None:
     from sktime.forecasting.compose import ForecastX
 
     y, X = load_longley()
-    fh = [1, 2, 3, 4]
+    fh = 4
     cols_to_forecast = ["GNPDEFL", "GNP"]
 
     y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
@@ -424,7 +424,7 @@ def test_forecaster_X_exogeneous(cols_to_forecast):
 
     y, X = load_longley()
 
-    fh = [1, 2, 3, 4]
+    fh = 4
     y_train, y_test, X_train, X_test = temporal_train_test_split(
         y, X, test_size=max(fh)
     )
