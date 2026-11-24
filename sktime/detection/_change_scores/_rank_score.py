@@ -112,6 +112,38 @@ class RankScore(BaseIntervalScorer):
     .. [1] Lung-Yut-Fong, A., Levy-Leduc, C., & Cappe, O. (2015).
        Homogeneity and change-point detection tests for multivariate data using
        rank statistics.
+
+    Examples
+    --------
+    Compare candidate splits of a bivariate series. Each row of ``cuts`` is
+    ``[start, split, end]``, using integer positions and an exclusive end.
+    The first cut separates two groups with different locations; the second
+    splits the unchanged first group.
+
+    >>> import numpy as np
+    >>> from sktime.detection._change_scores import RankScore
+    >>> X = np.array([
+    ...     [0., 1.], [1., 0.], [0., 0.], [1., 1.],
+    ...     [5., 6.], [6., 5.], [5., 5.], [6., 6.],
+    ... ])
+    >>> cuts = np.array([[0, 4, 8], [0, 2, 4]])
+    >>> scorer = RankScore()
+    >>> scores = scorer.evaluate(X, cuts)
+    >>> scores.shape
+    (2, 1)
+    >>> bool(scores[0, 0] > scores[1, 0])
+    True
+
+    Scores are aggregated across variables. No fitting step is needed, and
+    a strictly increasing transformation preserves the ranks and scores.
+
+    >>> transformed_scores = scorer.evaluate(np.exp(X), cuts)
+    >>> np.testing.assert_allclose(transformed_scores, scores)
+
+    A one-dimensional cut specification evaluates a single candidate split.
+
+    >>> single_score = scorer.evaluate(X, [0, 4, 8])
+    >>> np.testing.assert_allclose(single_score, scores[:1])
     """
 
     _tags = {
