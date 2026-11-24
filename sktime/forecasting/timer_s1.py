@@ -109,7 +109,7 @@ class TimerS1Forecaster(BaseForecaster):
     >>> # By default, loads bytedance-research/Timer-S1.
     >>> forecaster = TimerS1Forecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Reduced-memory inference for the 8-billion-parameter model:
 
@@ -126,7 +126,7 @@ class TimerS1Forecaster(BaseForecaster):
     ...     quantization_config=BitsAndBytesConfig(load_in_8bit=True),
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Loading a quantized smaller model directly:
 
@@ -137,7 +137,7 @@ class TimerS1Forecaster(BaseForecaster):
     ...     model_path="geetu040/Timer-S1-quantized-4bit",
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Randomly initialized local model, useful for tests or local experimentation.
     This model is not trained by ``fit``; the weights stay random and should not
@@ -167,7 +167,7 @@ class TimerS1Forecaster(BaseForecaster):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict_quantiles(  # doctest: +SKIP
-    ...     fh=[1, 2, 3],
+    ...     fh=3,
     ...     alpha=[0.1, 0.5, 0.9],
     ... )
     """
