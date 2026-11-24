@@ -101,3 +101,34 @@ def test_cutoff_fh_splitter_relative_cutoffs(hierarchical, fh, method):
         else:
             pd.testing.assert_frame_equal(train, y.iloc[expected_train])
             pd.testing.assert_frame_equal(test, y.iloc[expected_test])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(CutoffFhSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("fh", [None, [1, 2], ForecastingHorizon([1, 2])])
+@pytest.mark.parametrize("method", ["split", "split_loc", "split_series"])
+def test_cutoff_fh_splitter_period_index(fh, method):
+    """Test CutoffFhSplitter with PeriodIndex and integer cutoffs."""
+    index = pd.period_range("2000-01", periods=8, freq="M")
+    y = pd.DataFrame(np.arange(len(index)), index=index)
+    spl = CutoffFhSplitter([3, 4], fh)
+
+    splits = list(getattr(spl, method)(y))
+
+    assert len(splits) == 2
+    for cutoff, (train, test) in zip([3, 4], splits):
+        positions = np.arange(len(y))
+        expected_train = np.flatnonzero(positions <= cutoff)
+        end = 7 if fh is None else cutoff + 2
+        expected_test = np.flatnonzero((positions > cutoff) & (positions <= end))
+        if method == "split":
+            np.testing.assert_array_equal(train, expected_train)
+            np.testing.assert_array_equal(test, expected_test)
+        elif method == "split_loc":
+            pd.testing.assert_index_equal(train, y.index[expected_train])
+            pd.testing.assert_index_equal(test, y.index[expected_test])
+        else:
+            pd.testing.assert_frame_equal(train, y.iloc[expected_train])
+            pd.testing.assert_frame_equal(test, y.iloc[expected_test])
