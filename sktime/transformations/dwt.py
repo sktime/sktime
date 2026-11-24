@@ -5,10 +5,9 @@ import math
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
-__author__ = ["vnicholson1"]
+__author__ = ["vnicholson1", "shubham5080"]
 
 
 class DWTTransformer(BaseTransformer):
@@ -25,7 +24,6 @@ class DWTTransformer(BaseTransformer):
     --------
     >>> from sktime.transformations.dwt import DWTTransformer
     >>> from sktime.datasets import load_airline
-    >>> from sktime.datatypes import convert
     >>>
     >>> y = load_airline()
     >>> transformer = DWTTransformer(num_levels=3)
@@ -33,15 +31,17 @@ class DWTTransformer(BaseTransformer):
     """
 
     _tags = {
-        "authors": "vnicholson1",
+        "authors": ["vnicholson1", "shubham5080"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd-multiindex",  # replace nested_univ (#10716)
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
         "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
@@ -59,47 +59,37 @@ class DWTTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of X must contain pandas.Series
-            Data to fit transform to
+        X : pd.DataFrame with MultiIndex (instance, time)
+            Panel of equal-length series; columns are variables
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of Xt contains pandas.Series
-            transformed version of X
+        Xt : pd.DataFrame with MultiIndex (instance, coefficient)
+            Haar wavelet coefficients per variable
         """
         self._check_parameters()
 
-        # Get information about the dataframe
-        col_names = X.columns
+        instances = X.index.get_level_values(0).unique()
 
-        Xt = pd.DataFrame()
-        for x in col_names:
-            # Convert one of the columns in the dataframe to numpy array
-            arr = convert(
-                pd.DataFrame(X[x]),
-                from_type="nested_univ",
-                to_type="numpyflat",
-                as_scitype="Panel",
+        frames = []
+        for col in X.columns:
+            # shape (n_instances, n_timepoints)
+            arr = np.stack(
+                [X.xs(i, level=0)[col].to_numpy(dtype=float) for i in instances]
             )
+            transformed = np.asarray(
+                self._extract_wavelet_coefficients(arr), dtype=float
+            )
+            n_coeffs = transformed.shape[1]
+            idx = pd.MultiIndex.from_product(
+                [instances, range(n_coeffs)],
+                names=X.index.names,
+            )
+            frames.append(pd.Series(transformed.ravel(), index=idx, name=col))
 
-            transformedData = self._extract_wavelet_coefficients(arr)
-
-            # Convert to a numpy array
-            transformedData = np.asarray(transformedData)
-
-            # Add it to the dataframe
-            colToAdd = []
-            for i in range(len(transformedData)):
-                inst = transformedData[i]
-                colToAdd.append(pd.Series(inst))
-
-            Xt[x] = colToAdd
-
-        return Xt
+        return pd.concat(frames, axis=1)
 
     def _extract_wavelet_coefficients(self, data):
         """Extract wavelet coefficients of a 2d array of time series.
@@ -112,10 +102,10 @@ class DWTTransformer(BaseTransformer):
 
         for x in data:
             if num_levels == 0:
-                res.append(x)
+                res.append(list(x))
             else:
                 coeffs = []
-                current = x
+                current = list(x)
                 approx = None
                 for _ in range(num_levels):
                     approx = self._get_approx_coefficients(current)
