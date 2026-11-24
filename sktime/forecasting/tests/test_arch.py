@@ -44,7 +44,7 @@ def test_ARCH_against_arch_model():
     )
     sktime_model.fit(sample_returns_series)
     # Predict variance, starting from fh[2]
-    sktime_pred = sktime_model.predict_var(fh=[i for i in range(2, 6)])
+    sktime_pred = sktime_model.predict_var(fh=[*range(2, 6)])
 
     arch_model_arch = arch_model(
         sample_returns_series,
@@ -88,10 +88,10 @@ def test_ARCH_insample():
     )
     sktime_model.fit(sample_returns_series)
     sktime_pred_mean = sktime_model.predict(
-        fh=[i for i in range(-len(sample_returns_series) + 1, 1)]
+        fh=[*range(-len(sample_returns_series) + 1, 1)]
     )
     sktime_pred_var = sktime_model.predict_var(
-        fh=[i for i in range(-len(sample_returns_series) + 1, 1)]
+        fh=[*range(-len(sample_returns_series) + 1, 1)]
     )
 
     arch_model_arch = arch_model(
@@ -161,7 +161,7 @@ def test_ARCH_with_exogenous():
     assert sktime_model.get_tag("capability:exogenous") is True
 
     # Predict with exogenous variables (X_forecast must match horizon exactly)
-    skt_pred = sktime_model.predict(fh=[1, 2, 3], X=X_forecast)
+    skt_pred = sktime_model.predict(fh=3, X=X_forecast)
 
     # Fit arch package model directly for comparison
     arch_model_direct = arch_model(

@@ -27,7 +27,7 @@ class BottomUpReconciler(_ReconcilerTransformer):
     >>> y = _make_hierarchical()
     >>> pipe = BottomUpReconciler() * NaiveForecaster()
     >>> pipe = pipe.fit(y)
-    >>> y_pred = pipe.predict(fh=[1, 2, 3])
+    >>> y_pred = pipe.predict(fh=3)
     """
 
     _tags = {
