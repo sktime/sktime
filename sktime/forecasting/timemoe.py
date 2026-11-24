@@ -149,7 +149,7 @@ class TimeMoEForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3, y = y_test)  # doctest: +SKIP
 
     Fine-tuning of a pretrained checkpoint:
 
@@ -165,7 +165,7 @@ class TimeMoEForecaster(BaseForecaster):
     ... )
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
     >>> forecaster.fit(load_airline())  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Training from scratch:
 
@@ -187,7 +187,7 @@ class TimeMoEForecaster(BaseForecaster):
     ... )
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
     >>> forecaster.fit(load_airline())  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -199,6 +199,7 @@ class TimeMoEForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers<=4.40.1", "accelerate<=0.28.0"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
@@ -211,7 +212,6 @@ class TimeMoEForecaster(BaseForecaster):
         "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         # testing configuration
         # ---------------------
         "tests:vm": True,

@@ -69,12 +69,13 @@ class TimeLLMForecaster(BaseForecaster):
     ...     seq_len=96,
     ...     llm_model='GPT2'
     ... )
-    >>> forecaster.fit(y, fh=[1])
+    >>> forecaster.fit(y, fh=1)
     TimeLLMForecaster(pred_len=36)
-    >>> y_pred = forecaster.predict(fh=[1])
+    >>> y_pred = forecaster.predict(fh=1)
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "capability:multivariate": False,
         "authors": ["KimMeen", "jgyasu"],
         # KimMeen for [ICLR 2024] Official implementation of Time-LLM

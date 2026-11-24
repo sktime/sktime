@@ -113,6 +113,34 @@ class EmpiricalDistributionCost(BaseCost):
     .. [1] Haynes, K., Fearnhead, P. & Eckley, I.A. A computationally efficient
        nonparametric approach for changepoint detection. Stat Comput 27,
        1293-1305 (2017).
+
+    Examples
+    --------
+    Intervals must contain at least ``min_size`` observations, which is 10 by
+    default, since the empirical distribution is estimated from them.
+
+    >>> import numpy as np
+    >>> from sktime.detection.costs import EmpiricalDistributionCost
+    >>> block = np.tile([0., 1., 2., 3.], 5)
+    >>> X = np.concatenate([block, block + 10.]).reshape(-1, 1)
+    >>> cost = EmpiricalDistributionCost()
+    >>> cost.evaluate(X, [[0, 20], [20, 40], [10, 30]]).round(2)
+    array([[ 82.58],
+           [ 82.58],
+           [124.31]])
+
+    The first two intervals each cover a homogeneous part of the series, while
+    the third straddles the change and is more costly. The cost makes no
+    parametric assumption about the distribution of the data.
+
+    ``num_approximation_quantiles`` controls how finely the empirical
+    distribution is approximated:
+
+    >>> cost = EmpiricalDistributionCost(num_approximation_quantiles=5)
+    >>> cost.evaluate(X, [[0, 20], [20, 40], [10, 30]]).round(2)
+    array([[ 73.01],
+           [ 73.01],
+           [136.09]])
     """
 
     _tags = {

@@ -88,13 +88,13 @@ class FunctionParamFitter(BaseParamFitter):
     ... )
     >>> forecaster.fit(np.asarray([1, 2, 3, 4]))
     PluginParamsForecaster(...)
-    >>> forecaster.predict(fh=[1,2,3])
+    >>> forecaster.predict(fh=3)
     array([[4.],
            [4.],
            [4.]])
     >>> forecaster.fit(np.asarray([1, 2, 3, 4, 5, 6, 7]))
     PluginParamsForecaster(...)
-    >>> forecaster.predict(fh=[1,2,3])
+    >>> forecaster.predict(fh=3)
     array([[1.],
            [2.],
            [3.]])

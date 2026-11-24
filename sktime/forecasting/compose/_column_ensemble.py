@@ -61,7 +61,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         ...     ("naive", NaiveForecaster(), 1),
         ... ]
         >>> forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
-        >>> forecaster.fit(y, fh=[1, 2, 3])
+        >>> forecaster.fit(y, fh=3)
         ColumnEnsembleForecaster(...)
         >>> y_pred = forecaster.predict()
 
@@ -96,6 +96,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         "authors": ["GuzalBulatova", "mloning", "fkiraly"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": True,
         "capability:exogenous": True,
         "y_inner_mtype": PANDAS_MTYPES,

@@ -184,18 +184,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 1.2.0 - check why this cannot be easily removed
-                        # in theory, we should get rid of the "Coverage" case treatment
-                        # (the legacy naming convention was removed in 0.23.0)
-                        # deal with the "Coverage" case, we need to get rid of this
-                        #   i.d., special 1st level name of prediction object
-                        #   in the case where there is only one variable
-                        if len(yt[ix].columns) == 1:
-                            temp = yt[ix].columns
-                            yt[ix].columns = self._get_varnames()
+
                         yt[ix] = transformer.inverse_transform(yt[ix], X)
-                        if len(yt[ix].columns) == 1:
-                            yt[ix].columns = temp
+
                     y = pd.concat(yt, axis=1)
                     flipcols = [n - 1] + list(range(n - 1))
                     y.columns = y.columns.reorder_levels(flipcols)
@@ -416,6 +407,7 @@ class ForecastingPipeline(_Pipeline):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "capability:multivariate": True,
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -861,7 +853,7 @@ class TransformedTargetForecaster(_Pipeline):
     ... ])
     >>> pipe.fit(y)
     TransformedTargetForecaster(...)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
+    >>> y_pred = pipe.predict(fh=3)
 
         Example 2: without strings
 
@@ -886,6 +878,7 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:multivariate": True,
         # estimator type
         # --------------
+        "category": ["composition"],
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -1540,6 +1533,7 @@ class ForecastX(BaseForecaster):
         "authors": ["fkiraly", "benheid", "yarnabrina"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "capability:multivariate": True,
@@ -2078,7 +2072,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.split import ExpandingWindowSplitter
-    >>> fh = [1,2,3]
+    >>> fh = 3
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> # check which of the two sequences of transformers is better
@@ -2092,6 +2086,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": "aiwalter",
         "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,

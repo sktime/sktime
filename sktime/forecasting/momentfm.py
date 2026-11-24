@@ -126,11 +126,12 @@ class MomentFMForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = MomentFMForecaster(seq_len = 2)
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "capability:multivariate": True,
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
@@ -147,7 +148,6 @@ class MomentFMForecaster(BaseForecaster):
             "accelerate",
             "transformers",
         ],
-        "capability:global_forecasting": True,
         "python_version": ">= 3.10",
         "capability:insample": False,
         "capability:pred_int:insample": False,

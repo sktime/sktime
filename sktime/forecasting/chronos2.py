@@ -71,10 +71,11 @@ class Chronos2Forecaster(BaseForecaster):
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> forecaster = Chronos2Forecaster("amazon/chronos-2")  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": ["priyanshuharshbodhi1", "fkiraly"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],
@@ -87,7 +88,6 @@ class Chronos2Forecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:insample": False,
-        "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
@@ -95,6 +95,22 @@ class Chronos2Forecaster(BaseForecaster):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "chronos_2": (
+                'Chronos2Forecaster(model_path="amazon/chronos-2", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_small": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-small", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_synth": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-synth", '
+                'config={"device_map": "auto"})'
+            ),
+        },
     }
 
     _default_config = {

@@ -202,7 +202,7 @@ class UnobservedComponents(_StatsModelsAdapter):
     >>> forecaster = UnobservedComponents(level='local linear trend')  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     UnobservedComponents(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -214,6 +214,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:missing_values": False,

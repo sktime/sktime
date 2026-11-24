@@ -170,7 +170,7 @@ class AutoETS(_StatsModelsAdapter):
     >>> forecaster = AutoETS(auto=True, n_jobs=-1, sp=12)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     AutoETS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
@@ -182,6 +182,7 @@ class AutoETS(_StatsModelsAdapter):
         "python_dependencies": ["statsmodels", "joblib"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

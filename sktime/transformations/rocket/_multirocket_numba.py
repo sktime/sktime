@@ -11,12 +11,18 @@ if _check_soft_dependencies("numba", severity="none"):
 
 @njit(
     "float32[:,:](float64[:,:],float64[:,:],Tuple((int32[:],int32[:],float32[:])),"
-    "Tuple((int32[:],int32[:],float32[:])),int32)",
+    "Tuple((int32[:],int32[:],float32[:])),boolean)",
     fastmath=True,
     parallel=True,
     cache=True,
 )
-def _transform(X, X1, parameters, parameters1, n_features_per_kernel):
+def _transform(
+    X,
+    X1,
+    parameters,
+    parameters1,
+    original_implementation=False,
+):
     num_examples, input_length = X.shape
 
     dilations, num_features_per_dilation, biases = parameters
@@ -293,10 +299,14 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel):
     num_features1 = num_kernels * np.sum(num_features_per_dilation1)
 
     features = np.zeros(
-        (num_examples, (num_features + num_features1) * n_features_per_kernel),
+        (num_examples, (num_features + num_features1) * 4),
         dtype=np.float32,
     )
     n_features_per_transform = np.int64(features.shape[1] / 2)
+
+    # the original implementation sizes the differenced pass's convolution
+    # windows from the undifferenced length; see the class docstring
+    end_length1 = input_length if original_implementation else input_length - 1
 
     for example_index in prange(num_examples):
         _X = X[example_index]
@@ -442,7 +452,7 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel):
             C_gamma[9 // 2] = G1
 
             start = dilation
-            end = input_length - padding
+            end = end_length1 - padding
 
             for gamma_index in range(9 // 2):
                 C_alpha[-end:] = C_alpha[-end:] + A1[:end]

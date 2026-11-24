@@ -71,7 +71,7 @@ class TimerForecaster(BaseForecaster):
     ...     model_name="thuml/timer-base-84m",
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -84,6 +84,7 @@ class TimerForecaster(BaseForecaster):
         "python_version": "<3.13",
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
