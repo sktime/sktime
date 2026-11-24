@@ -217,7 +217,7 @@ class FalconXForecaster(BaseForecaster):
     >>> forecaster = FalconXForecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     FalconXForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Probabilistic/quantile forecasting:
 
@@ -228,7 +228,7 @@ class FalconXForecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     FalconXForecaster(...)
     >>> y_pred_q = forecaster.predict_quantiles(  # doctest: +SKIP
-    ...     fh=[1, 2, 3], alpha=[0.1, 0.5, 0.9]
+    ...     fh=3, alpha=[0.1, 0.5, 0.9]
     ... )
 
     Mock mode for offline testing or local experimentation
@@ -254,7 +254,7 @@ class FalconXForecaster(BaseForecaster):
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     FalconXForecaster(context_length=64)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -265,6 +265,7 @@ class FalconXForecaster(BaseForecaster):
         "python_dependencies": ["requests"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,

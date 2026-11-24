@@ -36,7 +36,7 @@ class IgnoreX(_DelegatedForecaster):
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
     >>> forecaster = IgnoreX(SARIMAX())
-    >>> forecaster.fit(y, X=X, fh=[1, 2, 3])
+    >>> forecaster.fit(y, X=X, fh=3)
     IgnoreX(forecaster=SARIMAX())
     >>> y_pred = forecaster.predict(X=X)
     """
@@ -49,6 +49,7 @@ class IgnoreX(_DelegatedForecaster):
     _tags = {
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:exogenous": True,
         # CI and test flags
         # -----------------

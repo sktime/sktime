@@ -22,7 +22,7 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
     >>> forecaster = MockUnivariateForecasterLogger()
     >>> forecaster.fit(y)
     MockUnivariateForecasterLogger(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     >>> print(forecaster.log)
     [('_fit', ...), ('_predict', ...)]
     """
@@ -208,7 +208,7 @@ class MockForecaster(BaseForecaster):
     >>> forecaster = MockUnivariateForecasterLogger()
     >>> forecaster.fit(y)
     MockUnivariateForecasterLogger(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     >>> print(forecaster.log)
     [('_fit', ...), ('_predict', ...)]
     """

@@ -84,7 +84,7 @@ class MiddleOutReconciler(_ReconcilerTransformer):
     >>> y = _make_hierarchical(hierarchy_levels=(2, 2, 4))
     >>> pipe = MiddleOutReconciler(middle_level=1) * NaiveForecaster()
     >>> pipe = pipe.fit(y)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
+    >>> y_pred = pipe.predict(fh=3)
     """
 
     _tags = {

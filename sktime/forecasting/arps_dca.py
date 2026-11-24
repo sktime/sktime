@@ -471,9 +471,13 @@ class ArpsExponential(_ArpsDcaBase):
     >>> q = 1000 * np.exp(-0.1 * t)
     >>> y = pd.Series(q, index=t)
     >>> forecaster = ArpsExponential()
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=3)
     ArpsExponential(...)
     """
+
+    _tags = {
+        "category": ["statistical"],
+    }
 
     def __init__(
         self,
@@ -595,9 +599,13 @@ class ArpsHyperbolic(_ArpsDcaBase):
     >>> q = 1000 / (1 + 0.5 * 0.1 * t) ** (1 / 0.5)
     >>> y = pd.Series(q, index=t)
     >>> forecaster = ArpsHyperbolic()
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=3)
     ArpsHyperbolic(...)
     """
+
+    _tags = {
+        "category": ["statistical"],
+    }
 
     def __init__(
         self,
@@ -720,9 +728,13 @@ class ArpsHarmonic(_ArpsDcaBase):
     >>> q = 1000 / (1 + 0.1 * t)
     >>> y = pd.Series(q, index=t)
     >>> forecaster = ArpsHarmonic()
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=3)
     ArpsHarmonic(...)
     """
+
+    _tags = {
+        "category": ["statistical"],
+    }
 
     def __init__(
         self,
