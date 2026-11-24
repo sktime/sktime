@@ -3820,7 +3820,11 @@
       "name": "Srujan Patwardhan",
       "avatar_url": "https://avatars.githubusercontent.com/u/131141745?v=4",
       "profile": "https://github.com/srupat",
-      "contributions": ["code", "doc", "bug"]
+      "contributions": [
+        "code",
+        "doc",
+        "bug"
+      ]
     },
     {
       "login": "Spandan-Mishra",
@@ -4194,11 +4198,11 @@
       ]
     },
     {
-      "login":"Ayushagrawal-cse",
+      "login": "Ayushagrawal-cse",
       "name": "Ayush Agrawal",
       "avatar_url": "https://avatars.githubusercontent.com/u/191835489?v=4",
-      "profile" : "https://www.linkedin.com/in/bgp-ayush-agrawal/",
-      "contributions" : [
+      "profile": "https://www.linkedin.com/in/bgp-ayush-agrawal/",
+      "contributions": [
         "code"
       ]
     },
@@ -4436,6 +4440,16 @@
       "profile": "https://www.markstudios.com",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "aryany3101",
+      "name": "Aryan Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/141573833?v=4",
+      "profile": "https://github.com/aryany3101",
+      "contributions": [
+        "bug",
+        "code"
       ]
     }
   ]
