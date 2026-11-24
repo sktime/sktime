@@ -44,7 +44,7 @@ def test_heterogeneous_get_fitted_params():
 
     N_cv_fold = 2
     step_cv = 1
-    fh = [1, 2]
+    fh = 2
 
     N_t = len(y_agg.index.get_level_values(2).unique())
     initial_window_cv_len = N_t - (N_cv_fold - 1) * step_cv - fh[-1]
@@ -76,7 +76,7 @@ def test_predict_residuals_conversion():
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     pipe = Differencer() * NaiveForecaster()
-    pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
+    pipe.fit(y=y_train, X=X_train, fh=4)
     result = pipe.predict_residuals(y_train)
 
     assert type(result) is type(y_train)
