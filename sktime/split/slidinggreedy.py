@@ -16,16 +16,55 @@ from sktime.split.base import BaseSplitter
 
 
 class SlidingGreedySplitter(BaseSplitter):
-    """Splitter that combines sliding window with greedy splitting.
+    r"""Splitter that combines sliding window with greedy splitting.
 
     Takes integers or floats ``train_size`` and ``test_size`` that define the
     number of steps included in the train and test sets of each fold.
     If float values are provided, they are interpreted as proportions of the
-    total length of the time series. If the data contains multiple instances,
-    sizes are _per instance_.
+    total length of the time series and rounded up with ``ceil``. The lengths
+    below are those integer counts.
 
-    If no ``step_length`` is defined, the test sets (one for each fold) will be
-    adjacent and disjoint, taken from the end of the dataset.
+    Windows are consecutive ``iloc`` positions, counted backward from the end
+    of the series. They are not aligned to time labels, so an irregular
+    datetime index is still split by position.
+
+    Let the positions be :math:`0, 1, \ldots, n-1`, and let
+    :math:`r(j) = n - 1 - j` be the distance from the last position.
+    Let :math:`w` be the integer training length, :math:`h` the integer test
+    length, and :math:`s` the step. ``step_length`` supplies :math:`s`; if it
+    is ``None``, :math:`s = h`. For :math:`i = 0, 1, \ldots, f-1`, where
+    :math:`f` is ``folds`` and :math:`i = 0` is the fold at the end:
+
+    * test positions are those with :math:`i s \le r(j) < i s + h`
+    * training positions are those with :math:`i s + h \le r(j) < i s + h + w`
+
+    Folds are returned from :math:`i = f - 1` down to :math:`i = 0`.
+    For a single series, a candidate fold is returned when both sets are
+    nonempty. The number of splits is the number of those candidates, and is
+    at most ``folds``. A training set that passes the start is shortened.
+
+    If ``step_length`` is ``None``, successive test sets are adjacent and do
+    not overlap. A smaller step makes them overlap. A larger step leaves a gap.
+
+    For a panel with integer ``train_size`` and ``test_size``, the distance
+    from the end is computed within each instance, and a fold is returned when
+    the combined training positions and the combined test positions are both
+    nonempty. For panel data with float sizes, the base splitter handles
+    instances separately; the panel behavior is not described by the
+    single-series formula above.
+
+    For ``train_size = 4``, ``test_size = 2``, ``folds = 2`` and a series of
+    length 10, ``step_length`` defaults to 2::
+
+        |---------------------|
+        | - - * * * * x x - - |
+        | - - - - * * * * x x |
+
+    ``*`` = training fold.
+
+    ``x`` = test fold.
+
+    ``-`` = not used in this fold.
 
     Parameters
     ----------
