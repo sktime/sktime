@@ -51,6 +51,9 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "capability:multivariate": True,
         "capability:exogenous": False,
         "capability:update": True,
+        # weights live on ``network`` (no trailing ``_``); protect them on
+        # state-aware reset/clone so a second fit after pretrain keeps them
+        "pretrain:fitted_params": ["network", "n_pretrain_instances_"],
         # CI and testing tags
         # -------------------
         "tests:vm": True,
