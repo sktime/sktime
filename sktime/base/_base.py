@@ -334,9 +334,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             with open(path / "_obj", "wb") as file:
                 pickle.dump(self, file)
 
-        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        archive_path = shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
-        return ZipFile(path.with_name(f"{path.stem}.zip"))
+        return ZipFile(archive_path)
 
     @classmethod
     def load_from_serial(cls, serial):
