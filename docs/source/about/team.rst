@@ -111,10 +111,12 @@ Core Developers
      - :user:`SaiRevanth25`
    * - Simon Blanke
      - :user:`SimonBlanke`
-   * - Svea Marie Meyer
-     - :user:`SveaMeyer13`
+   * - Srujan Patwardhan
+     - :user:`srupat`
    * - Ugochukwu Onyeka
      - :user:`onyekaugochukwu`
+   * - Yash Sangwan
+     - :user:`yash-sangwan`
 
 
 Former Core Developers
@@ -177,6 +179,8 @@ Former Core Developers
      - :user:`sajaysurya`
    * - Stanislav Khrapov
      - :user:`khrapovs`
+   * - Svea Marie Meyer
+     - :user:`SveaMeyer13`
    * - Xinyu Wu
      - :user:`XinyuWuu`
    * - Anonymous upon contributor's request

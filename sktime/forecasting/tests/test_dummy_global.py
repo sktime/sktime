@@ -31,7 +31,7 @@ class TestDummyGlobalForecaster:
 
         # Fit on a single series
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
         y_pred = forecaster.predict()
 
         # Check predictions
@@ -54,7 +54,7 @@ class TestDummyGlobalForecaster:
 
         # Fit on a single series
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
         y_pred = forecaster.predict()
 
         # Check predictions
@@ -72,7 +72,7 @@ class TestDummyGlobalForecaster:
 
         # Fit without pretraining
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
 
         # Check that global_mean_ was computed from the training series
         assert hasattr(forecaster, "global_mean_")
@@ -100,7 +100,7 @@ class TestDummyGlobalForecaster:
         assert forecaster.state == "pretrained"
 
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
 
         assert forecaster.state == "fitted"
 
@@ -141,7 +141,7 @@ class TestDummyGlobalForecaster:
 
         # Fit on multivariate series
         y_train = _make_series(n_columns=2, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
         y_pred = forecaster.predict()
 
         assert len(y_pred) == 3
@@ -171,7 +171,7 @@ class TestDummyGlobalForecaster:
 
         # After fit, pretrained params should still be available
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
 
         params_after_fit = forecaster.get_pretrained_params()
         # All pretrained params should still exist
@@ -190,7 +190,7 @@ class TestDummyGlobalForecaster:
         forecaster = DummyGlobalForecaster(strategy="invalid")
 
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
 
         # Predict should raise ValueError for invalid strategy
         with pytest.raises(ValueError, match="Unknown strategy"):
@@ -209,7 +209,7 @@ class TestDummyGlobalForecaster:
 
         # Fit on different series
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
 
         # Pretrained params should be preserved
         np.testing.assert_almost_equal(forecaster.global_mean_, pretrained_mean)
@@ -227,7 +227,7 @@ class TestDummyGlobalForecaster:
         pretrained_std = forecaster.global_std_
 
         y_first = pd.Series([10.0, 20.0, 30.0])
-        forecaster.fit(y_first, fh=[1, 2, 3])
+        forecaster.fit(y_first, fh=3)
 
         assert forecaster.state == "fitted"
         assert forecaster.last_value_ == y_first.iloc[-1]
@@ -235,7 +235,7 @@ class TestDummyGlobalForecaster:
         np.testing.assert_almost_equal(forecaster.global_std_, pretrained_std)
 
         y_second = pd.Series([100.0, 200.0, 300.0, 400.0])
-        forecaster.fit(y_second, fh=[1, 2, 3])
+        forecaster.fit(y_second, fh=3)
 
         assert forecaster.state == "fitted"
         assert forecaster.last_value_ == y_second.iloc[-1]
@@ -282,7 +282,7 @@ class TestDummyGlobalForecaster:
 
         # Fit on a single series
         y_train = _make_series(n_columns=1, n_timepoints=20)
-        forecaster.fit(y_train, fh=[1, 2, 3])
+        forecaster.fit(y_train, fh=3)
 
         assert forecaster._state == "fitted"
         assert hasattr(forecaster, "last_value_")

@@ -314,7 +314,7 @@ class _ProphetAdapter(BaseForecaster):
 
         References
         ----------
-        https://facebook.github.io/prophet/docs/additional_topics.html
+        https://meta.github.io/prophet/docs/additional_topics.html
         """
         fitted_params = {}
         for name in ["k", "m", "sigma_obs"]:

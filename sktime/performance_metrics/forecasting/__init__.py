@@ -21,10 +21,12 @@ __all__ = [
     "KLDivergenceNormal",
     "KLDivergenceSingleExponential",
     "MeanAbsoluteError",
+    "MeanAbsoluteErrorPercentage",
     "MeanAbsolutePercentageError",
     "MeanAbsolutePercentageErrorStabilized",
     "MeanAbsoluteScaledError",
     "MeanAsymmetricError",
+    "MeanBias",
     "MeanLinexError",
     "MeanRelativeAbsoluteError",
     "MeanSquaredError",
@@ -115,12 +117,14 @@ from sktime.performance_metrics.forecasting._maape import (
     mean_arctangent_absolute_percentage_error,
 )
 from sktime.performance_metrics.forecasting._mae import MeanAbsoluteError
+from sktime.performance_metrics.forecasting._maep import MeanAbsoluteErrorPercentage
 from sktime.performance_metrics.forecasting._mape import MeanAbsolutePercentageError
 from sktime.performance_metrics.forecasting._mapes import (
     MeanAbsolutePercentageErrorStabilized,
 )
 from sktime.performance_metrics.forecasting._mase import MeanAbsoluteScaledError
 from sktime.performance_metrics.forecasting._masyme import MeanAsymmetricError
+from sktime.performance_metrics.forecasting._mb import MeanBias
 from sktime.performance_metrics.forecasting._medae import MedianAbsoluteError
 from sktime.performance_metrics.forecasting._medape import MedianAbsolutePercentageError
 from sktime.performance_metrics.forecasting._medase import MedianAbsoluteScaledError
