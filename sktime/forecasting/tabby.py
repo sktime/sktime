@@ -248,6 +248,14 @@ class TabbyForecaster(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         """Extend the stored history without refitting the model."""
         self.context_ = update_data(self.context_, y)
+
+        model = self._load_model()
+        config = getattr(model, "config", None)
+        context_length = getattr(config, "context_length", 8192)
+
+        if self.context_ is not None and len(self.context_) > context_length:
+            self.context_ = self.context_.iloc[-context_length:]
+
         return self
 
     def _load_model(self):

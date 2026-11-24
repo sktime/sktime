@@ -80,3 +80,28 @@ def test_tabby_predict_proba_matches_quantiles():
         ppf = distribution.ppf(probabilities)
         expected = quantiles[(var_name, alpha)].to_numpy().reshape(-1, 1)
         np.testing.assert_allclose(ppf.to_numpy(), expected, rtol=1e-5, atol=1e-6)
+
+
+def test_tabby_update_restricts_context_to_context_length(monkeypatch):
+    """``_update`` retains only the latest ``context_length`` observations."""
+    mock_config = type("MockConfig", (), {"context_length": 4, "patch_size": 1})()
+    mock_model = type(
+        "MockModel",
+        (),
+        {"config": mock_config, "eval": lambda self: None},
+    )()
+    forecaster = TabbyForecaster(license_accepted=True)
+    monkeypatch.setattr(forecaster, "_load_model", lambda: mock_model)
+
+    y = pd.Series(np.arange(20, dtype=np.float64))
+    forecaster.fit(y, fh=1)
+
+    y_new = pd.Series(
+        np.arange(20, 25, dtype=np.float64), index=pd.RangeIndex(20, 25)
+    )
+    forecaster.update(y_new, update_params=False)
+
+    assert len(forecaster.context_) == 4
+    np.testing.assert_array_equal(
+        forecaster.context_.to_numpy(), [21, 22, 23, 24]
+    )
