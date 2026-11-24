@@ -63,6 +63,7 @@ Evaluation and metrics
     metric_detection
     metric_forecasting
     metric_forecasting_proba
+    benchmark_analyzer
 
 Catalogues and collections
 --------------------------

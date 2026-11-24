@@ -429,7 +429,7 @@ class ARARForecaster(BaseForecaster):
     >>> forecaster = ARARForecaster()
     >>> forecaster.fit(y)
     ARARForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
 
     Prediction intervals and coefficients:
     >>> from sktime.split import temporal_train_test_split
@@ -469,6 +469,7 @@ class ARARForecaster(BaseForecaster):
         "authors": ["Akai01"],
         "maintainers": ["Akai01"],
         # estimator type
+        "category": ["statistical"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "requires-fh-in-fit": False,

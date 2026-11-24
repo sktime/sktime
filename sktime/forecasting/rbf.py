@@ -99,7 +99,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
     >>> forecaster = RBFForecaster(window_length=12, hidden_size=16, epochs=10)
     >>> forecaster.fit(y)
     RBFForecaster(epochs=10, hidden_size=16, window_length=12)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {
@@ -110,6 +110,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         "python_dependencies": "torch",
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "capability:exogenous": False,

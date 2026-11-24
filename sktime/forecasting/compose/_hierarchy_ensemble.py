@@ -120,7 +120,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     by='level',
     ...     default=PolynomialTrendForecaster(degree=2),
     ... )
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=3)
     HierarchyEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
 
@@ -133,7 +133,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...                 forecasters=forecasters,
     ...                 by='node', default=NaiveForecaster()
     ... )
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=3)
     HierarchyEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -145,6 +145,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "maintainers": ["VyomkeshVyas"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": True,
         "capability:exogenous": True,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],

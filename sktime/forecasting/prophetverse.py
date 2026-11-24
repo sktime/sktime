@@ -10,7 +10,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
-# TODO 1.3.0: update upper and/or lower bounds when Prophetverse 0.13.0 is released
+# TODO 1.4.0: update upper and/or lower bounds when Prophetverse 0.13.0 is released
 @_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.13.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
@@ -92,7 +92,7 @@ class Prophetverse(_DelegatedForecaster):
     ...     ],
     ... )
     >>> model.fit(y) # doctest: +SKIP
-    >>> model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    >>> model.predict(fh=3) # doctest: +SKIP
     """
 
     _tags = {
@@ -103,6 +103,7 @@ class Prophetverse(_DelegatedForecaster):
         "python_dependencies": "prophetverse>=0.8.0",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:unequal_length": False,
@@ -160,7 +161,7 @@ class Prophetverse(_DelegatedForecaster):
         self._delegate = Prophetverse(**self.get_params())
 
 
-# TODO 1.3.0: update upper and/or lower bounds when Prophetverse 0.13.0 is released
+# TODO 1.4.0: update upper and/or lower bounds when Prophetverse 0.13.0 is released
 @_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.13.0")
 class HierarchicalProphet(_DelegatedForecaster):
     """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
@@ -265,7 +266,7 @@ class HierarchicalProphet(_DelegatedForecaster):
     >>> y = agg.fit_transform(y)
     >>> forecaster = HierarchicalProphet()
     >>> forecaster.fit(y) # doctest: +SKIP
-    >>> forecaster.predict(fh=[1]) # doctest: +SKIP
+    >>> forecaster.predict(fh=1) # doctest: +SKIP
     """
 
     _delegate_name = "_delegate"
@@ -278,6 +279,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "python_dependencies": "prophetverse",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,

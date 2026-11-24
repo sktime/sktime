@@ -224,11 +224,12 @@ class PatchTSMixerForecaster(BaseForecaster):
     ...         "report_to": "none",
     ...     },
     ... )
-    >>> f.fit(y_train, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> f.fit(y_train, fh=3)  # doctest: +SKIP
     >>> y_pred = f.predict()  # doctest: +SKIP
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": [
             "Faakhir30",
             # IBM authors:
