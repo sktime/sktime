@@ -103,6 +103,7 @@ class NeuralProphet(BaseForecaster):
     """
 
     _tags = {
+        "category": ["statistical", "deep_learning"],
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
         "python_dependencies": [
