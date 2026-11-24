@@ -227,7 +227,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     >>>
     >>> forecaster.fit(y)  # doctest: +ELLIPSIS
     MCRecursiveProbaReductionForecaster(...)
-    >>> y_pred_dist = forecaster.predict_proba(fh=range(1, 13))
+    >>> y_pred_dist = forecaster.predict_proba(fh=12)
     >>> len(y_pred_dist.mean()) == 12
     True
     """
