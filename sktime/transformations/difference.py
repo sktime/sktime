@@ -253,8 +253,6 @@ class Differencer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        # test fails in the Panel case for Differencer, see #2522
-        "tests:skip_by_name": ["test_transform_inverse_transform_equivalent"],
     }
 
     VALID_NA_HANDLING_STR = ["drop_na", "keep_na", "fill_zero"]
@@ -346,6 +344,12 @@ class Differencer(BaseTransformer):
 
         X = self._check_freq(X)
 
+        # Keep a local undifferenced reference for inverse_transform of this
+        # transform call. Do not overwrite self._X (fit memory stays intact);
+        # overlapping-index transforms must invert using transform-time values
+        # rather than stale fit values (see #2265).
+        self._X_last_transform = X
+
         Xt = _diff_transform(X, self._lags)
 
         na_handling = self.na_handling
@@ -386,7 +390,14 @@ class Differencer(BaseTransformer):
         """
         lags = self._lags
 
-        X_diff_seq = _diff_to_seq(self._X, lags)
+        # Prefer the undifferenced series from the most recent transform when
+        # available, so inverse(transform(X)) recovers X even if X overlaps
+        # the fit index with different values. Fall back to fit memory for
+        # continuation / forecasting-style inverses without a prior transform.
+        X_mem = getattr(self, "_X_last_transform", None)
+        if X_mem is None:
+            X_mem = self._X
+        X_diff_seq = _diff_to_seq(X_mem, lags)
 
         X = self._check_freq(X)
 
