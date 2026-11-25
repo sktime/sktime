@@ -14,6 +14,7 @@ import pandas as pd
 from scipy.stats import gmean
 from sklearn.pipeline import Pipeline
 
+from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 from sktime.split import temporal_train_test_split
@@ -115,7 +116,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:multivariate": False,
+        "capability:unequal_length": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }
@@ -144,12 +148,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         Parameters
         ----------
-        y : pd.Series
+        y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
-        fh : int, list or np.array, optional, default=None
+            For Panel or Hierarchical data, the component forecasters are
+            fitted to the entire data, and a single set of weights is found,
+            using the predictions on all instances.
+        fh : ForecastingHorizon, optional, default=None
             The forecasters horizon with the steps ahead to predict.
-        X : pd.DataFrame, optional, default=None
-            Exogenous variables are ignored.
+        X : pd.DataFrame, optional, default=None, must be of same mtype as y
+            Exogenous data to which to fit the forecaster.
 
         Returns
         -------
@@ -169,7 +176,9 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             X_train, X_test = None, None
 
         # fit ensemble models
-        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
+        # for Panel or Hierarchical y, the fh consists of the time points
+        # in the test set, which are the same for all instances
+        fh_test = ForecastingHorizon(get_time_index(y_test), is_relative=False)
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
@@ -178,10 +187,12 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
             )
             X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
             X_meta.columns = pd.RangeIndex(len(X_meta.columns))
+            # align rows of predictions with the test set
+            X_meta = X_meta.loc[y_test.index]
 
             # fit meta-model (regressor) on predictions of ensemble models
             # with y_test as endog/target
-            self.regressor_.fit(X=X_meta, y=y_test)
+            self.regressor_.fit(X=X_meta, y=y_test.iloc[:, 0])
 
             # check if regressor is a sklearn.Pipeline
             if isinstance(self.regressor_, Pipeline):
@@ -196,7 +207,10 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 Warning(f"regressor will not be used because ${self.method} is set.")
             inv_var = np.array(
                 [
-                    1 / np.var(y_test - y_pred_test)
+                    1
+                    / np.var(
+                        y_test.to_numpy() - y_pred_test.loc[y_test.index].to_numpy()
+                    )
                     for y_pred_test in self._predict_forecasters(fh_test, X_test)
                 ]
             )
@@ -221,13 +235,16 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         Returns
         -------
-        y_pred : pd.Series
+        y_pred : pd.DataFrame - Series, Panel, or Hierarchical mtype format,
+            will be of same mtype as y in _fit
             Aggregated predictions.
         """
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
-        y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
-        y_pred.name = self._cur_y.name
+        y_pred = np.average(y_pred_df.to_numpy(), weights=self.weights_, axis=1)
+        y_pred = pd.DataFrame(
+            y_pred, index=y_pred_df.index, columns=self._cur_y.columns
+        )
         return y_pred
 
     @classmethod
