@@ -4365,7 +4365,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/248665831?v=4",
       "profile": "https://github.com/dhruvgupta2109",
       "contributions": [
-        "doc"
+        "doc",
+        "bug",
+        "code",
+        "test"
       ]
     },
     {
