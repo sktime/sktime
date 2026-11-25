@@ -17,7 +17,12 @@ import pandas as pd
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
 VALID_INDEX_TYPES = (pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)
 RELATIVE_INDEX_TYPES = (pd.RangeIndex, pd.TimedeltaIndex)
-ABSOLUTE_INDEX_TYPES = (pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
+ABSOLUTE_INDEX_TYPES = (
+    pd.RangeIndex,
+    pd.DatetimeIndex,
+    pd.PeriodIndex,
+    pd.TimedeltaIndex,
+)
 assert set(RELATIVE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
 assert set(ABSOLUTE_INDEX_TYPES).issubset(VALID_INDEX_TYPES)
 
