@@ -79,7 +79,7 @@ class ReconcilerForecaster(BaseForecaster):
     >>> reconciler = ReconcilerForecaster(forecaster, method="mint_shrink")
     >>> reconciler.fit(y)
     ReconcilerForecaster(...)
-    >>> prds_recon = reconciler.predict(fh=[1])
+    >>> prds_recon = reconciler.predict(fh=1)
     """
 
     _tags = {
