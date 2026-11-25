@@ -17,6 +17,40 @@ __all__ = [
 
 # forked from sklearn.utils to ensure compatibility with newer sklearn versions
 def _weighted_percentile(array, sample_weight, percentile=50):
+    """Compute weighted percentile, averaging the lower and upper percentile.
+
+    With equal weights, this coincides with ``np.median`` for ``percentile=50``,
+    also for an even number of values. If `array` is a 2D array, the
+    `percentile` is computed along the axis 0.
+
+    Parameters
+    ----------
+    array : 1D or 2D array
+        Values to take the weighted percentile of.
+
+    sample_weight: 1D or 2D array-like
+        Weights for each value in `array`. Must be same shape as `array` or
+        of shape `(array.shape[0],)`.
+
+    percentile: int or float, default=50
+        Percentile to compute. Must be value between 0 and 100.
+
+    Returns
+    -------
+    percentile : int if `array` 1D, ndarray if `array` 2D
+        Weighted percentile.
+    """
+    array = np.asarray(array)
+    # The upper percentile negates the values, which wraps around for
+    # unsigned and smallest signed integers.
+    if np.issubdtype(array.dtype, np.integer):
+        array = array.astype(np.float64)
+    lower = _lower_weighted_percentile(array, sample_weight, percentile)
+    upper = -_lower_weighted_percentile(-array, sample_weight, 100 - percentile)
+    return (lower + upper) / 2
+
+
+def _lower_weighted_percentile(array, sample_weight, percentile=50):
     """Compute lower weighted percentile.
 
     Computes lower weighted percentile. If `array` is a 2D array, the
@@ -60,6 +94,11 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     adjusted_percentile[mask] = np.nextafter(
         adjusted_percentile[mask], adjusted_percentile[mask] + 1
     )
+    # The cumulative sum carries rounding error, so a weight that should land
+    # exactly on the percentile can end up just below it; treat values that
+    # close as equal, so equal non-integer weights average like equal ones.
+    tol = weight_cdf.shape[0] * np.finfo(np.float64).eps * weight_cdf[-1]
+    adjusted_percentile[~mask] -= tol[~mask]
 
     percentile_idx = np.array(
         [

@@ -20,6 +20,31 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
     not run_test_for_class(EnsembleForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_weighted_median_equal_weights():
+    """Assert `median` with equal weights equals the unweighted `median`.
+
+    With two forecasters, the median is the mean of the two predictions.
+    """
+    y = pd.Series(np.arange(1.0, 21.0))
+    forecasters = [
+        ("last", NaiveForecaster(strategy="last")),
+        ("mean", NaiveForecaster(strategy="mean")),
+    ]
+    fh = [1, 2, 3]
+
+    unweighted = EnsembleForecaster(forecasters, aggfunc="median")
+    weighted = EnsembleForecaster(forecasters, aggfunc="median", weights=[1, 1])
+    y_unweighted = unweighted.fit(y, fh=fh).predict()
+    y_weighted = weighted.fit(y, fh=fh).predict()
+
+    np.testing.assert_allclose(y_weighted, y_unweighted)
+    np.testing.assert_allclose(y_weighted, 15.25)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "forecasters",
     [
