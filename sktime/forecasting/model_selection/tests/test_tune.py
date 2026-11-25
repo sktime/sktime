@@ -362,7 +362,13 @@ def optuna_samplers():
             None,
             optuna.samplers.NSGAIISampler(seed=42),
             optuna.samplers.QMCSampler(seed=42),
-            # optuna.samplers.CmaEsSampler(seed=42),
+            pytest.param(
+                optuna.samplers.CmaEsSampler(seed=42),
+                marks=pytest.mark.skipif(
+                    not _check_soft_dependencies("cmaes", severity="none"),
+                    reason="CmaEsSampler requires the optional cmaes package",
+                ),
+            ),
         ]
         return samplers
 
