@@ -331,9 +331,11 @@ class Imputer(BaseTransformer):
         """
         rng = check_random_state(self.random_state)
         if (z.dropna() % 1 == 0).all():
-            return lambda size, low=z.min(), high=z.max(): rng.randint(
-                low=low, high=high, size=size
-            )
+            low, high = z.min(), z.max()
+            if low == high:
+                # randint requires low < high, even for a constant series.
+                return lambda size: np.full(size, low)
+            return lambda size: rng.randint(low=low, high=high, size=size)
         else:
             return lambda size, low=z.min(), high=z.max(): rng.uniform(
                 low=low, high=high, size=size
