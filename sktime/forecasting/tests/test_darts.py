@@ -11,6 +11,7 @@ import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_longley
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.darts import (
     DartsLinearRegressionModel,
     DartsRegressionModel,
@@ -64,6 +65,32 @@ def test_darts_regression_model_without_X(model):
 
     # check the index of the prediction
     pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
+
+
+@pytest.mark.parametrize("origin", [0, 10])
+@pytest.mark.parametrize("is_relative", [True, False])
+@pytest.mark.parametrize("steps", [pd.RangeIndex(1, 4), pd.RangeIndex(2, 5, 2)])
+@pytest.mark.skipif(
+    not run_test_for_class(DartsLinearRegressionModel),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_darts_linear_regression_range_index(origin, is_relative, steps):
+    """Test integer horizons retain the forecast's absolute index."""
+    y = pd.Series(
+        np.arange(10, dtype=float),
+        index=pd.RangeIndex(origin, origin + 10),
+        name="y",
+    )
+    expected_index = steps + y.index[-1]
+    fh = ForecastingHorizon(
+        steps if is_relative else expected_index, is_relative=is_relative
+    )
+    forecaster = DartsLinearRegressionModel(lags=2, output_chunk_length=4)
+
+    actual = forecaster.fit(y).predict(fh)
+
+    pd.testing.assert_index_equal(actual.index, expected_index, check_names=False)
+    np.testing.assert_allclose(actual.to_numpy(), y.iloc[-1] + steps.to_numpy())
 
 
 def _darts_to_series(obj):
