@@ -119,7 +119,7 @@ def test_reconcilerforecaster_exog(n_columns):
 
     forecaster = SARIMAX()
     estimator_instance = ReconcilerForecaster(forecaster, method="mint_shrink")
-    fh = [1, 2]
+    fh = 2
     estimator_instance.fit(y=y_train, X=X_train, fh=fh)
     estimator_instance.predict(X=X_test)
     estimator_instance.update(y=y_test, X=X_test)
@@ -165,7 +165,7 @@ def test_reconcilerforecaster_return_totals(method, return_totals):
     estimator_instance = ReconcilerForecaster(
         forecaster, method=method, return_totals=return_totals
     )
-    fh = [1, 2]
+    fh = 2
     estimator_instance.fit(y=y_train, X=X_train, fh=fh)
     y_pred = estimator_instance.predict(X=X_test)
     if return_totals:
@@ -207,4 +207,4 @@ def test_reconcilerforecaster_singular(alpha):
     )
     if alpha == 0:
         with pytest.raises(np.linalg.LinAlgError, match="Singular matrix"):
-            forecaster.fit(df, fh=[1]).predict()
+            forecaster.fit(df, fh=1).predict()
