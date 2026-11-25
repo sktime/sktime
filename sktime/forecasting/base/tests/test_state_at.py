@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["SimonBlanke"]
+__author__ = ["SimonBlanke", "shubham5080"]
 
 import numpy as np
 import pytest
@@ -213,3 +213,38 @@ def test_state_aware_tuner_sequence_preserves_pretraining():
 
     assert candidate.is_fitted
     np.testing.assert_almost_equal(candidate.global_mean_, pretrain_mean)
+
+
+def test_non_underscore_tag_attr_survives_reset_and_clone():
+    """Attrs in pretrain:fitted_params without trailing ``_`` are protected (#11502).
+
+    PyTorch adapters keep weights on ``self.network`` (no trailing underscore).
+    That attribute must survive ``_reset_at("pretrained")`` and clone, otherwise
+    a second ``fit`` after ``pretrain`` silently rebuilds the network.
+    """
+    forecaster = _make_pretrained_dummy()
+    sentinel = {"weights": [1.0, 2.0]}
+    forecaster.network = sentinel
+    forecaster.set_tags(
+        **{
+            "pretrain:fitted_params": [
+                "network",
+                "global_mean_",
+                "n_pretrain_instances_",
+            ]
+        }
+    )
+    # simulate what _pretrain_and_track does for tag-listed attrs
+    if "network" not in forecaster._pretrained_attrs:
+        forecaster._pretrained_attrs.append("network")
+
+    forecaster.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+    assert forecaster.network is sentinel
+
+    # second fit triggers _reset_at("pretrained") on the fitted estimator
+    forecaster.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+    assert forecaster.network is sentinel
+
+    cloned = forecaster.clone()
+    assert cloned.network == sentinel
+    assert "network" in cloned._pretrained_attrs

@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Mixin with pretrain state logic shared by estimator base classes."""
 
-__author__ = ["SimonBlanke", "srupat"]
+__author__ = ["SimonBlanke", "srupat", "shubham5080"]
 
 from collections import defaultdict
 
@@ -147,6 +147,15 @@ class _PretrainMixin:
         ]
         self._pretrained_attrs.extend(new_attrs)
 
+        # Also register attrs named by pretrain:fitted_params (e.g. ``network``),
+        # which may not end in ``_`` and would otherwise be dropped on reset/clone.
+        tag_attrs = self.get_tag(
+            "pretrain:fitted_params", tag_value_default=None, raise_error=False
+        ) or []
+        for attr in tag_attrs:
+            if hasattr(self, attr) and attr not in self._pretrained_attrs:
+                self._pretrained_attrs.append(attr)
+
         self._state = "pretrained"
         return self
 
@@ -245,6 +254,8 @@ class _PretrainMixin:
 
     def _save_pretrained_state(self):
         """Save protected pretrained attributes before an in-place reset."""
+        # No runtime pretrain record ⇒ never pretrained; do not treat tag-only
+        # names as pretrained state (fit may set overlapping ``*_`` attrs).
         if not getattr(self, "_pretrained_attrs", None):
             return {}
         attr_names = self._get_protected_pretrained_attrs()
