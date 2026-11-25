@@ -23,12 +23,12 @@ import pandas as pd
 
 ACCEPTED_DATETIME_TYPES = np.datetime64, pd.Timestamp
 ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
-ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
+ACCEPTED_DATEOFFSET_TYPES = pd.offsets.BaseOffset
 ACCEPTED_WINDOW_LENGTH_TYPES = (
-    int | float | pd.Timedelta | timedelta | np.timedelta64 | pd.DateOffset
+    int | float | pd.Timedelta | timedelta | np.timedelta64 | pd.offsets.BaseOffset
 )
 NON_FLOAT_WINDOW_LENGTH_TYPES = (
-    int | pd.Timedelta | timedelta | np.timedelta64 | pd.DateOffset
+    int | pd.Timedelta | timedelta | np.timedelta64 | pd.offsets.BaseOffset
 )
 
 
@@ -63,7 +63,7 @@ def is_datetime(x) -> bool:
 
 
 def is_date_offset(x) -> bool:
-    """Check if x is of pd.DateOffset type."""
+    """Check if x is a pandas date offset."""
     return isinstance(x, ACCEPTED_DATEOFFSET_TYPES)
 
 
