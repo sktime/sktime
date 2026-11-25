@@ -205,3 +205,33 @@ def test_predict_quantiles_from_interval_multivariate():
             # lower end for alpha < 0.5, upper end for alpha >= 0.5
             expected = y[var].mean() + 10 * (j + 1) * (2 * a - 1)
             np.testing.assert_allclose(pred_q[(var, a)].values, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
+def test_update_predict_overlapping_windows_no_concat_sort_warning():
+    """Regression test for pandas concat sort deprecation in update_predict.
+
+    With a multi-step ``fh`` and overlapping windows, the per-cutoff predictions
+    have row indices that are not sorted in insertion order. ``pd.concat`` without
+    ``sort`` then raised a deprecation warning under ``pandas 3``, and passing
+    ``sort`` explicitly must not drop the ``freq`` of the returned index.
+    """
+    import warnings
+
+    import pandas as pd
+
+    index = pd.date_range("2020-01-01", periods=40, freq="D")
+    y = pd.Series(range(40), index=index, dtype=float)
+    fh = [2, 5]
+    cv = ExpandingWindowSplitter(fh=fh, initial_window=5, step_length=1)
+
+    f = NaiveForecaster().fit(y[:20], fh=fh)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", message="Sorting by default")
+        y_pred = f.update_predict(y[20:], cv=cv)
+
+    assert y_pred.index.is_monotonic_increasing
+    assert y_pred.index.freq == y.index.freq
