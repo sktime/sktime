@@ -145,6 +145,25 @@ def test_hog1d_performs_correctly_along_each_dim():
     assert check_if_dataframes_are_equal(res, orig)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(HOG1DTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_hog1d_preserves_instance_index():
+    """Test that instance labels of a hierarchical input are kept."""
+    idx = pd.MultiIndex.from_product(
+        [["org"], ["a", "b"], range(10)], names=["org", "author", "time"]
+    )
+    X = pd.DataFrame({"values": np.arange(20.0)}, index=idx)
+
+    Xt = HOG1DTransformer().fit_transform(X)
+
+    expected = pd.MultiIndex.from_tuples(
+        [("org", "a"), ("org", "b")], names=["org", "author"]
+    )
+    assert Xt.index.droplevel(-1).unique().equals(expected)
+
+
 def convert_list_to_dataframe(list_to_convert):
     """Convert a Python list to a Pandas dataframe."""
     df = pd.DataFrame()
