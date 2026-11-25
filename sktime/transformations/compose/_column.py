@@ -122,6 +122,8 @@ class ColumnEnsembleTransformer(
     """
 
     _tags = {
+        "named_object_parameters": "transformers",
+        "fitted_named_object_parameters": "transformers_",
         "authors": ["fkiraly", "mloning"],
         "X_inner_mtype": PANDAS_MTYPES,
         "y_inner_mtype": PANDAS_MTYPES,
@@ -133,17 +135,6 @@ class ColumnEnsembleTransformer(
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
     }
-
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "transformers"
-    # if the estimator is fittable, _HeterogenousMetaEstimator also
-    # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_fitted_attr = "transformers_"
 
     def __init__(self, transformers, remainder=None, feature_names_out="auto"):
         self.transformers = transformers
@@ -326,7 +317,8 @@ class ColumnEnsembleTransformer(
         """
         Xts = []
         keys = []
-        for name, est, index in getattr(self, self._steps_fitted_attr):
+        fitted_attr = self.get_class_tag("fitted_named_object_parameters")
+        for name, est, index in getattr(self, fitted_attr):
             Xts += [est.transform(X.loc[:, index], y)]
             keys += [name]
 

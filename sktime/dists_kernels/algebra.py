@@ -54,6 +54,7 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
     """
 
     _tags = {
+        "named_object_parameters": "_pw_trafos",
         # packaging info
         # --------------
         "authors": ["fkiraly"],
@@ -67,12 +68,6 @@ class CombinedDistance(_HeterogenousMetaEstimator, BasePairwiseTransformerPanel)
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
     }
-
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator, ...) tuples for the default
-    _steps_attr = "_pw_trafos"
 
     def __init__(self, pw_trafos, operation=None):
         self.pw_trafos = pw_trafos

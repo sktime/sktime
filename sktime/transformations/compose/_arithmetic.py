@@ -79,10 +79,9 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
     - This transformer is useful for combining features via arithmetic or custom logic.
     """
 
-    _steps_attr = "_transformers"
-    _steps_fitted_attr = "transformers_"
-
     _tags = {
+        "named_object_parameters": "_transformers",
+        "fitted_named_object_parameters": "transformers_",
         # packaging info
         # --------------
         "authors": ["oresthes"],
