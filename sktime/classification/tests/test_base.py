@@ -12,6 +12,9 @@ from sklearn.model_selection import KFold
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.deep_learning.base import BaseDeepClassifier
+from sktime.classification.deep_learning.cnn import CNNClassifier
+from sktime.classification.deep_learning.cntc import CNTCClassifier
+from sktime.classification.deep_learning.mcdcnn import MCDCNNClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.tests.test_switch import run_test_module_changed
@@ -512,6 +515,41 @@ def test_deep_estimator_empty():
     serialized_empty = pickle.dumps(empty_dummy)
     deserialized_empty = pickle.loads(serialized_empty)
     assert empty_dummy.__dict__ == deserialized_empty.__dict__
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize(
+    "estimator_class", [CNNClassifier, CNTCClassifier, MCDCNNClassifier]
+)
+@pytest.mark.parametrize("verbose", [False, True])
+def test_deep_prediction_verbose(estimator_class, verbose, capsys):
+    """Prediction respects verbosity without changing class probabilities."""
+    from tensorflow import keras
+
+    keras.backend.clear_session()
+    X = np.random.default_rng(0).normal(size=(4, 1, 12))
+    y = np.array([0, 1, 0, 1])
+    classifier = estimator_class(
+        n_epochs=1, batch_size=4, verbose=verbose, random_state=0
+    )
+    classifier.fit(X, y)
+    capsys.readouterr()
+
+    prediction = classifier.predict(X)
+    assert bool(capsys.readouterr().out) == verbose
+    assert prediction.shape == y.shape
+
+    probabilities = classifier.predict_proba(X)
+    assert bool(capsys.readouterr().out) == verbose
+    assert probabilities.shape == (len(y), 2)
+    np.testing.assert_allclose(probabilities.sum(axis=1), 1, rtol=1e-6)
+
+    overridden = classifier._predict_proba(X, verbose=not verbose)
+    assert bool(capsys.readouterr().out) == (not verbose)
+    np.testing.assert_allclose(overridden, probabilities)
 
 
 @pytest.mark.skipif(

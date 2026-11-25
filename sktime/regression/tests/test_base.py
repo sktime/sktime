@@ -11,6 +11,9 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.regression.base import BaseRegressor
 from sktime.regression.deep_learning.base import BaseDeepRegressor
+from sktime.regression.deep_learning.cnn import CNNRegressor
+from sktime.regression.deep_learning.cntc import CNTCRegressor
+from sktime.regression.deep_learning.mcdcnn import MCDCNNRegressor
 from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
 from sktime.regression.dummy import DummyRegressor
 from sktime.utils._testing.panel import (
@@ -359,6 +362,38 @@ def test_deep_estimator_empty():
     serialized_empty = pickle.dumps(empty_dummy)
     deserialized_empty = pickle.loads(serialized_empty)
     assert empty_dummy.__dict__ == deserialized_empty.__dict__
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("tensorflow", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize(
+    "estimator_class", [CNNRegressor, CNTCRegressor, MCDCNNRegressor]
+)
+@pytest.mark.parametrize("verbose", [False, True])
+def test_deep_prediction_verbose(estimator_class, verbose, capsys):
+    """Prediction and internal keyword overrides respect verbosity."""
+    from tensorflow import keras
+
+    keras.backend.clear_session()
+    X = np.random.default_rng(0).normal(size=(4, 1, 12))
+    y = np.array([0.0, 1.0, 0.0, 1.0])
+    regressor = estimator_class(
+        n_epochs=1, batch_size=4, verbose=verbose, random_state=0
+    )
+    regressor.fit(X, y)
+    capsys.readouterr()
+
+    prediction = regressor.predict(X)
+    assert bool(capsys.readouterr().out) == verbose
+    assert prediction.shape == y.shape
+    assert np.isfinite(prediction).all()
+
+    overridden = regressor._predict(X, verbose=not verbose)
+    assert bool(capsys.readouterr().out) == (not verbose)
+    assert overridden.shape == prediction.shape
+    assert np.isfinite(overridden).all()
 
 
 @pytest.mark.xfail(reason="known failure, see #6153")
