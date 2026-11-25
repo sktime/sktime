@@ -67,3 +67,103 @@ def test_timesfm2_airline_predictions_match_transformers_reference(
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+# Reference quantile forecasts at levels 0.1, 0.5, 0.9 for the first three steps,
+# generated as above from ``output.full_predictions``, where column 0 is the mean
+# forecast and the forecast at ``model.config.quantiles[k]`` is in column ``k + 1``.
+_TIMESFM2_QUANTILE_REFERENCE_CASES = [
+    pytest.param(
+        "google/timesfm-2.5-200m-transformers",
+        [
+            [382.19610595703125, 407.3865051269531, 426.4412841796875],
+            [348.47515869140625, 378.2121276855469, 401.3867492675781],
+            [395.8646240234375, 429.0090026855469, 454.17608642578125],
+        ],
+        id="timesfm-2.5-200m-transformers",
+    ),
+    pytest.param(
+        "google/timesfm-2.0-500m-pytorch",
+        [
+            [388.2955322265625, 419.729736328125, 451.2749328613281],
+            [379.2339782714844, 412.2949523925781, 446.4942626953125],
+            [411.508056640625, 446.5558776855469, 481.1740417480469],
+        ],
+        id="timesfm-2.0-500m-pytorch",
+    ),
+]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimesFM2Forecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("model_path,expected_head", _TIMESFM2_QUANTILE_REFERENCE_CASES)
+def test_timesfm2_airline_quantiles_match_transformers_reference(
+    model_path, expected_head
+):
+    """TimesFM-2 quantiles match the raw transformers implementation."""
+    y = load_airline()
+    y_train = y.iloc[:-12]
+    fh = np.arange(1, 13)
+
+    forecaster = TimesFM2Forecaster(model_path=model_path, device_map="cpu")
+    forecaster.fit(y_train, fh=fh)
+    y_pred = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.5, 0.9])
+
+    np.testing.assert_allclose(
+        y_pred.iloc[:3].to_numpy(),
+        np.asarray(expected_head, dtype=np.float32),
+        rtol=1e-5,
+        atol=1e-4,
+    )
+
+
+_TIMESFM2_PROBA_CASES = [
+    pytest.param(
+        {"model_path": "google/timesfm-2.5-200m-transformers", "device_map": "cpu"},
+        id="timesfm-2.5-200m-transformers",
+    ),
+    pytest.param(
+        {"model_path": "google/timesfm-2.0-500m-pytorch", "device_map": "cpu"},
+        id="timesfm-2.0-500m-pytorch",
+    ),
+    # randomly initialized, quantile forecasts may cross
+    pytest.param(
+        TimesFM2Forecaster.get_test_params()[0],
+        id="random-init",
+    ),
+]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimesFM2Forecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("params", _TIMESFM2_PROBA_CASES)
+def test_timesfm2_predict_proba_consistent_with_predict_quantiles(params):
+    """predict_proba quantiles agree with predict_quantiles, see #10566."""
+    pytest.importorskip("skpro")
+    from skpro.distributions import HistogramQPD
+
+    y = load_airline()
+    y_train = y.iloc[:-12]
+    fh = np.arange(1, 7)
+
+    forecaster = TimesFM2Forecaster(**params)
+    forecaster.fit(y_train, fh=fh)
+
+    alpha = sorted(round(a, 3) for a in forecaster.model_.config.quantiles)
+    q_direct = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+    pred_dist = forecaster.predict_proba(fh=fh)
+
+    assert isinstance(pred_dist, HistogramQPD)
+
+    q_proba = pred_dist.quantile(alpha=alpha)
+    np.testing.assert_allclose(q_proba.to_numpy(), q_direct.to_numpy(), rtol=1e-5)
+
+    # linear interpolation between adjacent native levels
+    mid = (alpha[0] + alpha[1]) / 2
+    q_mid = pred_dist.quantile(alpha=[mid]).to_numpy().ravel()
+    expected_mid = q_direct.to_numpy()[:, :2].mean(axis=1)
+    np.testing.assert_allclose(q_mid, expected_mid, rtol=1e-5)
