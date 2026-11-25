@@ -6,13 +6,14 @@ import numpy as np
 import numpy.typing as npt
 from sklearn.neighbors import NearestNeighbors
 
-from sktime.transformations.base import BaseTransformer
+import pandas as pd
+from sktime.detection.base import BaseDetector
 
 __author__ = ["KatieBuc"]
 __all__ = ["STRAY"]
 
 
-class STRAY(BaseTransformer):
+class STRAY(BaseDetector):
     """STRAY: robust anomaly detection in data streams with concept drift.
 
     This is based on STRAY (Search TRace AnomalY) _[1], which is a modification
@@ -70,9 +71,9 @@ class STRAY(BaseTransformer):
     >>> scaler = MinMaxScaler()
     >>> X = scaler.fit_transform(X)
     >>> model = STRAY(k=3)
-    >>> y = model.fit_transform(X)
-    >>> y[:5]
-    array([False, False, False, False, False])
+    >>> y = model.fit_predict(X)
+    >>> "ilocs" in y.columns
+    True
     """
 
     _tags = {
@@ -82,10 +83,12 @@ class STRAY(BaseTransformer):
         "maintainers": "KatieBuc",
         # estimator type
         # --------------
+        "task": "anomaly_detection",
+        "learning_type": "unsupervised",
+        "capability:multivariate": True,
         "capability:missing_values": True,
         "X_inner_mtype": "np.ndarray",
         "fit_is_empty": False,
-        "skip-inverse-transform": True,
     }
 
     def __init__(
@@ -235,7 +238,7 @@ class STRAY(BaseTransformer):
 
         return self
 
-    def _transform(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+    def _predict(self, X: npt.ArrayLike) -> pd.DataFrame:
         """Return anomaly detection.
 
         Parameters
@@ -245,8 +248,8 @@ class STRAY(BaseTransformer):
 
         Returns
         -------
-        y_ : np.ArrayLike
-            Anomaly detection, boolean.
+        y_ : pd.DataFrame
+            Anomaly detection, sparse format.
         """
         # fit again if data is different to fit, but don't store anything
         if not np.allclose(X, self._X, equal_nan=True):
@@ -261,12 +264,15 @@ class STRAY(BaseTransformer):
             warnings.warn(
                 "Warning: Input data X differs from that given to fit(). "
                 "Refitting with new input data, not storing updated public class "
-                "attributes. For this, explicitly use fit(X) or fit_transform(X).",
+                "attributes. For this, explicitly use fit(X) or fit_predict(X).",
                 stacklevel=2,
             )
-            return new_obj.y_.astype(bool)
+            y_bool = new_obj.y_.astype(bool)
+        else:
+            y_bool = self.y_.astype(bool)
 
-        return self.y_.astype(bool)
+        anomaly_indexes = np.where(y_bool)[0]
+        return pd.DataFrame({"ilocs": anomaly_indexes})
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
