@@ -134,6 +134,9 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
         "requires-y-train": False,
         # whether the metric requires a benchmark forecast y_pred_benchmark
         "requires-y-pred-benchmark": False,
+        # whether the metric requires true labels y_true in evaluate
+        # if False, the metric is unsupervised
+        "requires_y_true": True,
         # whether the metric supports multivariate (multi-column) inputs
         "capability:multivariate": True,
         # whether lower values of the metric are better (True) or worse (False)

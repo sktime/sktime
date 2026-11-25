@@ -86,6 +86,10 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         # valid values: "Series", "Panel", "Hierarchical", or list thereof
         #   should correspond to the mtype formats in X_inner_mtype
         #
+        # scitype:y tells the user which scitype of y is supported natively
+        "scitype:y": "Series",
+        # valid values: scitype string, typically "Series"
+        #
         # capability tags: properties of the estimator
         # --------------------------------------------
         #
@@ -98,6 +102,10 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         "capability:multivariate": False,
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if X passed has more than one variable
+        #
+        # capability:pairwise = does estimator support pairwise parameter estimation?
+        "capability:pairwise": False,
+        # valid values: boolean True (yes), False (no)
         #
         # property:randomness = is the estimator deterministic or stochastic?
         "property:randomness": "deterministic",
