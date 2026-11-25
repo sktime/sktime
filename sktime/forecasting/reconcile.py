@@ -29,8 +29,7 @@ class ReconcilerForecaster(BaseForecaster):
     ----------
     forecaster : estimator
         Estimator to generate base forecasts which are then reconciled
-    method : {"mint_cov", "mint_shrink", "ols", "wls_var", "wls_str", \
-            "bu", "td_fcst"}, default="mint_shrink"
+    method : str, default="mint_shrink"
         The reconciliation approach applied to the forecasts based on:
 
             * ``"mint_cov"`` - sample covariance
@@ -40,6 +39,9 @@ class ReconcilerForecaster(BaseForecaster):
             * ``"wls_str"`` - weighted least squares (structural)
             * ``"bu"`` - bottom-up
             * ``"td_fcst"`` - top down based on forecast proportions
+            * ``"td_share"`` - top down based on forecast shares
+            * ``"td_average_proportions"`` - average of historical proportions
+            * ``"td_proportion_averages"`` - proportions of historical averages
 
     return_totals : bool
         Whether the predictions returned by ``predict`` and predict-like methods
@@ -51,6 +53,11 @@ class ReconcilerForecaster(BaseForecaster):
 
     alpha: float default=0
         Optional regularization parameter to avoid singular covariance matrix
+
+    window_length : int or None, default=None
+        Number of most recent training periods used to estimate historical
+        proportions. None uses all training periods. The proportions stay fixed
+        until the reconciler is fit again.
 
     See Also
     --------
@@ -136,6 +143,15 @@ class ReconcilerForecaster(BaseForecaster):
             OptimalReconciler,
             TopdownReconciler,
         )
+        from sktime.transformations.hierarchical.reconcile._topdown import (
+            _HISTORICAL_METHODS,
+        )
+
+        if method in _HISTORICAL_METHODS:
+            return TopdownReconciler, {
+                "method": method,
+                "window_length": self.window_length,
+            }
 
         # We do not create the instances to avoid error due to
         # soft dependency on cvxpy for NonNegativeOptimalReconciler
@@ -162,16 +178,26 @@ class ReconcilerForecaster(BaseForecaster):
         "bu",
         "td_fcst",
         "td_share",
+        "td_average_proportions",
+        "td_proportion_averages",
         "ols:nonneg",
         "wls_str:nonneg",
     ]
     RETURN_TOTALS_LIST = [True, False]
 
-    def __init__(self, forecaster, method="mint_shrink", return_totals=True, alpha=0):
+    def __init__(
+        self,
+        forecaster,
+        method="mint_shrink",
+        return_totals=True,
+        alpha=0,
+        window_length=None,
+    ):
         self.forecaster = forecaster
         self.method = method
         self.return_totals = return_totals
         self.alpha = alpha
+        self.window_length = window_length
 
         super().__init__()
 

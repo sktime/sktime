@@ -1,9 +1,13 @@
 """Topdown reconciliation."""
 
+from numbers import Integral
+
+import numpy as np
 import pandas as pd
 
 from sktime.transformations.hierarchical.reconcile._base import _ReconcilerTransformer
 from sktime.transformations.hierarchical.reconcile._utils import (
+    _get_bottom_level_idxs,
     _get_total_level_idxs,
     _loc_series_idxs,
     _promote_hierarchical_indexes_and_keep_timeindex,
@@ -14,6 +18,8 @@ from sktime.transformations.hierarchical.squeeze_hierarchy import (  # noqa: E50
 )
 
 __all__ = ["TopdownReconciler"]
+
+_HISTORICAL_METHODS = ("td_average_proportions", "td_proportion_averages")
 
 
 class TopdownReconciler(_ReconcilerTransformer):
@@ -28,14 +34,29 @@ class TopdownReconciler(_ReconcilerTransformer):
     forecast with respect to their parent, and then uses the total forecast
     to multiply the shares.
 
+    The historical methods estimate fixed bottom-level shares during fit and
+    multiply them by each forecast of the total series.
+
     For more information, see "Single level approaches" in [1].
 
     Parameters
     ----------
     method : str, default="td_fcst"
         The method to use for reconciliation.
-        - `td_fcst`: Forecast Proportions.
-        - `td_share`: Topdown Share.
+        - `td_fcst`: Forecast proportions.
+        - `td_share`: Top-down share.
+        - `td_average_proportions`: Average of the bottom-to-total ratios over
+          historical periods. Periods with a zero total are excluded.
+        - `td_proportion_averages`: Ratio of the bottom-level average to the
+          total average over the same historical periods.
+    window_length : int or None, default=None
+        Number of most recent training periods used by the historical methods.
+        None uses the whole training history.
+
+    Raises
+    ------
+    ValueError
+        If the selected historical method has no nonzero denominator.
 
     Examples
     --------
@@ -54,16 +75,27 @@ class TopdownReconciler(_ReconcilerTransformer):
        principles and practice. OTexts.
     """
 
-    def __init__(self, method="td_fcst"):
+    def __init__(self, method="td_fcst", window_length=None):
         self.method = method
+        self.window_length = window_length
         super().__init__()
 
-        if method not in ["td_fcst", "td_share"]:
-            raise ValueError(
-                f"Method must be one of 'td_fcst' or 'td_share'. Got {method}."
-            )
+        methods = ("td_fcst", "td_share", *_HISTORICAL_METHODS)
+        if method not in methods:
+            raise ValueError(f"Method must be one of {methods}. Got {method}.")
+        if window_length is not None and (
+            not isinstance(window_length, Integral)
+            or isinstance(window_length, bool)
+            or window_length < 1
+        ):
+            raise ValueError("window_length must be a positive integer or None.")
 
     def _fit_reconciler(self, X, y=None):
+        if self.method in _HISTORICAL_METHODS:
+            self._total_series = _get_total_level_idxs(X)
+            self._fit_historical_proportions(X)
+            return self
+
         self._drop_redundant_levels = SqueezeHierarchy()
         self._drop_redundant_levels.fit(X)
         X = self._drop_redundant_levels.transform(X)
@@ -71,6 +103,36 @@ class TopdownReconciler(_ReconcilerTransformer):
         self._total_series = _get_total_level_idxs(X)
 
         return self
+
+    def _fit_historical_proportions(self, X):
+        """Estimate each bottom-level series' share of the historical total."""
+        total = _loc_series_idxs(X, self._total_series)
+        total.index = total.index.get_level_values(-1)
+        if self.window_length is not None:
+            total = total.sort_index().iloc[-self.window_length :]
+
+        bottom_nodes = _get_bottom_level_idxs(X)
+        bottom = _loc_series_idxs(X, bottom_nodes)
+        bottom = bottom.loc[bottom.index.get_level_values(-1).isin(total.index)]
+        hierarchy_levels = list(range(bottom.index.nlevels - 1))
+
+        if self.method == "td_average_proportions":
+            nonzero_total = total.where(total != 0)
+            ratios = bottom.div(nonzero_total, level=-1)
+            denominator = nonzero_total.count()
+            numerator = ratios.groupby(level=hierarchy_levels).sum()
+        else:
+            denominator = total.sum()
+            numerator = bottom.groupby(level=hierarchy_levels).sum()
+
+        if (denominator == 0).any():
+            raise ValueError(
+                f"Cannot estimate {self.method}: the historical denominator is zero."
+            )
+
+        self.proportions_ = numerator.reindex(bottom_nodes, fill_value=0).div(
+            denominator
+        )
 
     def _transform_reconciler(self, X, y=None):
         """
@@ -95,12 +157,17 @@ class TopdownReconciler(_ReconcilerTransformer):
         X : pd.DataFrame
             The transformed series.
         """
+        if self.method in _HISTORICAL_METHODS:
+            return X
+
         X = self._drop_redundant_levels.transform(X)
         if self.method == "td_share":
             X = self._transform_non_total_to_ratios(X)
         return X
 
     def _inverse_transform_reconciler(self, X, y=None):
+        if self.method in _HISTORICAL_METHODS:
+            return self._reconcile_historical(X)
         if self.method == "td_share":
             _X = self._reconcile_td_share(X)
         else:
@@ -108,6 +175,24 @@ class TopdownReconciler(_ReconcilerTransformer):
 
         _X = self._drop_redundant_levels.inverse_transform(_X)
         return _X
+
+    def _reconcile_historical(self, X):
+        """Distribute the total forecast using fitted bottom-level proportions."""
+        total = _loc_series_idxs(X, self._total_series)
+        if total.empty:
+            raise ValueError("Historical reconciliation requires a total forecast.")
+
+        proportions = self.proportions_.loc[:, total.columns]
+        nodes = proportions.index.repeat(len(total))
+        time_positions = np.tile(np.arange(len(total)), len(proportions))
+        times = total.index.get_level_values(-1).take(time_positions)
+        index = pd.MultiIndex.from_arrays(
+            [*(nodes.get_level_values(i) for i in range(nodes.nlevels)), times],
+            names=X.index.names,
+        )
+        forecasts = np.tile(total.to_numpy(), (len(proportions), 1))
+        shares = proportions.to_numpy().repeat(len(total), axis=0)
+        return pd.DataFrame(forecasts * shares, index=index, columns=total.columns)
 
     def _reconcile_td_share(self, X):
         """
