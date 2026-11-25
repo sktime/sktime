@@ -887,3 +887,26 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("index_freq", ["M", "Q", "Y"])
+def test_recursive_reduction_with_period_index_offset_freq(index_freq):
+    """Test RecursiveReductionForecaster with PeriodIndex of offset-alias frequency."""
+    y = pd.Series(
+        np.arange(24, dtype=float),
+        index=pd.period_range("2000-01-01", periods=24, freq=index_freq),
+    )
+
+    forecaster = RecursiveReductionForecaster(
+        estimator=LinearRegression(), window_length=4
+    )
+    forecaster.fit(y, fh=[1, 2])
+    y_pred = forecaster.predict()
+
+    expected_index = pd.period_range(y.index[-1] + 1, periods=2, freq=index_freq)
+    assert y_pred.index.equals(expected_index)
+    assert np.isfinite(y_pred).all()
