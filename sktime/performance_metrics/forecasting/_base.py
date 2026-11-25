@@ -828,6 +828,9 @@ class BaseForecastingErrorMetric(BaseMetric):
         returns df * sample_weight.reshape(-1, 1), i.e., weights
         multiplied to each row of the DataFrame.
 
+        Weights are rescaled to have mean 1 first, so that the arithmetic mean
+        over rows of the result is the weighted average of the rows of ``df``.
+
         Parameters
         ----------
         df : pd.DataFrame
@@ -840,7 +843,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         """
         sample_weight = self._set_sample_weight_on_kwargs(**kwargs)
         if sample_weight is not None:
-            df = df.mul(sample_weight, axis=0)
+            df = df.mul(sample_weight / sample_weight.mean(), axis=0)
         return df
 
     def _handle_multioutput(self, df, multioutput):
