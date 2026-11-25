@@ -29,7 +29,8 @@ class TimeSince(BaseTransformer):
 
     Parameters
     ----------
-    start : a list of start times, optional, default=None (use earliest time in index)
+    start : a list of start times or single start time, optional, default=None
+        (use earliest time in index)
         a "start time" can be one of the following types:
 
         * int: Start time to compute the time elapsed, use when index is integer.
@@ -174,18 +175,26 @@ class TimeSince(BaseTransformer):
 
         self.start_ = []
         if self.start is None:
-            self.start_.append(time_index.min())
+            starts = [None]
+        elif isinstance(
+            self.start, (str, datetime.datetime, pd.Period, int, np.integer)
+        ):
+            starts = [self.start]
+        elif isinstance(self.start, (list, tuple, pd.Index, np.ndarray)):
+            starts = list(self.start)
         else:
-            for start in self.start:
-                if start is None:
-                    self.start_.append(time_index.min())
-                elif isinstance(start, str):
-                    if isinstance(time_index, pd.PeriodIndex):
-                        self.start_.append(pd.Period(start))
-                    else:
-                        self.start_.append(pd.to_datetime(start))
+            starts = [self.start]
+
+        for start in starts:
+            if start is None:
+                self.start_.append(time_index.min())
+            elif isinstance(start, str):
+                if isinstance(time_index, pd.PeriodIndex):
+                    self.start_.append(pd.Period(start))
                 else:
-                    self.start_.append(start)
+                    self.start_.append(pd.to_datetime(start))
+            else:
+                self.start_.append(start)
 
         # Check `start_` is compatible with index
         for start_ in self.start_:
