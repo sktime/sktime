@@ -887,3 +887,26 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("freq", ["M", "Q", "Y", "D"])
+def test_recursive_reduction_period_index_standard_freq(freq):
+    """Test RecursiveReductionForecaster predict with standard PeriodIndex freqs."""
+    y = pd.Series(
+        np.arange(40, dtype=float),
+        index=pd.period_range("2000-01-01", periods=40, freq=freq),
+    )
+
+    forecaster = RecursiveReductionForecaster(LinearRegression(), window_length=6)
+    forecaster.fit(y, fh=[1, 2, 3])
+    y_pred = forecaster.predict()
+
+    expected_idx = pd.period_range(y.index[-1] + 1, periods=3, freq=freq)
+    assert isinstance(y_pred.index, pd.PeriodIndex)
+    assert y_pred.index.equals(expected_idx)
+    # linear trend is recovered exactly by linear regression on lagged values
+    assert np.allclose(y_pred.values.flatten(), [40.0, 41.0, 42.0])
