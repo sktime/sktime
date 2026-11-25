@@ -199,6 +199,10 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
             "capability:unequal_length", "capability:unequal_length:removes", ests
         )
 
+        # pipeline can update iff all steps support update
+        can_update = [est.get_tag("capability:update", False) for _, est in ests]
+        self.set_tags(**{"capability:update": all(can_update)})
+
     @property
     def _steps(self):
         return self._get_estimator_tuples(self.steps, clone_ests=False)
