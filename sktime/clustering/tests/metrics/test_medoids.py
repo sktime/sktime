@@ -26,3 +26,24 @@ def test_medoids():
             [-0.16941098301459817, -0.11809201542630064, -0.3188275062421506],
         ],
     )
+
+
+def test_medoids_precomputed_distance():
+    """Medoid is the series with the smallest sum of distances to all others."""
+    rng = np.random.default_rng(0)
+    n_instances = 50
+    X = rng.standard_normal((n_instances, 2, 10))
+    distances = rng.random((n_instances, n_instances))
+    distances = distances + distances.T
+    np.fill_diagonal(distances, 0)
+
+    result = medoids(X, precomputed_pairwise_distance=distances)
+
+    expected_index = min(
+        range(n_instances),
+        key=lambda j: sum(distances[k, j] for k in range(n_instances)),
+    )
+    np.testing.assert_array_equal(result, X[expected_index])
+
+    # empty input is returned unchanged
+    assert medoids(X[:0], precomputed_pairwise_distance=distances[:0, :0]).shape[0] == 0

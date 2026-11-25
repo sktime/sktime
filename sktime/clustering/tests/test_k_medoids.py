@@ -139,3 +139,24 @@ def test_kmedoids():
 
     for val in proba:
         assert np.count_nonzero(val == 1.0) == 1
+
+
+def test_kmedoids_new_cluster_centers():
+    """New cluster centers are the medoids of each cluster, by precomputed distances."""
+    rng = np.random.default_rng(0)
+    n_instances, n_clusters = 60, 3
+    X = rng.standard_normal((n_instances, 2, 10))
+    distances = rng.random((n_instances, n_instances))
+    distances = distances + distances.T
+    np.fill_diagonal(distances, 0)
+    assignment = rng.integers(0, n_clusters, n_instances)
+
+    kmedoids = TimeSeriesKMedoids(n_clusters=n_clusters)
+    kmedoids._precomputed_pairwise = distances
+    centers = kmedoids._compute_new_cluster_centers(X, assignment)
+
+    assert centers.shape == (n_clusters, 2, 10)
+    for i in range(n_clusters):
+        members = np.flatnonzero(assignment == i)
+        sums = [sum(distances[k, j] for k in members) for j in members]
+        np.testing.assert_array_equal(centers[i], X[members[int(np.argmin(sums))]])
