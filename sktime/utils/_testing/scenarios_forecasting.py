@@ -150,6 +150,21 @@ class ForecasterFitPredictUnivariateNoXLateFh(ForecasterTestScenario):
     default_method_sequence = ["fit", "predict"]
 
 
+class ForecasterFitPredictUnivariateNoXDuplicateIndex(ForecasterTestScenario):
+    """Fit/predict with a duplicate time index and no exogenous data."""
+
+    _tags = {"univariate_y": True, "fh_passed_in_fit": True, "is_enabled": False}
+
+    @property
+    def args(self):
+        y = _make_series(n_timepoints=20, random_state=RAND_SEED)
+        index = pd.period_range("2000-01", periods=19, freq="M")
+        y.index = index.append(pd.PeriodIndex([index[-1]], freq="M"))
+        return {"fit": {"y": y, "fh": 1}, "predict": {}}
+
+    default_method_sequence = ["fit", "predict"]
+
+
 class ForecasterFitPredictUnivariateNoXLongFh(ForecasterTestScenario):
     """Fit/predict only, univariate y, no X, longer fh, passed early in fit."""
 
@@ -299,6 +314,7 @@ forecasting_scenarios_extended = [
     ForecasterFitPredictUnivariateNoX,
     ForecasterFitPredictUnivariateNoXEarlyFh,
     ForecasterFitPredictUnivariateNoXLateFh,
+    ForecasterFitPredictUnivariateNoXDuplicateIndex,
     ForecasterFitPredictUnivariateWithX,
     ForecasterFitPredictUnivariateWithXLongFh,
     ForecasterFitPredictMultivariateNoX,
