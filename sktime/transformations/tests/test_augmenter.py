@@ -65,6 +65,35 @@ def test_white_noise(parameter):
     assert checksums == expected_checksums_white_noise
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(aug.WhiteNoiseAugmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_white_noise_dataframe_and_named_series():
+    """Test WhiteNoiseAugmenter on DataFrame, named Series, and multivariate inputs."""
+    # Test named pd.Series
+    s = pd.Series([1.0, 2.0, 3.0], name="temp")
+    aug_s = aug.WhiteNoiseAugmenter(random_state=42)
+    s_t = aug_s.fit_transform(s)
+    assert isinstance(s_t, pd.Series)
+    assert s_t.name == "temp"
+    assert len(s_t) == 3
+
+    # Test DataFrame with string columns
+    df = pd.DataFrame({"sensor_1": [1.0, 2.0, 3.0], "sensor_2": [4.0, 5.0, 6.0]})
+    aug_df = aug.WhiteNoiseAugmenter(random_state=42)
+    df_t = aug_df.fit_transform(df)
+    assert isinstance(df_t, pd.DataFrame)
+    assert list(df_t.columns) == ["sensor_1", "sensor_2"]
+    assert df_t.shape == (3, 2)
+
+    # Test multivariate DataFrame with scale=np.std
+    aug_std = aug.WhiteNoiseAugmenter(scale=np.std, random_state=42)
+    df_std_t = aug_std.fit_transform(df)
+    assert isinstance(df_std_t, pd.DataFrame)
+    assert df_std_t.shape == (3, 2)
+
+
 # Test ReverseAugmenter
 expected_checksum_reverse = 17.757893
 
