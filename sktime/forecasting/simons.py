@@ -241,30 +241,45 @@ class SimonsForecaster(BaseForecaster):
                 f"forecast horizon; missing {len(missing)} row(s)."
             )
         future = X.loc[future_index]
-        combined = pd.concat([self.X_, future])
-        encoded_columns = []
-        for column in combined.columns:
-            history_and_future = combined[column]
-            if isinstance(history_and_future.dtype, pd.CategoricalDtype) or (
-                history_and_future.dtype == object
-            ):
-                from sktime.libs.simons import encode_categorical
+        history_encoded = self.X_.copy()
+        future_encoded = future.copy()
+        for column in self.X_.columns:
+            history_column = self.X_[column]
+            future_column = future[column]
+            is_categorical = any(
+                isinstance(series.dtype, pd.CategoricalDtype) or series.dtype == object
+                for series in (history_column, future_column)
+            )
+            if not is_categorical:
+                continue
 
-                categories = sorted(
-                    {str(value) for value in history_and_future if not pd.isna(value)}
+            categories = sorted(
+                {
+                    str(value)
+                    for series in (history_column, future_column)
+                    for value in series
+                    if not pd.isna(value)
+                }
+            )
+            category_codes = {value: code for code, value in enumerate(categories)}
+            for encoded_frame, series in (
+                (history_encoded, history_column),
+                (future_encoded, future_column),
+            ):
+                encoded_frame[column] = pd.Series(
+                    [
+                        (
+                            np.nan
+                            if pd.isna(value)
+                            else category_codes.get(str(value), np.nan)
+                        )
+                        for value in series
+                    ],
+                    index=series.index,
+                    dtype=np.float64,
                 )
-                encoded_columns.append(
-                    pd.Series(
-                        encode_categorical(history_and_future, categories=categories),
-                        index=combined.index,
-                    )
-                )
-            else:
-                encoded_columns.append(
-                    pd.Series(history_and_future, index=combined.index)
-                )
-        encoded = pd.concat(encoded_columns, axis=1)
-        encoded.columns = combined.columns
+
+        encoded = pd.concat([history_encoded, future_encoded])
         values = prepare_covariates(
             length=len(self.context_),
             horizon=horizon,

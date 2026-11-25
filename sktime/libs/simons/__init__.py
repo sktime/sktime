@@ -24,4 +24,3 @@ __all__ = [
     "forecast_series",
     "prepare_covariates",
 ]
-__version__ = "0.1.2"

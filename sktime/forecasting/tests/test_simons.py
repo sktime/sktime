@@ -13,9 +13,26 @@ pytestmark = pytest.mark.skipif(
     reason="run test only if Simons soft dependencies are installed",
 )
 
-# Generation: Simons.from_pretrained("abel-lab/Simons-25M", device="cpu").forecast(
-# torch.as_tensor(np.sin(np.arange(200, dtype=np.float32) / 10)[None, None, :],
-# dtype=torch.float32), horizon=3)
+# Generate using the upstream package:
+# pip install "git+https://github.com/Abel-ai-lab/Simons@0d0042f8da45140172bd36980be08654c0017d8b"
+# import numpy as np
+# import torch
+# from simons import QUANTILES, Simons
+# history = torch.as_tensor(
+#     np.sin(np.arange(200, dtype=np.float32) / 10)[None, None, :],
+#     dtype=torch.float32,
+# )
+# raw = Simons.from_pretrained("abel-lab/Simons-25M", device="cpu").forecast(
+#     history, horizon=3
+# )
+# point = raw.detach().cpu().numpy()[0, 0, :, 4]
+# quantiles = np.apply_along_axis(
+#     lambda row: np.interp([0.1, 0.25, 0.5, 0.9], QUANTILES, row),
+#     axis=-1,
+#     arr=raw.detach().cpu().numpy()[0, 0],
+# )
+# print(point)
+# print(quantiles)
 # input series: np.sin(np.arange(200, dtype=np.float32) / 10), horizon=3,
 # checkpoint=abel-lab/Simons-25M,
 # revision=main 0d0042f8da45140172bd36980be08654c0017d8b,
@@ -148,6 +165,35 @@ def test_simons_accepts_categorical_covariates():
     prediction = forecaster.predict(fh=[1, 5, 10], X=x_future)
     assert prediction.shape == (3,)
     assert prediction.index.equals(pd.Index([200, 204, 209]))
+
+
+def test_simons_numeric_categorical_covariates_share_codes(monkeypatch):
+    """Numeric labels use shared codes across fit and predict."""
+
+    class CovariateEchoModel:
+        def forecast(self, history, horizon, covariates):
+            future_codes = covariates[:, :1, -horizon:]
+            return future_codes.unsqueeze(-1).expand(-1, -1, -1, len(QUANTILES))
+
+    monkeypatch.setattr(
+        SimonsForecaster, "_load_model", lambda self: CovariateEchoModel()
+    )
+    y = _make_y()
+    x_history = pd.DataFrame(
+        {"category": pd.Categorical([1, 2] * 100)},
+        index=y.index,
+    )
+    x_future = pd.DataFrame(
+        {"category": pd.Categorical([2, 3])},
+        index=pd.RangeIndex(200, 202),
+    )
+    forecaster = SimonsForecaster().fit(y, X=x_history)
+
+    prediction = forecaster.predict(fh=[1, 2], X=x_future)
+
+    assert prediction.shape == (2,)
+    assert prediction.index.equals(pd.Index([200, 201]))
+    np.testing.assert_array_equal(prediction.to_numpy(), np.array([1.0, 2.0]))
 
 
 def test_simons_accepts_18_covariates_with_constants():
