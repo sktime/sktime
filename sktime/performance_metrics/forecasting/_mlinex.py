@@ -147,6 +147,7 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
         multioutput="uniform_average",
         multilevel="uniform_average",
         by_index=False,
+        sample_weight=None,
     ):
         self.a = a
         self.b = b
@@ -154,6 +155,7 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     @classmethod
