@@ -887,3 +887,143 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+def _lag_feature_names(var_names, window_length):
+    """Oldest lag first, matching the local sliding-window column order."""
+    return [
+        f"lag_{lag}__{var}" for var in var_names for lag in range(window_length, 0, -1)
+    ]
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput", "dirrec"])
+def test_make_reduction_pandas_input_sets_feature_names(strategy):
+    """Test input_type='pandas' keeps lag names on the wrapped estimator.
+
+    Covers the request in #8755: ``feature_names_in_`` is set when reduction
+    passes a DataFrame, and forecasts stay the same as the numpy input.
+    """
+    y = pd.Series(np.arange(40, dtype=float), name="passengers")
+    window_length = 5
+    fh = [1, 2, 3]
+    expected = _lag_feature_names(["passengers"], window_length)
+
+    numpy_forecaster = make_reduction(
+        LinearRegression(),
+        window_length=window_length,
+        strategy=strategy,
+        input_type="numpy",
+    )
+    pandas_forecaster = make_reduction(
+        LinearRegression(),
+        window_length=window_length,
+        strategy=strategy,
+        input_type="pandas",
+    )
+    numpy_forecaster.fit(y, fh=fh)
+    pandas_forecaster.fit(y, fh=fh)
+
+    y_numpy = numpy_forecaster.predict(fh=fh)
+    y_pandas = pandas_forecaster.predict(fh=fh)
+    np.testing.assert_allclose(
+        np.asarray(y_numpy, dtype=float), np.asarray(y_pandas, dtype=float)
+    )
+
+    if strategy in ("direct", "dirrec"):
+        fitted = pandas_forecaster.estimators_
+        numpy_fitted = numpy_forecaster.estimators_
+    else:
+        fitted = [pandas_forecaster.estimator_]
+        numpy_fitted = [numpy_forecaster.estimator_]
+
+    assert list(fitted[0].feature_names_in_) == expected
+    for estimator in fitted:
+        assert len(estimator.feature_names_in_) == estimator.n_features_in_
+    for estimator in numpy_fitted:
+        assert not hasattr(estimator, "feature_names_in_")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("strategy", ["recursive", "direct", "multioutput"])
+def test_make_reduction_pandas_input_names_exogenous_columns(strategy):
+    """Test lag names cover endogenous and exogenous columns."""
+    y = pd.Series(np.linspace(0, 10, 36), name="y")
+    X = pd.DataFrame(
+        {"temp": np.linspace(0, 1, 36), "hum": np.linspace(1, 0, 36)},
+        index=y.index,
+    )
+    window_length = 4
+    fh = [1, 2]
+    X_future = X.iloc[:2]
+
+    numpy_forecaster = make_reduction(
+        LinearRegression(),
+        window_length=window_length,
+        strategy=strategy,
+        input_type="numpy",
+    )
+    pandas_forecaster = make_reduction(
+        LinearRegression(),
+        window_length=window_length,
+        strategy=strategy,
+        input_type="pandas",
+    )
+    numpy_forecaster.fit(y, X=X, fh=fh)
+    pandas_forecaster.fit(y, X=X, fh=fh)
+    y_numpy = numpy_forecaster.predict(fh=fh, X=X_future)
+    y_pandas = pandas_forecaster.predict(fh=fh, X=X_future)
+    np.testing.assert_allclose(
+        np.asarray(y_numpy, dtype=float), np.asarray(y_pandas, dtype=float)
+    )
+
+    estimator = (
+        pandas_forecaster.estimators_[0]
+        if strategy == "direct"
+        else pandas_forecaster.estimator_
+    )
+    assert list(estimator.feature_names_in_) == _lag_feature_names(
+        ["y", "temp", "hum"], window_length
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_make_reduction_pandas_input_keeps_global_transformer_names():
+    """Test global pooling keeps WindowSummarizer column names."""
+    from sktime.transformations.summarize import WindowSummarizer
+
+    y = pd.Series(np.arange(30, dtype=float), name="passengers")
+    forecaster = make_reduction(
+        LinearRegression(),
+        strategy="recursive",
+        pooling="global",
+        window_length=None,
+        transformers=[WindowSummarizer(lag_feature={"lag": [1, 2]}, n_jobs=1)],
+        input_type="pandas",
+    )
+    forecaster.fit(y, fh=[1, 2])
+    assert list(forecaster.estimator_.feature_names_in_) == [
+        "passengers_lag_1",
+        "passengers_lag_2",
+    ]
+    y_pred = forecaster.predict(fh=[1, 2])
+    assert len(y_pred) == 2
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_make_reduction_rejects_unknown_input_type():
+    """Test input_type is limited to numpy and pandas."""
+    with pytest.raises(ValueError, match="input_type"):
+        make_reduction(LinearRegression(), input_type="series")
