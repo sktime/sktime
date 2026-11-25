@@ -394,8 +394,17 @@ def _calendar_dummies(x, funcs):
             (x["date_sequence"] - quarter_start) / pd.to_timedelta("1D") + 1
         ).astype(int)
         cd = values
-    elif funcs == "hour_of_week":
-        cd = date_sequence.day_of_week * 24 + date_sequence.hour
+    elif funcs in ("hour", "hour_of_week"):
+        utc_sequence = (
+            date_sequence.tz_convert("UTC").dt
+            if date_sequence.tz is not None
+            else date_sequence
+        )
+        cd = (
+            utc_sequence.day_of_week * 24 + utc_sequence.hour
+            if funcs == "hour_of_week"
+            else utc_sequence.hour
+        )
     elif funcs == "is_weekend":
         cd = date_sequence.day_of_week > 4
     else:
