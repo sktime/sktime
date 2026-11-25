@@ -335,3 +335,33 @@ def test_polynomial_trend_predict_interval_long_series():
 
     pred_int = forecaster.predict_interval(fh=fh, coverage=0.9)
     assert np.all(np.isfinite(pred_int.to_numpy()))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("index_type", ["range", "period"])
+def test_polynomial_trend_predict_var_after_update(index_type):
+    """Variance after update is computed at the same time points as predict."""
+    n = 40
+    rng = np.random.default_rng(0)
+    y = pd.Series(np.arange(n, dtype=float) + rng.normal(size=n))
+    if index_type == "period":
+        y.index = pd.period_range("2000-01", periods=n, freq="M")
+
+    updated = PolynomialTrendForecaster(degree=1, prediction_intervals=True)
+    updated.fit(y.iloc[:30])
+    updated.update(y.iloc[30:], update_params=False)
+
+    # same fitted model, asked for the same time points from the fit cutoff
+    fresh = PolynomialTrendForecaster(degree=1, prediction_intervals=True)
+    fresh.fit(y.iloc[:30])
+
+    pd.testing.assert_frame_equal(
+        updated.predict_var(fh=[1, 10]), fresh.predict_var(fh=[11, 20])
+    )
+    pd.testing.assert_frame_equal(
+        updated.predict_interval(fh=[1, 10], coverage=0.9),
+        fresh.predict_interval(fh=[11, 20], coverage=0.9),
+    )
