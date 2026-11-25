@@ -306,3 +306,49 @@ def test_fit_transform_datetime_daily_idx_panel_multiple_starts_output(
         index=df_datetime_daily_idx_panel.index,
     )
     assert_frame_equal(Xt, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_fit_transform_scalar_start(
+    df_datetime_monthly_idx, df_period_monthly_idx, df_int_idx
+):
+    """Test TimeSince with scalar start values (#11944)."""
+    # 1. str on DatetimeIndex
+    ts_str_dt = TimeSince(start="2000-01-01")
+    Xt_str_dt = ts_str_dt.fit_transform(df_datetime_monthly_idx)
+    expected_dt = pd.DataFrame(
+        data={"time_since_2000-01-01 00:00:00": [0, 1, 2, 3, 4]},
+        index=df_datetime_monthly_idx.index,
+    )
+    assert_frame_equal(Xt_str_dt, expected_dt)
+
+    # 2. Timestamp on DatetimeIndex
+    ts_ts_dt = TimeSince(start=pd.Timestamp("2000-01-01"))
+    Xt_ts_dt = ts_ts_dt.fit_transform(df_datetime_monthly_idx)
+    assert_frame_equal(Xt_ts_dt, expected_dt)
+
+    # 3. str on PeriodIndex
+    ts_str_p = TimeSince(start="2000-01")
+    Xt_str_p = ts_str_p.fit_transform(df_period_monthly_idx)
+    expected_p = pd.DataFrame(
+        data={"time_since_2000-01": [0, 1, 2, 3, 4]},
+        index=df_period_monthly_idx.index,
+    )
+    assert_frame_equal(Xt_str_p, expected_p)
+
+    # 4. Period on PeriodIndex
+    ts_p = TimeSince(start=pd.Period("2000-01", freq="M"))
+    Xt_p = ts_p.fit_transform(df_period_monthly_idx)
+    assert_frame_equal(Xt_p, expected_p)
+
+    # 5. int on integer index
+    ts_int = TimeSince(start=1)
+    Xt_int = ts_int.fit_transform(df_int_idx)
+    expected_int = pd.DataFrame(
+        data={"time_since_1": [0, 1, 2, 4, 8]},
+        index=df_int_idx.index,
+    )
+    assert_frame_equal(Xt_int, expected_int)
