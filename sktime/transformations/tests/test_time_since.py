@@ -306,3 +306,28 @@ def test_fit_transform_datetime_daily_idx_panel_multiple_starts_output(
         index=df_datetime_daily_idx_panel.index,
     )
     assert_frame_equal(Xt, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("start", ["2000-02-01", pd.Timestamp("2000-02-01")])
+def test_fit_transform_scalar_start(df_datetime_monthly_idx, start):
+    """Tests that a single start time gives the same output as a list of one."""
+    Xt = TimeSince(start=start).fit_transform(df_datetime_monthly_idx)
+    expected = TimeSince(start=[start]).fit_transform(df_datetime_monthly_idx)
+    assert_frame_equal(Xt, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeSince),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_fit_transform_scalar_int_start(df_int_idx):
+    """Tests that a single integer start is accepted with an integer index."""
+    Xt = TimeSince(start=2).fit_transform(df_int_idx)
+    expected = pd.DataFrame(
+        data={"time_since_2": [-1, 0, 1, 3, 7]}, index=df_int_idx.index
+    )
+    assert_frame_equal(Xt, expected)
