@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes import convert_to, scitype
+from sktime.datatypes._series_as_panel._polars import convert_polars, is_polars_frame
 
 
 def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
@@ -46,6 +47,11 @@ def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
         this is done by possibly converting to pd.DataFrame, and adding a list nesting
     if obj was np.ndarray, returns a panel of mtype numpy3D, by adding one axis at end
     """
+    if is_polars_frame(obj):
+        return convert_polars(obj, "Series", "Panel", return_to_mtype=return_to_mtype)
+
+    obj_mtype = None
+
     if isinstance(obj, pd.Series):
         obj = pd.DataFrame(obj)
 
@@ -71,6 +77,13 @@ def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
             obj_mtype = "numpy3D"
         else:
             raise ValueError("if obj is np.ndarray, must be of dim 1 or 2")
+
+    if return_to_mtype and obj_mtype is None:
+        raise TypeError(
+            "obj must be of mtype pd.Series, pd.DataFrame, np.ndarray, "
+            "or pl.DataFrame, "
+            f"but found type {type(obj)}"
+        )
 
     if return_to_mtype:
         return obj, obj_mtype
@@ -100,6 +113,11 @@ def convert_Panel_to_Series(obj, store=None, return_to_mtype=False):
     if obj df-list or pd-multiindex, returns a series of type pd.DataFrame
     if obj was numpy3D, returns a panel mtype np.ndarray
     """
+    if is_polars_frame(obj):
+        return convert_polars(obj, "Panel", "Series", return_to_mtype=return_to_mtype)
+
+    obj_mtype = None
+
     if isinstance(obj, list):
         if len(obj) == 1:
             if return_to_mtype:
@@ -122,6 +140,12 @@ def convert_Panel_to_Series(obj, store=None, return_to_mtype=False):
         obj = np.reshape(obj, (obj.shape[1], obj.shape[2]))
         obj = np.swapaxes(obj, 0, 1)
         obj_mtype = "np.ndarray"
+
+    if return_to_mtype and obj_mtype is None:
+        raise TypeError(
+            "obj must be of mtype df-list, pd-multiindex, numpy3D, or polars_panel, "
+            f"but found type {type(obj)}"
+        )
 
     if return_to_mtype:
         return obj, obj_mtype
@@ -150,6 +174,11 @@ def convert_Series_to_Hierarchical(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd_multiindex_hier
     """
+    if is_polars_frame(obj):
+        return convert_polars(
+            obj, "Series", "Hierarchical", return_to_mtype=return_to_mtype
+        )
+
     obj_df = convert_to(obj, to_type="pd.DataFrame", as_scitype="Series")
     obj_df = obj_df.copy()
     obj_df["__level1"] = 0
@@ -184,6 +213,11 @@ def convert_Hierarchical_to_Series(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd.DataFrame, of scitype Series
     """
+    if is_polars_frame(obj):
+        return convert_polars(
+            obj, "Hierarchical", "Series", return_to_mtype=return_to_mtype
+        )
+
     obj_df = convert_to(obj, to_type="pd_multiindex_hier", as_scitype="Hierarchical")
     obj_df = obj_df.copy()
     obj_df.index = obj_df.index.get_level_values(-1)
@@ -215,6 +249,11 @@ def convert_Panel_to_Hierarchical(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd_multiindex_hier
     """
+    if is_polars_frame(obj):
+        return convert_polars(
+            obj, "Panel", "Hierarchical", return_to_mtype=return_to_mtype
+        )
+
     obj_df = convert_to(obj, to_type="pd-multiindex", as_scitype="Panel")
     obj_df = obj_df.copy()
     obj_df["__level2"] = 0
@@ -248,6 +287,11 @@ def convert_Hierarchical_to_Panel(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd-multiindex, of scitype Panel
     """
+    if is_polars_frame(obj):
+        return convert_polars(
+            obj, "Hierarchical", "Panel", return_to_mtype=return_to_mtype
+        )
+
     obj_df = convert_to(obj, to_type="pd_multiindex_hier", as_scitype="Hierarchical")
     obj_df = obj_df.copy()
     # keep the last two levels (instance and time), drop all higher levels
