@@ -53,11 +53,13 @@ def _check_scores(metrics) -> dict:
     ------
     metrics_type : Dict
         The key is metric types and its value is a list of its corresponding metrics.
+        Metrics whose result columns would clash, for instance two instances of
+        the same metric class, are copies renamed by ``_make_names_unique``.
     """
     if not isinstance(metrics, list):
         metrics = [metrics]
 
-    metrics_type = {}
+    scitypes_and_metrics = []
     for metric in metrics:
         metric = check_scoring(metric)
         # collect predict type
@@ -67,11 +69,64 @@ def _check_scores(metrics) -> dict:
             )
         else:  # If no scitype exists then metric is a point forecast type
             scitype = "pred"
+        scitypes_and_metrics.append((scitype, metric))
+
+    scitypes_and_metrics = _make_names_unique(scitypes_and_metrics)
+
+    metrics_type = {}
+    for scitype, metric in scitypes_and_metrics:
         if scitype not in metrics_type.keys():
             metrics_type[scitype] = [metric]
         else:
             metrics_type[scitype].append(metric)
     return metrics_type
+
+
+def _make_names_unique(scitypes_and_metrics):
+    """Rename metrics that would write to the same result column in ``evaluate``.
+
+    Result columns are keyed by metric ``name``, and by the prediction argument
+    for probabilistic metrics, for instance ``alpha``. Two metrics with the
+    same key, for instance ``MeanSquaredError()`` and
+    ``MeanSquaredError(square_root=True)``, would write to the same column,
+    and all but the last score would be lost.
+
+    The first metric with a given key keeps its name. Further metrics with the
+    same key are replaced by a copy, named ``f"{name}_{k}"``, with ``k`` the
+    smallest integer from 2 on that gives an unused name. The metrics passed
+    are not mutated.
+
+    Parameters
+    ----------
+    scitypes_and_metrics : list of tuple (str, metric)
+        Prediction scitype and metric, in the order passed by the user.
+
+    Returns
+    -------
+    list of tuple (str, metric)
+        Same as ``scitypes_and_metrics``, with metrics renamed where needed.
+    """
+
+    def _key(scitype, name, metric):
+        pred_args = _get_pred_args_from_metric(scitype, metric)
+        return scitype, name, repr(pred_args)
+
+    used_keys = set()
+    used_names = {metric.name for _, metric in scitypes_and_metrics}
+    result = []
+    for scitype, metric in scitypes_and_metrics:
+        name = metric.name
+        if _key(scitype, name, metric) in used_keys:
+            k = 2
+            while f"{name}_{k}" in used_names:
+                k += 1
+            name = f"{name}_{k}"
+            metric = metric.clone() if hasattr(metric, "clone") else deepcopy(metric)
+            metric.name = name
+            used_names.add(name)
+        used_keys.add(_key(scitype, name, metric))
+        result.append((scitype, metric))
+    return result
 
 
 def _get_column_order_and_datatype(
@@ -658,7 +713,10 @@ def evaluate(
 
         - test_{scoring.name}: (float) Model performance score. If ``scoring`` is a
         list,
-        then there is a column withname ``test_{scoring.name}`` for each scorer.
+        then there is a column with name ``test_{scoring.name}`` for each scorer.
+        If several scorers have the same name, for instance two instances of the
+        same metric class, the second gets the column ``test_{scoring.name}_2``,
+        the third ``test_{scoring.name}_3``, and so on.
 
         - fit_time: (float) Time in sec for ``fit`` or ``update`` on train fold.
         - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
