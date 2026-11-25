@@ -1,6 +1,9 @@
 """Module for splitters."""
 
 __all__ = [
+    "SlidingWindowResampler",
+    "ExpandingWindowResampler",
+    "ResamplerToSplitter",
     "CutoffSplitter",
     "CutoffFhSplitter",
     "ExpandingCutoffSplitter",
@@ -28,6 +31,11 @@ from sktime.split.expandingslidingwindow import ExpandingSlidingWindowSplitter
 from sktime.split.expandingwindow import ExpandingWindowSplitter
 from sktime.split.fh import ForecastingHorizonSplitter
 from sktime.split.instance import InstanceSplitter
+from sktime.split.resample import (
+    ExpandingWindowResampler,
+    ResamplerToSplitter,
+    SlidingWindowResampler,
+)
 from sktime.split.sameloc import SameLocSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 from sktime.split.slidinggreedy import SlidingGreedySplitter

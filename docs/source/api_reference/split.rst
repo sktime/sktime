@@ -34,6 +34,25 @@ see :ref:`forecasting API reference <forecasting_ref>`.
     temporal_train_test_split
 
 
+Single-window resampling
+------------------------
+
+Single-window resamplers have tag ``split:arity=1``. Their ``split``,
+``split_loc`` and ``split_series`` methods yield one array, index or data
+container per iteration, respectively. Existing train/test splitters retain
+``split:arity=2`` and yield tuples. Use ``ResamplerToSplitter`` to add a
+forecasting horizon before passing a resampler to forecasting evaluation.
+
+.. currentmodule:: sktime.split
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    resample.SlidingWindowResampler
+    resample.ExpandingWindowResampler
+    resample.ResamplerToSplitter
+
 Time index splitters
 --------------------
 

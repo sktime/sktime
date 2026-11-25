@@ -3154,6 +3154,23 @@ class inner_implements_multilevel(_BaseTag):
 # ---------
 
 
+class split_arity(_BaseTag):
+    """Number of folds yielded per iteration by the splitting interface.
+
+    Single-window resamplers use 1 and return one array, index or series.
+    Train/test splitters use 2 and return a tuple. Higher arities return a tuple
+    of the indicated length. The default is 2 for backwards compatibility.
+    """
+
+    _tags = {
+        "tag_name": "split:arity",
+        "parent_type": "splitter",
+        "tag_type": "int",
+        "short_descr": "number of folds returned per splitting iteration",
+        "user_facing": True,
+    }
+
+
 class split_series_uses(_BaseTag):
     """Whether split_series dispatches to integer- or label-based location splitting.
 

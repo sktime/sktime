@@ -169,6 +169,12 @@ def check_cv(cv, enforce_start_with_window=False):
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
 
+    if cv.get_tag("split:arity", 2) != 2:
+        raise ValueError(
+            "Cross-validation requires a train/test splitter (split:arity=2). "
+            "Use ResamplerToSplitter to add a forecasting horizon to a resampler."
+        )
+
     if enforce_start_with_window:
         if hasattr(cv, "start_with_window") and not cv.start_with_window:
             raise ValueError("`start_with_window` must be set to True")

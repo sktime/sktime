@@ -109,6 +109,8 @@ class SyncToLongest(BaseSplitter):
     def __init__(self, base_cv: BaseSplitter, min_length: int | None = None) -> None:
         self.base_cv = base_cv
         self.min_length = min_length
+        if base_cv.get_tag("split:arity", 2) != 2:
+            raise ValueError("SyncToLongest requires a train/test splitter.")
 
         super().__init__()
 
