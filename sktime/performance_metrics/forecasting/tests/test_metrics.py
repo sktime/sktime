@@ -159,6 +159,41 @@ def test_make_scorer():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_make_scorer_additional_params():
+    """Test make_forecasting_scorer with additional parameters, issue #4834.
+
+    Additional keyword arguments should be exposed as __init__ parameters
+    of the returned metric, be passed to the metric function on evaluation,
+    and work with get_params, set_params and clone.
+    """
+    from sklearn.metrics import mean_tweedie_deviance
+
+    from sktime.performance_metrics.forecasting import make_forecasting_scorer
+
+    y_true = pd.Series([1.0, 2.0, 3.0])
+    y_pred = pd.Series([1.0, 2.0, 4.0])
+
+    scorer = make_forecasting_scorer(mean_tweedie_deviance, name="mtd", power=1.5)
+
+    assert scorer.get_params()["power"] == 1.5
+
+    score = scorer.evaluate(y_true, y_pred)
+    expected = mean_tweedie_deviance(y_true, y_pred, power=1.5)
+    assert np.isclose(score, expected)
+
+    scorer.set_params(power=0.0)
+    score = scorer.evaluate(y_true, y_pred)
+    expected = mean_tweedie_deviance(y_true, y_pred, power=0.0)
+    assert np.isclose(score, expected)
+
+    cloned = scorer.clone()
+    assert cloned.get_params()["power"] == 0.0
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_make_scorer_sklearn():
     """Test make_forecasting_scorer and the failure case in #5715.
 
