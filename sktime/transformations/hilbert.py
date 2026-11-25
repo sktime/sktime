@@ -109,6 +109,18 @@ class HilbertTransformer(BaseTransformer):
         df = pd.DataFrame(X) if was_series else X
         n = len(df)
 
+        if n == 0:
+            if self.output_type == "all":
+                cols = []
+                for col in df.columns:
+                    cols.extend(
+                        [f"{col}_envelope", f"{col}_phase", f"{col}_frequency"]
+                    )
+                return pd.DataFrame(columns=cols, index=df.index)
+            if was_series:
+                return pd.Series([], dtype=float, index=X.index, name=X.name)
+            return pd.DataFrame(columns=df.columns, index=df.index)
+
         if self.N is not None and self.N < n:
             raise ValueError(
                 f"`N` ({self.N}) must be greater than or equal to signal length ({n})."
@@ -128,6 +140,11 @@ class HilbertTransformer(BaseTransformer):
             if self.unwrap_phase:
                 phase = np.unwrap(phase)
 
+            if n < 2:
+                freq = np.zeros_like(phase, dtype=float)
+            else:
+                freq = np.gradient(phase) * self.fs / (2 * np.pi)
+
             if self.output_type == "envelope":
                 result[col] = envelope
             elif self.output_type == "quadrature":
@@ -135,9 +152,8 @@ class HilbertTransformer(BaseTransformer):
             elif self.output_type == "phase":
                 result[col] = phase
             elif self.output_type == "frequency":
-                result[col] = np.gradient(phase) * self.fs / (2 * np.pi)
+                result[col] = freq
             elif self.output_type == "all":
-                freq = np.gradient(phase) * self.fs / (2 * np.pi)
                 result[f"{col}_envelope"] = envelope
                 result[f"{col}_phase"] = phase
                 result[f"{col}_frequency"] = freq
