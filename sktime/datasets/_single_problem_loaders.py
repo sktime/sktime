@@ -864,7 +864,9 @@ def load_longley(y_name="TOTEMP"):
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
     data = data.set_index("YEAR")
-    data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
+    data.index = pd.PeriodIndex(
+        data.index.astype(str), freq="Y", name="Period"
+    )
     data = data.astype(float)
 
     # Get target series
