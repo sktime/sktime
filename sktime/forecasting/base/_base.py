@@ -430,6 +430,8 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
         # task-specific fitted state while retaining pretrained state
         if not self._state == "pretrained":
             self._reset_at("pretrained")
+        else:
+            self._detach_pretrained_state()
 
         # check and convert X/y
         X_inner, y_inner, X_schema, y_schema = self._check_X_y(X=X, y=y)
