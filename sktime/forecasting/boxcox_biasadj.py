@@ -52,7 +52,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()
     >>> # Define the forecasting horizon
-    >>> fh = [1, 2, 3]
+    >>> fh = 3
     >>> # wrap a forecaster with Box-Cox bias adjustment
     >>> forecaster = BoxCoxBiasAdjustedForecaster(NaiveForecaster())
     >>> forecaster.fit(y, fh=fh)
@@ -72,6 +72,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         "authors": "sanskarmodi8",
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:pred_int": True,
         # CI and test flags
         # -----------------

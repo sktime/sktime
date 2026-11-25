@@ -691,7 +691,7 @@ def evaluate(
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_airline()[:24]
     >>> forecaster = NaiveForecaster(strategy="mean", sp=3)
-    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
+    >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=3)
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
     To do global evaluation, provide ``cv_global`` and use forecasters supporting

@@ -121,10 +121,11 @@ class VARReduce(BaseForecaster):
     >>> forecaster = VARReduce(regressor=Lasso())  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     VARReduce(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
+        "category": ["reduction"],
         "capability:multivariate": True,
         "authors": ["meraldoantonio"],
         "y_inner_mtype": "pd.DataFrame",
