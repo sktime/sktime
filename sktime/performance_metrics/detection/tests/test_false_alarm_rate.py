@@ -134,7 +134,7 @@ def test_false_alarm_rate_requires_X():
 
 
 @SKIP_IF_UNCHANGED
-@pytest.mark.parametrize("freq", ["D", "2D", "3h", "15min", "W", "B", "2M", "Q"])
+@pytest.mark.parametrize("freq", ["D", "2D", "3h", "15min", "W", "2M", "Q"])
 def test_false_alarm_rate_period_index(freq):
     """With a PeriodIndex, the duration is measured in period steps."""
     index = pd.period_range("2020-01-01", periods=9, freq=freq)

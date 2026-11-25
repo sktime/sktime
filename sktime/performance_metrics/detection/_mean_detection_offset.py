@@ -45,9 +45,11 @@ class MeanDetectionOffset(BaseDetectionMetric):
 
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
     and are mapped through ``X.index`` before matching, so ``X`` is required.
-    If ``X`` has a time index, the offsets are time offsets, for instance
-    ``pd.Timedelta("-3s")``, and the score is returned as a number of
-    ``time_unit``. Otherwise all values are in the units of ``X.index``.
+    If ``X`` has a time index (a ``pd.DatetimeIndex``), the offsets are time
+    offsets, for instance ``pd.Timedelta("-3s")``, and the score is returned as
+    a number of ``time_unit``. With a ``pd.PeriodIndex``, values and offsets are
+    in period steps, and ``time_unit`` is ignored. Otherwise all values are in
+    the units of ``X.index``, and ``time_unit`` is ignored.
 
     Only point events are scored, so interval ``ilocs`` (segments) in
     ``y_true`` or ``y_pred`` raise a ``ValueError``.
@@ -69,9 +71,10 @@ class MeanDetectionOffset(BaseDetectionMetric):
         means that alarms after the event do not count.
         Same unit as ``min_offset``. NaN raises a ``ValueError``.
     time_unit : str, default="s"
-        Unit of the returned score, if ``X`` has a time index.
-        Any unit accepted by ``pd.Timedelta``, for instance ``"s"``, ``"ms"``,
-        ``"min"``, or ``"h"``. Ignored if ``X`` does not have a time index.
+        Unit of the returned score, if ``X`` has a time index
+        (``pd.DatetimeIndex``). Any unit accepted by ``pd.Timedelta``, for
+        instance ``"s"``, ``"ms"``, ``"min"``, or ``"h"``. Ignored if ``X``
+        does not have a time index or has a ``pd.PeriodIndex``.
 
     Examples
     --------
