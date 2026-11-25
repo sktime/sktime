@@ -186,6 +186,40 @@ def test_recursive_reduction(y, index_names, y_dict):
     check_eval(y_pred.index.names, index_names)
 
 
+@pytest.mark.parametrize("strategy", ["recursive", "direct"])
+@pytest.mark.parametrize("panel", [False, True])
+def test_global_default_summarizer_uses_direct_lags(strategy, panel):
+    """Direct lag extraction preserves global reducer forecasts."""
+    from sktime.forecasting.compose import make_reduction
+
+    rng = np.random.default_rng(0)
+    if panel:
+        index = pd.MultiIndex.from_product(
+            [range(4), range(30)], names=["instance", "time"]
+        )
+    else:
+        index = pd.RangeIndex(30, name="time")
+    y = pd.DataFrame({"y": rng.normal(size=len(index))}, index=index)
+
+    optimized = make_reduction(
+        LinearRegression(), strategy=strategy, pooling="global", window_length=4
+    ).fit(y, fh=[1, 2, 3, 4])
+    reference = make_reduction(
+        LinearRegression(), strategy=strategy, pooling="global", window_length=4
+    ).fit(y, fh=[1, 2, 3, 4])
+
+    assert optimized._prefit_window_summarizer_
+    assert optimized.transformers_[0].is_fitted
+
+    # Exercise the previous fit_transform-per-window path as a reference.
+    reference._prefit_window_summarizer_ = False
+    pd.testing.assert_frame_equal(
+        optimized.predict(fh=[1, 2, 3, 4]),
+        reference.predict(fh=[1, 2, 3, 4]),
+        check_exact=True,
+    )
+
+
 @pytest.mark.skipif(
     not run_test_for_class(_DirectReducer),
     reason="run test only if softdeps are present and incrementally (if requested)",
