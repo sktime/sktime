@@ -186,6 +186,7 @@ class TimerS1Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timer_s1"],
+        "tests:specific": ["sktime.forecasting.tests.test_timer_s1"],
     }
 
     def __init__(
@@ -639,5 +640,8 @@ class _CachedTimerS1:
         model = model.to(self.device_map)
         if self.dtype is not None:
             model = model.to(dtype=self.dtype)
+        # from_pretrained returns a model in eval mode, a fresh one is in
+        # training mode, which would leave dropout active in predict
+        model.eval()
 
         return model
