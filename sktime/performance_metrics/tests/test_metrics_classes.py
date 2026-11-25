@@ -101,3 +101,60 @@ def test_custom_metric(greater_is_better):
     assert isinstance(score, float)
 
     check_estimator(fc_scorer, raise_exceptions=True)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_metric_reordered_multiindex():
+    """Test forecasting metrics when y_true and y_pred have different index order.
+
+    Fixes issue #7779.
+    """
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.performance_metrics.forecasting import MeanAbsoluteError
+
+    # Series 1 ends at 4 -> forecast is 4
+    # Series 2 ends at 8 -> forecast is 8
+    past_dataset = pd.DataFrame(
+        {
+            "series_id": [1, 1, 1, 1, 2, 2, 2, 2],
+            "time_id": [0, 1, 2, 3, 0, 1, 2, 3],
+            "y": [1, 2, 3, 4, 5, 6, 7, 8],
+        }
+    ).set_index(["series_id", "time_id"])
+
+    # Future dataset has series_id ordered [2, 1] with asymmetric errors:
+    # Series 2 future values are 18 -> true error is |18 - 8| = 10.0
+    # Series 1 future values are 5  -> true error is |5 - 4| = 1.0
+    future_dataset = pd.DataFrame(
+        {"series_id": [2, 2, 1, 1], "time_id": [4, 5, 4, 5], "y": [18, 18, 5, 5]}
+    ).set_index(["series_id", "time_id"])
+
+    model = NaiveForecaster()
+    model.fit(y=past_dataset)
+    forecasts = model.predict(fh=[1, 2])
+
+    evaluation_metric = MeanAbsoluteError()
+    with pytest.warns(UserWarning, match="do not have the same row index order"):
+        metric_score = evaluation_metric(future_dataset, forecasts)
+
+    # Average error: (1.0 + 1.0 + 10.0 + 10.0) / 4 = 5.5
+    # (If misaligned, error would be (|18-4|*2 + |5-8|*2)/4 = 34/4 = 8.5)
+    assert np.isclose(metric_score, 5.5)
+
+    # Verify per-series level evaluation via multilevel='raw_values'
+    raw_metric = MeanAbsoluteError(multilevel="raw_values")
+    raw_scores = raw_metric(future_dataset, forecasts)
+    assert np.isclose(raw_scores.loc[1].iloc[0], 1.0)
+    assert np.isclose(raw_scores.loc[2].iloc[0], 10.0)
+
+    # Verify evaluate_by_index preserves instance-level alignment
+    by_index = raw_metric.evaluate_by_index(future_dataset, forecasts)
+    assert np.allclose(by_index.loc[1].values, 1.0)
+    assert np.allclose(by_index.loc[2].values, 10.0)
+
+    # Verify default evaluate_by_index averages over series at each timepoint
+    by_index_avg = evaluation_metric.evaluate_by_index(future_dataset, forecasts)
+    assert np.allclose(by_index_avg.values, 5.5)
