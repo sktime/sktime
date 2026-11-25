@@ -20,7 +20,7 @@ For instance, if a user has code
     from sktime.forecasting.foo import BarForecaster
 
     bar = BarForecaster(42, x=43)
-    bar.fit(y_train, fh=[1, 2, 3])
+    bar.fit(y_train, fh=3)
     y_pred = bar.predict()
 
 then no release of ``sktime`` should change, without warning:

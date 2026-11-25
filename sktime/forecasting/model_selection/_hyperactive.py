@@ -179,7 +179,7 @@ class ForecastingOptCV(_DelegatedForecaster):
     ...     NaiveForecaster(),
     ...     GridSearch(param_grid),
     ...     cv=ExpandingWindowSplitter(
-    ...         initial_window=12, step_length=3, fh=range(1, 13)
+    ...         initial_window=12, step_length=3, fh=12
     ...     ),
     ... )
 
@@ -189,7 +189,7 @@ class ForecastingOptCV(_DelegatedForecaster):
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
     >>>
-    >>> tuned_naive.fit(y_train, fh=range(1, 13))
+    >>> tuned_naive.fit(y_train, fh=12)
     ForecastingOptCV(...)
     >>> y_pred = tuned_naive.predict()
 
