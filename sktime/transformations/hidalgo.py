@@ -7,6 +7,7 @@ __all__ = ["Hidalgo"]
 from functools import reduce
 
 import numpy as np
+import pandas as pd
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.validation import check_random_state
 
@@ -60,6 +61,16 @@ class Hidalgo(BaseTransformer):
         parameters of zeta
     seed : int, optional, default = 1
         generate random numbers with seed
+
+    Notes
+    -----
+    Hidalgo is transductive: the manifold labels are computed from the data
+    the algorithm is run on.
+    ``transform(X)`` returns the labels for the data ``X`` that is passed to it,
+    with the same index as ``X``.
+    If ``X`` is the data seen in ``fit``, the labels computed in ``fit`` are
+    returned. Otherwise, the algorithm is run on ``X`` with the parameters
+    of the estimator, and the labels for ``X`` are returned.
 
     References
     ----------
@@ -568,6 +579,8 @@ class Hidalgo(BaseTransformer):
             assigned to manifold k if Pi > 0.8
         _Z : 1D np.ndarray of length N
             base-zero integer values corresponding to segment (manifold k)
+        _X_fit : 2D np.ndarray of shape (N, dim)
+            copy of the data seen in fit, used in transform to detect fit data
 
         Parameters
         ----------
@@ -646,6 +659,7 @@ class Hidalgo(BaseTransformer):
         pZ = np.max(Pi, axis=0)
         Z[np.where(pZ < 0.8)] = -1
         self._Z = Z
+        self._X_fit = X.to_numpy(copy=True)
 
         return self
 
@@ -664,9 +678,39 @@ class Hidalgo(BaseTransformer):
 
         Returns
         -------
-        transformed version of X
+        Z : 1D np.ndarray of length N, or pd.DataFrame of shape (N, 1)
+            base-zero integer values corresponding to segment (manifold k)
+            for the rows of X, with the same index as X.
+            If X is the data seen in fit, these are the labels computed in fit.
+            Otherwise, the algorithm is run on X with the parameters of self,
+            since labels are only defined for the data the algorithm is run on.
         """
-        return self._Z
+        if np.array_equal(X.to_numpy(), self._X_fit):
+            Z = self._Z.copy()
+        else:
+            Z = self.clone().fit(X)._Z
+
+        return self._labels_to_output(Z, X.index)
+
+    @staticmethod
+    def _labels_to_output(Z, index):
+        """Attach the index of the input to the labels.
+
+        Parameters
+        ----------
+        Z : 1D np.ndarray of length N
+            labels
+        index : pd.Index of length N
+            index of the data that was transformed
+
+        Returns
+        -------
+        Z itself if index is the default RangeIndex (nothing to preserve),
+        otherwise pd.DataFrame of shape (N, 1) with the given index.
+        """
+        if index.equals(pd.RangeIndex(len(Z))):
+            return Z
+        return pd.DataFrame(Z, index=index)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
