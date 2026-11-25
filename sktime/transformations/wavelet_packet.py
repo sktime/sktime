@@ -76,9 +76,15 @@ class WaveletPacketTransformer(BaseTransformer):
     def __dynamic_tags__(self):
         """Set dynamic output scitype based on output_feature."""
         if self.output_feature in ("energy", "entropy"):
-            self.set_tags(**{"scitype:transform-output": "Primitives"})
+            self.set_tags(**{
+                "scitype:transform-output": "Primitives",
+                "transform-returns-same-time-index": False,
+            })
         else:
-            self.set_tags(**{"scitype:transform-output": "Series"})
+            self.set_tags(**{
+                "scitype:transform-output": "Series",
+                "transform-returns-same-time-index": True,
+            })
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -139,7 +145,8 @@ class WaveletPacketTransformer(BaseTransformer):
                 concat_coeffs = np.concatenate(nodes)
                 result[col] = concat_coeffs[:n_orig]
 
-        out = pd.DataFrame(result)
+        idx = df.index if self.output_feature == "coefficients" else None
+        out = pd.DataFrame(result, index=idx)
 
         if self.output_feature == "coefficients" and was_series:
             return pd.Series(out.iloc[:, 0], index=X.index, name=X.name)
