@@ -110,6 +110,25 @@ def test_slope_performs_correctly_along_each_dim():
     assert check_if_dataframes_are_equal(res, orig)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SlopeTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_slope_preserves_instance_index():
+    """Test that instance labels of a hierarchical input are kept, see #7017."""
+    idx = pd.MultiIndex.from_product(
+        [["org"], ["a", "b"], range(6)], names=["org", "author", "time"]
+    )
+    X = pd.DataFrame({"values": [1, 2, 3, 3, 2, 1, 0, 0, 1, 1, 5, 9]}, index=idx)
+
+    Xt = SlopeTransformer(num_intervals=2).fit_transform(X)
+
+    expected = pd.MultiIndex.from_tuples(
+        [("org", "a"), ("org", "b")], names=["org", "author"]
+    )
+    assert Xt.index.droplevel(-1).unique().equals(expected)
+
+
 def convert_list_to_dataframe(list_to_convert):
     """Convert a Python list to a Pandas dataframe."""
     df = pd.DataFrame()
