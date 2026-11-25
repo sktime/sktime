@@ -367,7 +367,7 @@ class ForecastingHorizon:
         if is_relative is None:
             is_relative = self._is_relative
         if freq is None:
-            freq = self._freq
+            freq = getattr(self, "_freq", None)
         return type(self)(values=values, is_relative=is_relative, freq=freq)
 
     @property
