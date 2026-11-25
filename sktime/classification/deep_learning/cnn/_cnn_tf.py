@@ -205,10 +205,9 @@ class CNNClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         if self.metrics is None:
             metrics = ["accuracy"]

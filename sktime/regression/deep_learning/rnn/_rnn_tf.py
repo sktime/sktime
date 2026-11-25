@@ -68,7 +68,6 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
         "tests:skip_by_name": [
-            "test_fit_idempotent",
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
@@ -143,10 +142,9 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         -------
         output : a compiled Keras Model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         metrics = self.metrics if self.metrics is not None else ["accuracy"]
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)

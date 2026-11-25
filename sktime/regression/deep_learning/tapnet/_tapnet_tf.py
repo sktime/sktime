@@ -112,7 +112,6 @@ class TapNetRegressor(BaseDeepRegressor):
         # ----------------
         "tests:skip_all": True,  # stochastic failures, see #3525
         "tests:skip_by_name": [
-            "test_fit_idempotent",
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
             # deepcopy of a fitted instance loses model_, see #10712
@@ -228,10 +227,9 @@ class TapNetRegressor(BaseDeepRegressor):
         -------
         output: a compiled Keras model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         metrics = ["mean_squared_error"] if self.metrics is None else self.metrics
 

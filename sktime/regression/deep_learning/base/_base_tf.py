@@ -37,7 +37,7 @@ class BaseDeepRegressor(BaseRegressor):
         "X_inner_mtype": "numpy3D",
         "capability:multivariate": True,
         "python_dependencies": "tensorflow",
-        "property:randomness": "stochastic",
+        "property:randomness": "derandomized",
         "capability:random_state": True,
         # CI and test tags
         # ----------------
@@ -59,6 +59,18 @@ class BaseDeepRegressor(BaseRegressor):
         A compiled Keras Model
         """
         ...
+
+    def _set_seed(self):
+        """Seed python, numpy and tensorflow, if ``random_state`` is set.
+
+        ``tf.random.set_seed`` alone does not make keras 3 reproducible, since
+        layer initializers and the shuffling in ``fit`` also draw from python
+        and numpy randomness. ``keras.utils.set_random_seed`` seeds all of them.
+        """
+        if self.random_state is not None:
+            import tensorflow as tf
+
+            tf.keras.utils.set_random_seed(self.random_state)
 
     def _predict(self, X, **kwargs):
         """Find regression estimate for all cases in X.

@@ -92,7 +92,6 @@ class CNTCRegressor(BaseDeepRegressor):
         "tests:libs": ["sktime.networks.cntc._cntc_tf"],
         "tests:skip_by_name": [
             "test_class_has_doctest_example",
-            "test_fit_idempotent",  # fails with `AssertionError`, see #3616
             "test_persistence_via_pickle",  # fails with `AssertionError`, see #8059
             "test_save_estimators_to_file",
         ],
@@ -170,6 +169,8 @@ class CNTCRegressor(BaseDeepRegressor):
         output : a compiled Keras Model
         """
         from tensorflow import keras
+
+        self._set_seed()
 
         metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)

@@ -155,6 +155,8 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         """
         from tensorflow import keras
 
+        self._set_seed()
+
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(

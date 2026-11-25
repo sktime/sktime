@@ -67,7 +67,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         # packaging info
         # --------------
         "authors": ["mloning", "noxthot"],
-        "property:randomness": "stochastic",
         "capability:random_state": True,
         # estimator type handled by parent class
         # CI and test tags
@@ -75,7 +74,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         "tests:vm": True,
         "tests:libs": ["sktime.networks.rnn._rnn_tf"],
         "tests:skip_by_name": [
-            "test_fit_idempotent",
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
             "test_multioutput",  # see 6201
@@ -155,10 +153,9 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         metrics = self.metrics if self.metrics is not None else ["accuracy"]
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)

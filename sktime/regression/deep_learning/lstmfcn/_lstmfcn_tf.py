@@ -151,10 +151,9 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         -------
         output : a compiled Keras Model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         input_layers, output_layer = self._network.build_network(input_shape, **kwargs)
 

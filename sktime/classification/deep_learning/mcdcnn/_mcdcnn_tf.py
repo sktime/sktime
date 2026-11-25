@@ -94,7 +94,6 @@ class MCDCNNClassifier(BaseDeepClassifier):
             "test_persistence_via_pickle",
             "test_multioutput",
             "test_classifier_on_unit_test_data",
-            "test_fit_idempotent",  # due to randomness
             "test_get_test_params_coverage",
         ],
     }
@@ -181,10 +180,9 @@ class MCDCNNClassifier(BaseDeepClassifier):
         -------
         output : a compiled Keras Model
         """
-        import tensorflow as tf
         from tensorflow import keras
 
-        tf.random.set_seed(self.random_state)
+        self._set_seed()
 
         metrics = ["accuracy"] if self.metrics is None else self.metrics
 
