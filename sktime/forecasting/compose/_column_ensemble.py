@@ -6,6 +6,7 @@ __author__ = ["GuzalBulatova", "mloning", "fkiraly"]
 __all__ = ["ColumnEnsembleForecaster"]
 
 from sktime.base._meta import _ColumnEstimator
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
 
@@ -204,7 +205,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         self._cur_X = X
 
         for name, forecaster, index in forecasters:
-            forecaster_ = forecaster.clone()
+            forecaster_ = _clone_at(forecaster, "pretrained")
 
             pd_index = self._coerce_to_pd_index(index, self.y_columns)
 

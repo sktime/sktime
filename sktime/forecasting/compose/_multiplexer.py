@@ -3,6 +3,7 @@
 """Implements forecaster for selecting among different model classes."""
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -222,10 +223,12 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         if self.selected_forecaster is not None:
             for name, forecaster in self._get_estimator_tuples(self.forecasters):
                 if self.selected_forecaster == name:
-                    self.forecaster_ = forecaster.clone()
+                    self.forecaster_ = _clone_at(forecaster, "pretrained")
         else:
             # if None, simply clone the first forecaster to self.forecaster_
-            self.forecaster_ = self._get_estimator_list(self.forecasters)[0].clone()
+            self.forecaster_ = _clone_at(
+                self._get_estimator_list(self.forecasters)[0], "pretrained"
+            )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
