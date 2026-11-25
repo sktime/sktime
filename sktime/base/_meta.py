@@ -147,6 +147,38 @@ class _HeterogenousMetaEstimator:
         super().set_params(**params)
         return self
 
+    def _set_params_at(self, state, params):
+        """Set parameters, retaining state up to ``state``.
+
+        State-aware variant of ``set_params``. Mirrors ``_set_params`` so
+        heterogeneous step-name keys swap estimators (and nested
+        ``step__param`` keys still route to the replacement), then
+        delegates remaining keys to ``super()._set_params_at`` to keep
+        pretrained state. Composites without that method fall back to
+        ``set_params``.
+        """
+        # do not mutate the caller dict; tuners reuse candidate params
+        params = dict(params)
+        attr = self._steps_attr
+        # 1. All steps
+        if attr in params:
+            setattr(self, attr, params.pop(attr))
+        # 2. Step replacement
+        items = getattr(self, attr)
+        names = []
+        if items and isinstance(items, (list, tuple)):
+            names = list(zip(*items))[0]
+        for name in list(params.keys()):
+            if "__" not in name and name in names:
+                self._replace_estimator(attr, name, params.pop(name))
+        # 3. Step parameters and other initialisation arguments
+        super_set_params_at = getattr(super(), "_set_params_at", None)
+        if super_set_params_at is not None:
+            return super_set_params_at(state, params)
+        if params:
+            super().set_params(**params)
+        return self
+
     def _replace_estimator(self, attr, name, new_val):
         # assumes `name` is a valid estimator name
         new_estimators = list(getattr(self, attr))

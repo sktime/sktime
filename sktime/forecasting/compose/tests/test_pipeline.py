@@ -15,7 +15,9 @@ from sktime.datasets import load_airline, load_longley
 from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.compose import (
+    EnsembleForecaster,
     ForecastingPipeline,
+    MultiplexForecaster,
     TransformedTargetForecaster,
     YfromX,
     make_reduction,
@@ -852,3 +854,103 @@ def test_transformed_target_forecaster_predict_proba_dunder():
     quantiles = dist.quantile([0.1, 0.5, 0.9])
     assert not quantiles.isnull().any().any()
     assert quantiles.shape[0] == len(fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [TransformedTargetForecaster, NaiveForecaster, PolynomialTrendForecaster]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_set_params_at_replaces_named_step():
+    """``_set_params_at`` must swap heterogeneous steps by name, like ``set_params``.
+
+    The base ``_set_params_at`` only ``setattr``s then ``_reset_at`` / ``reset``,
+    which rebuilds from constructor params and drops the step-name attribute.
+    Regression for the tuner path that uses ``_set_params_at`` on pipelines.
+    """
+    pipe = TransformedTargetForecaster(
+        [("t", ExponentTransformer()), ("f", NaiveForecaster())]
+    )
+
+    pipe._set_params_at("pretrained", {"f": PolynomialTrendForecaster()})
+
+    assert isinstance(dict(pipe.steps)["f"], PolynomialTrendForecaster)
+    assert isinstance(dict(pipe.steps)["t"], ExponentTransformer)
+
+    # nested step__param keys still route to the replacement estimator
+    pipe._set_params_at("pretrained", {"f__degree": 2})
+    assert dict(pipe.steps)["f"].degree == 2
+
+
+def _set_params_at_parity_estimator(estimator_name):
+    """Return a small heterogeneous compose estimator for parity checks."""
+    if estimator_name == "ttf":
+        return TransformedTargetForecaster(
+            [("t", ExponentTransformer()), ("f", NaiveForecaster())]
+        )
+    if estimator_name == "ensemble":
+        return EnsembleForecaster(
+            [("trend", PolynomialTrendForecaster()), ("naive", NaiveForecaster())]
+        )
+    return MultiplexForecaster(
+        [
+            ("naive", NaiveForecaster()),
+            ("trend", PolynomialTrendForecaster()),
+        ]
+    )
+
+
+def _set_params_at_parity_params(estimator_name, params_kind):
+    """Return params for a nested, step-replacement, or selected-key case."""
+    if params_kind == "nested":
+        key = "f__strategy" if estimator_name == "ttf" else "naive__strategy"
+        return {key: "mean"}
+    if params_kind == "replace_step":
+        key = "f" if estimator_name == "ttf" else "naive"
+        return {key: PolynomialTrendForecaster()}
+    return {"selected_forecaster": "trend"}
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            TransformedTargetForecaster,
+            EnsembleForecaster,
+            MultiplexForecaster,
+            NaiveForecaster,
+            PolynomialTrendForecaster,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "estimator_name, params_kind",
+    [
+        ("ttf", "nested"),
+        ("ttf", "replace_step"),
+        ("ensemble", "nested"),
+        ("ensemble", "replace_step"),
+        ("multiplex", "nested"),
+        ("multiplex", "replace_step"),
+        ("multiplex", "selected"),
+    ],
+)
+def test_set_params_at_new_matches_set_params(estimator_name, params_kind):
+    """``_set_params_at("new", p)`` must match ``set_params(p)`` on deep params.
+
+    Whole-step replacement is included so a silently ignored step name
+    cannot pass. ``MultiplexForecaster`` is a ``_HeterogenousMetaEstimator``
+    with the same ``_set_params_at`` override, so the same parity holds.
+    """
+    estimator = _set_params_at_parity_estimator(estimator_name)
+    params = _set_params_at_parity_params(estimator_name, params_kind)
+
+    via_set_params = estimator.clone()
+    via_set_params.set_params(**params)
+    via_set_params_at = estimator.clone()
+    via_set_params_at._set_params_at("new", params)
+
+    assert via_set_params.get_params(deep=True) == via_set_params_at.get_params(
+        deep=True
+    )
