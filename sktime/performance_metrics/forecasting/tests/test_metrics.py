@@ -792,3 +792,46 @@ def test_default_evaluate_by_index_with_sample_weight():
 
     by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+def test_base_metric_optional_kwargs_none():
+    """Test that metrics handle y_train=None and y_pred_benchmark=None gracefully."""
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteError,
+        MeanAbsoluteScaledError,
+        MeanRelativeAbsoluteError,
+    )
+
+    y = pd.Series([1.0, 2.0, 3.0], index=pd.date_range("2020-01-01", periods=3))
+    y_train = pd.Series([1.0, 2.0, 3.0], index=pd.date_range("2019-12-29", periods=3))
+
+    mae = MeanAbsoluteError()
+    # Unneeded y_train=None or y_pred_benchmark=None should evaluate without error
+    assert mae(y, y, y_train=None) == 0.0
+    assert mae(y, y, y_pred_benchmark=None) == 0.0
+    assert len(mae.evaluate_by_index(y, y, y_train=None)) == 3
+    assert len(mae.evaluate_by_index(y, y, y_pred_benchmark=None)) == 3
+
+    # Scaled metric requires y_train: None or omission raises ValueError
+    mase = MeanAbsoluteScaledError()
+    with pytest.raises(ValueError, match="requires `y_train`"):
+        mase(y, y, y_train=None)
+    with pytest.raises(ValueError, match="requires `y_train`"):
+        mase(y, y)
+    assert mase(y, y, y_train=y_train) == 0.0
+
+    # Relative metric requires y_pred_benchmark: None or omission raises ValueError
+    mrae = MeanRelativeAbsoluteError()
+    with pytest.raises(ValueError, match="requires `y_pred_benchmark`"):
+        mrae(y, y, y_pred_benchmark=None)
+    with pytest.raises(ValueError, match="requires `y_pred_benchmark`"):
+        mrae(y, y)
+    assert mrae(y, y, y_pred_benchmark=y) == 0.0
+
+    # Hierarchical data
+    idx = pd.MultiIndex.from_tuples(
+        [("a", 0), ("a", 1), ("b", 0), ("b", 1)], names=["instances", "time"]
+    )
+    y_hier = pd.DataFrame({"val": [1.0, 2.0, 3.0, 4.0]}, index=idx)
+    assert mae(y_hier, y_hier, y_train=None) == 0.0
+    assert mae(y_hier, y_hier, y_pred_benchmark=None) == 0.0

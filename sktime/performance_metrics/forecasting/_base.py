@@ -656,7 +656,10 @@ class BaseForecastingErrorMetric(BaseMetric):
             for i in range(n):
                 idx = y_true.index[i]
                 kwargs_i = kwargs.copy()
-                if "y_pred_benchmark" in kwargs.keys():
+                if (
+                    "y_pred_benchmark" in kwargs.keys()
+                    and kwargs["y_pred_benchmark"] is not None
+                ):
                     kwargs_i["y_pred_benchmark"] = kwargs["y_pred_benchmark"].drop(idx)
                 # weights are per time point, so drop the i-th weight as well
                 for key in ("sample_weight", "horizon_weight"):
@@ -760,11 +763,42 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         y_true_inner, scitype = _coerce_to_df(y_true, var_name="y_true")
         y_pred_inner, _ = _coerce_to_df(y_pred, var_name="y_pred")
-        if "y_train" in kwargs.keys():
-            kwargs["y_train"], _ = _coerce_to_df(kwargs["y_train"], var_name="y_train")
-        if "y_pred_benchmark" in kwargs.keys():
-            kwargs["y_pred_benchmark"], _ = _coerce_to_df(
-                kwargs["y_pred_benchmark"], var_name="y_pred_benchmark"
+        requires_y_train = self.get_tag("requires-y-train", False)
+        if "y_train" in kwargs:
+            if kwargs["y_train"] is not None:
+                kwargs["y_train"], _ = _coerce_to_df(
+                    kwargs["y_train"], var_name="y_train"
+                )
+            elif requires_y_train:
+                raise ValueError(
+                    f"{self.__class__.__name__} requires `y_train`, "
+                    "but `y_train` was None."
+                )
+            else:
+                del kwargs["y_train"]
+        elif requires_y_train:
+            raise ValueError(
+                f"{self.__class__.__name__} requires `y_train`, "
+                "but `y_train` was not provided."
+            )
+
+        requires_y_pred_benchmark = self.get_tag("requires-y-pred-benchmark", False)
+        if "y_pred_benchmark" in kwargs:
+            if kwargs["y_pred_benchmark"] is not None:
+                kwargs["y_pred_benchmark"], _ = _coerce_to_df(
+                    kwargs["y_pred_benchmark"], var_name="y_pred_benchmark"
+                )
+            elif requires_y_pred_benchmark:
+                raise ValueError(
+                    f"{self.__class__.__name__} requires `y_pred_benchmark`, "
+                    "but `y_pred_benchmark` was None."
+                )
+            else:
+                del kwargs["y_pred_benchmark"]
+        elif requires_y_pred_benchmark:
+            raise ValueError(
+                f"{self.__class__.__name__} requires `y_pred_benchmark`, "
+                "but `y_pred_benchmark` was not provided."
             )
 
         y_true_inner, y_pred_inner, multioutput, multilevel = (
@@ -778,7 +812,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_true_schema = VectorizedDF(y_true_inner, is_scitype=scitype)
             y_pred_schema = VectorizedDF(y_pred_inner, is_scitype=scitype)
             for k in ("y_train", "y_pred_benchmark"):
-                if k in kwargs:
+                if k in kwargs and kwargs[k] is not None:
                     kwargs[k] = (
                         kwargs[k],
                         VectorizedDF(kwargs[k], is_scitype=scitype),
