@@ -432,8 +432,29 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Training data to update model with (time series).
-        y : pd.Series, optional
-            Ground truth labels for training if detector is supervised.
+        y : pd.DataFrame with RangeIndex, optional.
+            Known events for updating, in ``X``, if detector is supervised.
+
+            Each row of ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges to indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place,
+              relative to the passed batch ``X``.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place, relative to the batch ``X``.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
@@ -452,10 +473,53 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         if self.get_tag("fit_is_empty", False):
             return self
 
-        self._X = X_inner.combine_first(self._X)
+        X_pooled = X_inner.combine_first(self._X)
+
+        def _remap_ilocs(y_df, index_map):
+            if y_df is None or "ilocs" not in y_df.columns or len(y_df) == 0:
+                return y_df
+            y_mapped = y_df.copy()
+            first_iloc = y_mapped["ilocs"].iloc[0]
+            if hasattr(first_iloc, "left"):
+
+                def _shift_interval(iv):
+                    new_left = int(index_map[iv.left])
+                    if iv.closed in ("left", "neither"):
+                        if iv.right > iv.left:
+                            right_idx = min(iv.right - 1, len(index_map) - 1)
+                            new_right = (
+                                int(index_map[right_idx])
+                                + 1
+                                + max(0, iv.right - len(index_map))
+                            )
+                        else:
+                            new_right = new_left
+                    else:
+                        right_idx = min(iv.right, len(index_map) - 1)
+                        new_right = int(index_map[right_idx]) + max(
+                            0, iv.right - (len(index_map) - 1)
+                        )
+                    return pd.Interval(new_left, new_right, closed=iv.closed)
+
+                y_mapped["ilocs"] = y_mapped["ilocs"].apply(_shift_interval)
+            else:
+                y_mapped["ilocs"] = y_mapped["ilocs"].apply(lambda k: int(index_map[k]))
+            return y_mapped
+
+        if self._y is not None:
+            old_to_pooled = X_pooled.index.get_indexer(self._X.index)
+            self._y = _remap_ilocs(self._y, old_to_pooled)
 
         if y is not None:
-            self._y = y.combine_first(self._y)
+            batch_to_pooled = X_pooled.index.get_indexer(X_inner.index)
+            y_shifted = _remap_ilocs(y, batch_to_pooled)
+
+            if self._y is None:
+                self._y = y_shifted.reset_index(drop=True)
+            else:
+                self._y = pd.concat([self._y, y_shifted], ignore_index=True)
+
+        self._X = X_pooled
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)
