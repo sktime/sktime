@@ -551,20 +551,14 @@ class NaiveForecaster(_BaseWindowForecaster):
                 if sp > 1:
                     # Label index by seasonal period
                     seasons = np.mod(np.arange(T), sp)
-                    # Compute rolling seasonal means
-                    y_pred = (
-                        y.to_frame()
-                        .assign(__sp__=seasons)
-                        # Group observations by their
-                        # seasonal period position
-                        .groupby("__sp__")
-                        # Compute rolling means per
-                        # seasonal period
-                        .rolling(self.window_length)
-                        .mean()
-                        .droplevel("__sp__")
-                        .sort_index()
-                        .squeeze()
+                    # window_length counts all observations, so _predict averages
+                    # (up to) ceil(window_length / sp) values per season
+                    window_per_season = math.ceil(self.window_length / sp)
+                    # Fitted value: mean of the previous window_per_season values
+                    # of the same season, i.e., the one-step forecast of _predict.
+                    # shift(1) excludes the value itself from its own fitted value.
+                    y_pred = y.groupby(seasons).transform(
+                        lambda s: s.rolling(window_per_season).mean().shift(1)
                     )
                 else:
                     # Compute rolling means

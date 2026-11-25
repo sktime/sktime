@@ -487,3 +487,44 @@ def test_insample_with_numpy_input():
     forecaster.fit(y)
     y_pred = forecaster.predict(np.arange(0, 10))
     assert len(y_pred) == 10
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "window_length, n",
+    [(12, 72), (24, 72), (30, 72), (24, 300)],
+)
+def test_seasonal_mean_predict_var_window_length(window_length, n):
+    """Test predict_var of the seasonal mean strategy with a window_length.
+
+    predict averages the last ceil(window_length / sp) values of each season.
+    The in-sample residuals for the variance compare each value with the mean
+    of the previous ceil(window_length / sp) values of the same season.
+    The variance is finite and positive, also with fewer than window_length
+    observations per season (n=72), and for window_length == sp.
+    """
+    sp = 12
+    y = pd.Series(
+        np.arange(n, dtype="float64") % sp + np.sin(np.arange(n)),
+        index=pd.period_range("2000-01", periods=n, freq="M"),
+    )
+    f = NaiveForecaster(strategy="mean", sp=sp, window_length=window_length)
+    f.fit(y, fh=[1, 2, 3])
+    pred_var = f.predict_var().iloc[:, 0].to_numpy()
+
+    # expected: residual of y_t against the mean of y_{t - sp}, ..., y_{t - k * sp}
+    k = int(np.ceil(window_length / sp))
+    values = y.to_numpy()
+    res = [
+        values[t] - np.mean([values[t - j * sp] for j in range(1, k + 1)])
+        for t in range(k * sp, n)
+    ]
+    mse = np.mean(np.square(res))
+    expected = mse * (1 + 1 / window_length)
+
+    assert np.all(np.isfinite(pred_var))
+    assert np.all(pred_var > 0)
+    np.testing.assert_allclose(pred_var, np.repeat(expected, 3))
