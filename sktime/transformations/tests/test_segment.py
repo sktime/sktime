@@ -6,6 +6,7 @@ import pytest
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.segment import (
+    IntervalSegmenter,
     RandomIntervalSegmenter,
     _rand_intervals_fixed_n,
     _rand_intervals_rand_n,
@@ -128,3 +129,24 @@ def test_rand_intervals_fixed_n_min_max_length(n_intervals, min_length, max_leng
     lengths = intervals[:, 1] - intervals[:, 0]  # length = end - start
     assert np.all(lengths >= min_length)
     assert np.all(lengths <= max_length)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(IntervalSegmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_interval_segmenter_includes_end_point():
+    """Regression test for issue #11785: interval segmenter drops last time point."""
+    # 1 instance with 10 time points: 0, 1, ..., 9
+    idx = pd.MultiIndex.from_product([[0], range(10)], names=["instances", "timepoints"])
+    X = pd.DataFrame({"var_0": range(10)}, index=idx)
+
+    transformer = IntervalSegmenter(intervals=2)
+    Xt = transformer.fit_transform(X)
+
+    # Generated intervals for 10 points split in 2 should be:
+    # interval 0: [0, 4] -> should include 0, 1, 2, 3, 4 (5 points)
+    # interval 1: [5, 9] -> should include 5, 6, 7, 8, 9 (5 points)
+    assert Xt.shape == (5, 2)
+    assert list(Xt["var_0_0_4"]) == [0, 1, 2, 3, 4]
+    assert list(Xt["var_0_5_9"]) == [5, 6, 7, 8, 9]
