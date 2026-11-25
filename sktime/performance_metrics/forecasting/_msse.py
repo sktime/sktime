@@ -15,11 +15,50 @@ from sktime.performance_metrics.forecasting._functions import mean_squared_scale
 
 
 class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
-    """Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
+    r"""Mean squared scaled error (MSSE) or root mean squared scaled error (RMSSE).
 
     If ``square_root`` is False then calculates MSSE, otherwise calculates RMSSE if
     ``square_root`` is True. Both MSSE and RMSSE output is non-negative floating
     point. The best value is 0.0.
+
+    For a univariate, non-hierarchical sample of
+    true values :math:`y_1, \dots, y_n`,
+    pred values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`\mathbb{R}`),
+    and in-sample training values :math:`y_1^{\text{train}}, \dots, y_m^{\text{train}}`,
+    ``evaluate`` or call returns the Mean Squared Scaled Error (MSSE), defined as:
+
+    .. math::
+        \text{MSSE} = \frac{
+            \frac{1}{n} \sum_{i=1}^n (y_i - \widehat{y}_i)^2
+        }{
+            \frac{1}{m - s}
+            \sum_{j=s+1}^m (y^{\text{train}}_j - y^{\text{train}}_{j-s})^2
+        }
+
+    where :math:`s` is the seasonal periodicity (``sp``), and
+    the denominator is the in-sample mean squared error of the seasonal naive forecast.
+
+    If ``square_root`` is True, the Root Mean Squared Scaled Error (RMSSE)
+    is returned instead, defined as:
+
+    .. math::
+        \text{RMSSE} = \sqrt{\text{MSSE}}
+
+    To avoid division by zero, the denominator above is replaced by the
+    machine epsilon ``np.finfo(np.float64).eps`` if it is smaller than that value.
+
+    ``evaluate_by_index`` returns jackknife pseudo-values of the metric at each
+    time point. Writing :math:`M` for the metric computed on all :math:`n` time
+    points, and :math:`M_{-i}` for the metric computed with time point :math:`i`
+    left out, the value returned at time point :math:`i` is
+
+    .. math::
+        n M - (n - 1) M_{-i}
+
+    The training values, and hence the denominator, are not changed when a time
+    point is left out. For MSSE, the mean of the pseudo-values over all time points
+    is equal to :math:`M`; for RMSSE this does not hold exactly, because of the
+    square root.
 
     This is a squared variant of the MASE loss metric.  Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
