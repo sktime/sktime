@@ -1,8 +1,10 @@
 """Benchmarking interface for use with sktime objects."""
 
 import logging
+import sys
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pandas as pd
 
@@ -31,6 +33,9 @@ _SCTYPE_TO_COLLECTION = {
 }
 
 logger = logging.getLogger(__name__)
+
+_BENCHMARK_ENVS_DIR = ".benchmark_envs"
+_BENCHMARK_BASE_REQUIREMENTS = ["cloudpickle"]
 
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
@@ -338,6 +343,33 @@ class BaseBenchmark:
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
+    env_mode : str, optional (default="auto")
+        The environment mode to use. One of "current", "per_task_estimator" or "auto".
+
+        - ``"auto"``: defaults to ``"per_task_estimator"`` if
+          ``env_manager`` is passed, otherwise ``"current"``.
+        - ``"current"``: tasks are executed in the current environment.
+        - ``"per_task_estimator"``: each task-estimator pair is executed in an isolated
+           environment via ``env_manager.run``.
+           Dependency set is determined by the combined dependency requirements
+           of the task and the estimator, resolved by the ``env_manager``.
+           Environments are created or reused per dependency set and never
+           activated in the parent process.
+
+    env_manager : BaseEnvironmentManager, optional (default=None)
+        Manager that creates environments and runs this benchmark's
+        ``_run_validation`` in the child process. ``None`` builds a
+        ``UvEnvironmentManager`` that installs ``cloudpickle`` and the
+        same ``sktime`` version as the parent process, using the parent
+        interpreter. A different Python version is not supported because
+        the child unpickles estimators and tasks with ``cloudpickle``.
+        To use a local checkout of sktime instead, pass a manager with
+        ``editable`` set.
+
+    envs_dir : str or pathlib.Path, optional (default=None)
+        Directory for isolated environments when ``env_manager`` is
+        ``None``. ``None`` uses ``.benchmark_envs`` in the current working
+        directory.
     """
 
     def __init__(
@@ -346,11 +378,17 @@ class BaseBenchmark:
         backend=None,
         backend_params=None,
         return_data=False,
+        env_mode="auto",
+        env_manager=None,
+        envs_dir=None,
     ):
         self.id_format = id_format
         self.backend = backend
         self.backend_params = backend_params
         self.return_data = return_data
+        self.env_mode = env_mode
+        self.env_manager = env_manager
+        self.envs_dir = envs_dir
         self.estimators = _SktimeRegistry(id_format)
         self.tasks = _SktimeRegistry(id_format)
 
@@ -359,6 +397,8 @@ class BaseBenchmark:
         self._metrics = []
 
         self._failed_experiments: list[FailedExperimentRecord] = []
+        self._isolated = env_mode == "per_task_estimator" or env_manager is not None
+        self._env_manager = env_manager
 
     def add_estimator(
         self,
@@ -694,7 +734,10 @@ class BaseBenchmark:
 
             logger.info(f"Running validation - model: {task_id} - {estimator_id}")
             try:
-                folds = self._run_validation(task, estimator)
+                if self._isolated:
+                    folds = self._run_validation_isolated(task, estimator)
+                else:
+                    folds = self._run_validation(task, estimator)
             except Exception as exc:
                 failure = FailedExperimentRecord(
                     task_id=task_id,
@@ -803,3 +846,64 @@ class BaseBenchmark:
     def _run_validation(self, task: TaskObject, estimator: BaseEstimator):
         """Run validation for a single task and estimator."""
         raise NotImplementedError("This method must be implemented by a subclass.")
+
+    def _get_env_manager(self):
+        """Return the environment manager for isolated execution.
+
+        Uses ``env_manager`` if the caller passed one. Otherwise builds a
+        ``UvEnvironmentManager`` that installs ``cloudpickle`` and the
+        same released ``sktime`` as the parent process, using the parent
+        interpreter so ``cloudpickle`` can round-trip the worker payload.
+        """
+        if self._env_manager is None:
+            import sktime
+            from sktime.utils._env_managers import UvEnvironmentManager
+
+            self._env_manager = UvEnvironmentManager(
+                envs_dir=self.envs_dir or Path.cwd() / _BENCHMARK_ENVS_DIR,
+                python=sys.executable,
+                base_requirements=[
+                    *_BENCHMARK_BASE_REQUIREMENTS,
+                    f"sktime=={sktime.__version__}",
+                ],
+            )
+        return self._env_manager
+
+    def _get_isolated_init_params(self) -> dict:
+        """Return constructor kwargs for the child benchmark.
+
+        The child is ``type(self)(**params)`` and then calls
+        ``_run_validation``. ``env_mode`` is ``"current"`` so the child
+        does not isolate again. Subclasses whose constructor takes further
+        arguments that ``_run_validation`` reads should override this and
+        include them.
+
+        Returns
+        -------
+        dict
+            Keyword arguments for the benchmark constructor.
+        """
+        return {
+            "id_format": self.id_format,
+            "backend": self.backend,
+            "backend_params": self.backend_params,
+            "return_data": self.return_data,
+            "env_mode": "current",
+        }
+
+    def _run_validation_isolated(self, task: TaskObject, estimator: BaseEstimator):
+        """Run this class's ``_run_validation`` in an isolated subprocess.
+
+        The child builds a fresh instance of ``type(self)`` and calls its
+        ``_run_validation``. The parent instance is not pickled, so tasks
+        and estimators registered on it are not sent to the child.
+        """
+        from sktime.benchmarking._isolated_runner import run_isolated_validation
+
+        return run_isolated_validation(
+            benchmark_cls=type(self),
+            init_params=self._get_isolated_init_params(),
+            task=task,
+            estimator=estimator,
+            env_manager=self._get_env_manager(),
+        )
