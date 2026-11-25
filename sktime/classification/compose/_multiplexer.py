@@ -44,6 +44,20 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         If None, behaves as if the first classifier in the list is selected.
         Selects the classifier as which MultiplexClassifier behaves.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.classification.compose import MultiplexClassifier
+    >>> from sktime.classification.dummy import DummyClassifier
+    >>> X_train = np.array([[[0.0, 1.0, 2.0]], [[1.0, 2.0, 3.0]]])
+    >>> y_train = np.array(["a", "b"])
+    >>> X_test = np.array([[[0.0, 1.0, 2.0]]])
+    >>> clf = MultiplexClassifier([("dummy", DummyClassifier())])
+    >>> clf.fit(X_train, y_train)
+    MultiplexClassifier(classifiers=[('dummy', DummyClassifier())])
+    >>> clf.predict(X_test)
+    array(['a'], dtype='<U1')
+
     Attributes
     ----------
     classifier_ : sktime classifier
@@ -68,7 +82,6 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # attribute for _DelegatedClassifier, which then delegates
