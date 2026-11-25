@@ -2,7 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["mloning"]
+__author__ = ["mloning", "shubham5080"]
 
 import numpy as np
 import pandas as pd
@@ -453,21 +453,23 @@ class FittedParamExtractor(BaseTransformer):
     """
 
     _tags = {
-        "authors": "mloning",
+        "authors": ["mloning", "shubham5080"],
         "python_dependencies": "joblib",
         "fit_is_empty": True,
         "capability:multivariate": False,
+        "capability:unequal_length": True,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        # per-instance Series fit; df-list keeps unequal length, numpy3D equal length
+        "X_inner_mtype": ["df-list", "numpy3D"],
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         # CI and test flags
         # -----------------
         "tests:vm": True,
-        "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
+        "tests:skip_all": True,  # see dedicated tests:specific module
         "tests:python_dependencies": ["statsmodels"],
         "tests:specific": [
             "sktime.transformations.summarize.tests.test_fittedparamextractor",
@@ -485,8 +487,8 @@ class FittedParamExtractor(BaseTransformer):
 
         Parameters
         ----------
-        X : pd.DataFrame
-            Univariate time series to transform.
+        X : list of pd.DataFrame (df-list) or np.ndarray (numpy3D)
+            Panel of univariate time series to transform.
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
@@ -498,7 +500,7 @@ class FittedParamExtractor(BaseTransformer):
         from joblib import Parallel, delayed
 
         param_names = self._check_param_names(self.param_names)
-        n_instances = X.shape[0]
+        n_instances = len(X)
 
         def _fit_extract(forecaster, x, param_names):
             forecaster.fit(x)
@@ -506,13 +508,16 @@ class FittedParamExtractor(BaseTransformer):
             return np.hstack([params[name] for name in param_names])
 
         def _get_instance(X, key):
-            # assuming univariate data
-            if isinstance(X, pd.DataFrame):
-                return X.iloc[key, 0]
-            else:
-                return pd.Series(X[key, 0])
+            # assuming univariate data; support df-list and numpy3D
+            if isinstance(X, list):
+                x = X[key]
+                if isinstance(x, pd.DataFrame):
+                    return x.iloc[:, 0]
+                return pd.Series(np.asarray(x).ravel())
+            # numpy3D: (n_instances, n_vars, n_timepoints)
+            return pd.Series(X[key, 0])
 
-        # iterate over rows
+        # iterate over instances
         extracted_params = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_extract)(
                 self.forecaster.clone(), _get_instance(X, i), param_names
