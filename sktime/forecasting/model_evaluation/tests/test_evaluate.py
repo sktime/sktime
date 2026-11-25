@@ -27,7 +27,10 @@ from sktime.datasets import load_airline, load_longley
 # commented out until bugs are resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.compose._reduce import DirectReductionForecaster
+from sktime.forecasting.compose._reduce import (
+    DirectReductionForecaster,
+    MultioutputTabularRegressionForecaster,
+)
 from sktime.forecasting.dummy_global import DummyGlobalForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
@@ -57,6 +60,7 @@ from sktime.split import (
     InstanceSplitter,
     SingleWindowSplitter,
     SlidingWindowSplitter,
+    TemporalTrainTestSplitter,
 )
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
@@ -77,6 +81,59 @@ INTERVAL_METRICS_WITH_PARAMS = [
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("estimator")
 STRATEGY = ["refit", "update", "no-update_params"]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            TemporalTrainTestSplitter,
+            NaiveForecaster,
+            MultioutputTabularRegressionForecaster,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("index_type", ["period", "datetime", "range"])
+@pytest.mark.parametrize(
+    "splitter_params",
+    [
+        {},
+        {"test_size": 6},
+        {"test_size": 0.2},
+        {"train_size": 0.8},
+        {"train_size": 12, "test_size": 6, "anchor": "start"},
+        {"train_size": 12, "test_size": 6, "anchor": "end"},
+        {"train_size": 24, "test_size": 12},
+    ],
+)
+@pytest.mark.parametrize(
+    "forecaster",
+    [
+        NaiveForecaster(),
+        MultioutputTabularRegressionForecaster(LinearRegression(), window_length=3),
+    ],
+)
+def test_evaluate_temporal_train_test_splitter(index_type, splitter_params, forecaster):
+    """Derive the forecast horizon from the actual test fold (issue #8211)."""
+    y = _make_series(n_timepoints=30, index_type=index_type)
+    cv = TemporalTrainTestSplitter(**splitter_params)
+    assert cv.fh is None
+    _, y_test = next(cv.split_series(y))
+
+    result = evaluate(
+        forecaster,
+        cv=cv,
+        y=y,
+        scoring=MeanAbsoluteError(),
+        return_data=True,
+        error_score="raise",
+    )
+
+    y_pred = result.loc[0, "y_pred"]
+    pd.testing.assert_index_equal(y_pred.index, y_test.index)
+    assert len(y_pred) == len(y_test)
+    assert np.isfinite(result.loc[0, "test_MeanAbsoluteError"])
+    assert cv.fh is None
 
 
 def _check_evaluate_output(
