@@ -31,7 +31,7 @@ def test_cisco_tsm_forecaster_predict_proba():
     forecaster = CiscoTSMForecaster()
     forecaster.fit(y)
 
-    fh = [1, 2]
+    fh = 2
     alpha = [0.1, 0.5, 0.9]
 
     # Predict quantiles directly

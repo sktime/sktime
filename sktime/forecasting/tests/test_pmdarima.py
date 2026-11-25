@@ -41,7 +41,7 @@ def test_ARIMA_integer_index_not_starting_at_zero():
     X = pd.DataFrame({"x": rng.normal(size=45)}, index=np.arange(3, 48))
 
     forecaster = ARIMA(order=(1, 0, 0))
-    forecaster.fit(y.iloc[:35], X=X.iloc[:35], fh=[1, 2])
+    forecaster.fit(y.iloc[:35], X=X.iloc[:35], fh=2)
 
     y_pred = forecaster.predict(X=X.loc[38:39])
     assert list(y_pred.index) == [38, 39]
