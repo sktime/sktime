@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import pandas as pd
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
@@ -60,9 +62,11 @@ class RandIndex(BaseDetectionMetric):
     by looking up the corresponding labels in ``X.index``.
     Otherwise, or if ``use_loc=False``, it uses iloc-based indexing.
 
-    If an existing "label" column is present in y_true/y_pred, those labels are used
-    directly for matching; otherwise, segments are considered to be numbered
-    consecutively, starting from 0.
+    If a "label" column is present in y_true/y_pred, it identifies clusters within
+    each segmentation. Multiple segments with the same label belong to the same
+    cluster. Labels need not agree between y_true and y_pred: renaming the labels
+    of either segmentation does not change the score. Without a "label" column,
+    each segment is treated as a separate cluster.
     """  # noqa: E501
 
     _tags = {
@@ -138,14 +142,8 @@ class RandIndex(BaseDetectionMetric):
             return 1.0
 
         # 5) Compute same-cluster pairs in y_true, y_pred
-        same_cluster_true = sum(
-            self._pairs_count(self._compute_length(seg["start"], seg["end"], X))
-            for seg in y_true_segments
-        )
-        same_cluster_pred = sum(
-            self._pairs_count(self._compute_length(seg["start"], seg["end"], X))
-            for seg in y_pred_segments
-        )
+        same_cluster_true = self._compute_same_cluster_pairs(y_true_segments, X)
+        same_cluster_pred = self._compute_same_cluster_pairs(y_pred_segments, X)
 
         # 6) same-cluster pairs that both segmentations agree on
         same_cluster_both = self._compute_same_cluster_both(
@@ -177,9 +175,18 @@ class RandIndex(BaseDetectionMetric):
         else:
             return float(length_iloc)
 
+    def _compute_same_cluster_pairs(self, segments, X=None):
+        """Count pairs within clusters, pooling segments that share a label."""
+        cluster_lengths = defaultdict(float)
+        for seg in segments:
+            cluster_lengths[seg["label"]] += self._compute_length(
+                seg["start"], seg["end"], X
+            )
+        return sum(self._pairs_count(length) for length in cluster_lengths.values())
+
     def _compute_same_cluster_both(self, y_true_segments, y_pred_segments, X=None):
-        """Compute # of same-cluster pairs (a) in the overlap of segments with the same label."""  # noqa: E501
-        a = 0
+        """Count pairs belonging to the same cluster in both segmentations."""
+        overlap_lengths = defaultdict(float)
         y_true_sorted = sorted(y_true_segments, key=lambda x: x["start"])
         y_pred_sorted = sorted(y_pred_segments, key=lambda x: x["start"])
 
@@ -193,16 +200,16 @@ class RandIndex(BaseDetectionMetric):
 
             if overlap_start < overlap_end:
                 overlap_length = self._compute_length(overlap_start, overlap_end, X)
-                # Compare existing 'label' columns
-                if t_seg["label"] == p_seg["label"]:
-                    a += self._pairs_count(overlap_length)
+                # Labels identify clusters within each segmentation, not across them.
+                label_pair = (t_seg["label"], p_seg["label"])
+                overlap_lengths[label_pair] += overlap_length
 
             if t_seg["end"] <= p_seg["end"]:
                 i += 1
             else:
                 j += 1
 
-        return a
+        return sum(self._pairs_count(length) for length in overlap_lengths.values())
 
     def _pairs_count(self, length):
         """

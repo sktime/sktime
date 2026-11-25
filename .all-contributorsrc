@@ -4437,6 +4437,17 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Utkarsh3725",
+      "name": "Utkarsh Arya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/190812618?v=4",
+      "profile": "https://github.com/Utkarsh3725",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
     }
   ]
 }
