@@ -80,3 +80,13 @@ def test_kinematic_stationary_trajectory(dtype):
     with np.errstate(invalid="ignore", divide="ignore"):
         actual = KinematicFeatures().fit_transform(X)
     assert_frame_equal(actual, expected, check_exact=True)
+
+
+@pytest.mark.parametrize("n", [1, 2])
+def test_acceleration_magnitude_short_series(n):
+    """Acceleration is undefined until the third observation."""
+    index = pd.date_range("2024-01-01", periods=n, name="time")
+    X = pd.DataFrame({"x": range(n), "y": range(n)}, index=index)
+    actual = KinematicFeatures(features="a_abs").fit_transform(X)
+    expected = pd.DataFrame({"a_abs": np.nan}, index=index)
+    assert_frame_equal(actual, expected)
