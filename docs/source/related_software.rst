@@ -176,8 +176,6 @@ Specific model implementations
      - A collection of common deep learning architectures for time series classification
    * - `M4 competition <https://github.com/M4Competition>`_
      - Collection of statistical and machine learning forecasting methods
-   * - `Microsoft forecasting <https://github.com/microsoft/forecasting>`_
-     - Collection of forecasting models and best practices, interfaces existing libraries in Python and R
    * - `LSTM-Neural-Network-for-Time-Series-Prediction <https://github.com/jaungiers/LSTM-Neural-Network-for-Time-Series-Prediction>`_
      - LSTM for forecasting model
    * - `LSTM_tsc <https://github.com/RobRomijnders/LSTM_tsc>`_
@@ -223,4 +221,4 @@ Time series databases and frameworks
 Acknowledgements
 ================
 
-Thanks to `Max Christ <https://github.com/MaxBenChrist/>`_ who started the list `here <https://github.com/MaxBenChrist/awesome_time_series_in_python/blob/main/README.md>`_.
+Thanks to `Max Christ <https://github.com/MaxBenChrist/>`_ who started the list `here <https://github.com/MaxBenChrist/awesome_time_series_in_python/blob/master/README.md>`_.
