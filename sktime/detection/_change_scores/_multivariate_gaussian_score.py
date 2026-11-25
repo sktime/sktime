@@ -66,6 +66,41 @@ class MultivariateGaussianScore(BaseIntervalScorer):
     ----------
     .. [1] Zamba, K. D., & Hawkins, D. M. (2009). A Multivariate Change-Point
        Model for Change in Mean Vector and/or Covariance Structure.
+
+    Examples
+    --------
+    Score a candidate change in the location of a bivariate series. Each
+    segment contains enough observations to estimate a nonsingular covariance
+    matrix. A cut is ``[start, split, end]``, with an exclusive end position.
+
+    >>> import numpy as np
+    >>> from sktime.detection._change_scores import MultivariateGaussianScore
+    >>> X = np.array([
+    ...     [0., 1.], [1., 0.], [0., 0.], [1., 1.],
+    ...     [5., 6.], [6., 5.], [5., 5.], [6., 6.],
+    ... ])
+    >>> cuts = [[0, 4, 8]]
+    >>> raw_scorer = MultivariateGaussianScore(apply_bartlett_correction=False)
+    >>> raw_scores = raw_scorer.evaluate(X, cuts)
+    >>> raw_scores.shape
+    (1, 1)
+    >>> bool(raw_scores[0, 0] > 0)
+    True
+
+    The default scorer applies the Bartlett correction to the likelihood
+    ratio. Both variants aggregate the variables into one score per cut.
+
+    >>> corrected_scores = MultivariateGaussianScore().evaluate(X, cuts)
+    >>> corrected_scores.shape
+    (1, 1)
+    >>> bool(0 < corrected_scores[0, 0] < raw_scores[0, 0])
+    True
+
+    Evaluation is stateless: translating the data and reusing a scorer does
+    not change the uncorrected likelihood ratio.
+
+    >>> shifted_scores = raw_scorer.evaluate(X + 10, cuts)
+    >>> np.testing.assert_allclose(shifted_scores, raw_scores)
     """
 
     _tags = {
