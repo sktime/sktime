@@ -697,7 +697,9 @@ class WindFMPredictor:
             sample_count,
             verbose,
         )
-        preds = preds[:, -pred_len:, :]
+        # preds has shape (batch, sample_count, time, features), so slice time;
+        # upstream slices axis 1, which drops samples if sample_count > pred_len
+        preds = preds[:, :, -pred_len:, :]
         return preds
 
     def predict(
