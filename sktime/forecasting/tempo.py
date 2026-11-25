@@ -59,6 +59,7 @@ class TEMPOForecaster(BaseForecaster):
         If None, uses the default cache directory of the upstream TEMPO library.
     device : str or None, optional (default=None)
         Device to run inference on, e.g., "cpu" or "cuda".
+        If None, uses "cuda" if available, otherwise "cpu".
     upstream_compatible : bool, optional (default=True)
         Whether to reproduce the original TEMPO inference code, or to apply
         sktime's fixes to it, in the vendored ``sktime.libs.tempo``.
