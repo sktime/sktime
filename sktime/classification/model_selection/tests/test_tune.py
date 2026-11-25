@@ -174,3 +174,24 @@ def test_no_sklearn_gridsearch_delegate():
 
     assert not isinstance(tuner.best_estimator_, GridSearchCV)
     assert not hasattr(tuner, "estimator_")
+
+
+def test_tuning_does_not_mutate_param_grid_estimators():
+    """Estimators passed in param_grid are not mutated, see #11829."""
+    from sktime.classification.compose import ClassifierPipeline
+    from sktime.transformations.series.exponent import ExponentTransformer
+
+    X, y = load_unit_test(split="train")
+    inner = DummyClassifier(strategy="stratified")
+    pipe = ClassifierPipeline(classifier=inner, transformers=[ExponentTransformer()])
+    param_grid = {
+        "classifier": [inner],
+        "classifier__strategy": ["most_frequent", "prior", "uniform"],
+    }
+    tuner = TSCGridSearchCV(pipe, param_grid, cv=CV).fit(X, y)
+
+    # the user's estimator in param_grid must not be mutated
+    assert inner.get_params()["strategy"] == "stratified"
+    # the best estimator uses the best params
+    best_strategy = tuner.best_estimator_.get_params()["classifier__strategy"]
+    assert best_strategy == tuner.best_params_["classifier__strategy"]
