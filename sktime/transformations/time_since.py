@@ -29,7 +29,8 @@ class TimeSince(BaseTransformer):
 
     Parameters
     ----------
-    start : a list of start times, optional, default=None (use earliest time in index)
+    start : a start time or list of start times, optional, default=None
+        (use earliest time in index)
         a "start time" can be one of the following types:
 
         * int: Start time to compute the time elapsed, use when index is integer.
@@ -176,7 +177,10 @@ class TimeSince(BaseTransformer):
         if self.start is None:
             self.start_.append(time_index.min())
         else:
-            for start in self.start:
+            starts = self.start
+            if not pd.api.types.is_list_like(starts):
+                starts = [starts]
+            for start in starts:
                 if start is None:
                     self.start_.append(time_index.min())
                 elif isinstance(start, str):
