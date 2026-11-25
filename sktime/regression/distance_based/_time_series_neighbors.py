@@ -139,6 +139,7 @@ class KNeighborsTimeSeriesRegressor(_BaseKnnTimeSeriesEstimator, BaseRegressor):
         "capability:unequal_length": True,
         "capability:missing_values": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
+        "tests:skip_by_name": ["test_scenario_does_not_modify_global_numpy_rng"],
     }
 
     def __init__(
