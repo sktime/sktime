@@ -100,6 +100,87 @@ def generate_segments_pandas(X: npt.ArrayLike, change_points: list) -> npt.Array
         yield X[interval.left : interval.right, :]
 
 
+def _weighted_segment_entropies(
+    cumsums: np.ndarray, starts: np.ndarray, ends: np.ndarray
+) -> np.ndarray:
+    """Compute length-weighted entropies of segments from cumulative sums.
+
+    For a segment ``X[start:end]``, this is ``(end - start) * entropy(X[start:end])``,
+    the summand in equation (2) of [1]_, computed for all segments at once.
+
+    Parameters
+    ----------
+    cumsums : 2D np.ndarray of shape (n_samples + 1, n_series)
+        Cumulative sums of the time series along the time axis, with a leading
+        row of zeros, so that ``cumsums[end] - cumsums[start]`` are the column
+        sums of ``X[start:end]``.
+    starts : 1D np.ndarray of int
+        Start indices of the segments (inclusive).
+    ends : 1D np.ndarray of int
+        End indices of the segments (exclusive), same length as ``starts``.
+
+    Returns
+    -------
+    weighted_entropies : 1D np.ndarray of float
+        Length-weighted entropies of the segments.
+    """
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
+    segment_sums = cumsums[ends] - cumsums[starts]
+    totals = segment_sums.sum(axis=1, keepdims=True)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        p = segment_sums / totals
+        plogp = np.where(p > 0.0, p * np.log(p), 0.0)
+    return -(ends - starts) * plogp.sum(axis=1)
+
+
+def _information_gain_scores_of_candidates(
+    cumsums: np.ndarray,
+    total_entropy: float,
+    change_points: list[int],
+    candidates: list[int],
+) -> np.ndarray:
+    """Compute information gain scores of all candidate change points at once.
+
+    For each candidate, the score is the information gain of the segmentation
+    obtained by adding the candidate to ``change_points``, i.e., the same value
+    as ``IGTS.information_gain_score`` for the extended set of change points.
+
+    Parameters
+    ----------
+    cumsums : 2D np.ndarray of shape (n_samples + 1, n_series)
+        Cumulative sums of the time series, see ``_weighted_segment_entropies``.
+    total_entropy : float
+        Entropy of the entire time series.
+    change_points : list of int, sorted
+        Current change points, including the identity segmentation.
+    candidates : list of int, sorted
+        Candidate change points, must not be in ``change_points``.
+
+    Returns
+    -------
+    scores : 1D np.ndarray of float
+        Information gain scores of the candidates, in the order of ``candidates``.
+    """
+    n_samples = cumsums.shape[0] - 1
+    cp = np.asarray(change_points)
+    candidates = np.asarray(candidates)
+    if len(candidates) == 0:
+        return np.zeros(0, dtype=np.float64)
+
+    # weighted entropies of the current segments
+    current = _weighted_segment_entropies(cumsums, cp[:-1], cp[1:])
+    current_total = current.sum()
+
+    # each candidate splits the segment [cp[i - 1], cp[i]) that contains it
+    i = np.searchsorted(cp, candidates)
+    left = _weighted_segment_entropies(cumsums, cp[i - 1], candidates)
+    right = _weighted_segment_entropies(cumsums, candidates, cp[i])
+    split_total = current_total - current[i - 1] + left + right
+
+    return total_entropy - split_total / n_samples
+
+
 @dataclass
 class IGTS:
     """Information Gain based Temporal Segmentation (IGTS).
@@ -259,14 +340,25 @@ class IGTS:
         # by convention initialize with the identity segmentation
         current_change_points = self.identity(X)
 
+        # the information gain of a segmentation depends on the column sums of
+        # its segments only, which are differences of cumulative sums.
+        # Inserting a candidate change point into a segmentation splits exactly
+        # one segment, so the scores of all candidates are computed at once
+        # from the cumulative sums, instead of recomputing all segment entropies
+        # for every candidate, see _information_gain_scores_of_candidates.
+        cumsums = np.zeros((n_samples + 1, n_series), dtype=np.float64)
+        cumsums[1:] = np.cumsum(X, axis=0)
+        total_entropy = entropy(X)
+
         for k in range(self.k_max):
             ig_max = 0
-            # find a point which maximizes score
-            for candidate in self.get_candidates(n_samples, current_change_points):
-                try_change_points = {candidate}
-                try_change_points.update(current_change_points)
-                try_change_points = sorted(try_change_points)
-                ig = self.information_gain_score(X, try_change_points)
+            candidates = self.get_candidates(n_samples, current_change_points)
+            scores = _information_gain_scores_of_candidates(
+                cumsums, total_entropy, current_change_points, candidates
+            )
+            # find a point which maximizes score,
+            # the first candidate with maximal score is chosen in case of ties
+            for candidate, ig in zip(candidates, scores):
                 if ig > ig_max:
                     ig_max = ig
                     best_candidate = candidate
