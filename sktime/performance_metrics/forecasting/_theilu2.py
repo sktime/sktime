@@ -159,6 +159,11 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
         y_train_vals = y_train.values
         y_true_vals = y_true.values
 
+        if not isinstance(sp, (int, np.integer)) or sp < 1:
+            raise ValueError(
+                f"Seasonal periodicity sp must be an integer >= 1, but found {sp}."
+            )
+
         if sp > y_train.shape[0]:
             raise ValueError(
                 f"Seasonal periodicity sp={sp} exceeds the number of training "
@@ -166,15 +171,14 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
                 "TheilU2 requires len(y_train) >= sp."
             )
 
-        if sp > n:
-            raise ValueError(
-                f"Seasonal periodicity sp={sp} exceeds the number of test "
-                f"observations ({n}). TheilU2 requires len(y_true) >= sp."
-            )
-
         # naive forecast: value from sp periods ago
-        # first sp values come from end of y_train, rest from y_true shifted
-        naive_source = np.concatenate([y_train_vals[-sp:], y_true_vals[:-sp]], axis=0)
+        # For test periods t < sp, the value comes from y_train; for t >= sp from y_true
+        if n <= sp:
+            naive_source = y_train_vals[-sp : -sp + n] if n < sp else y_train_vals[-sp:]
+        else:
+            naive_source = np.concatenate(
+                [y_train_vals[-sp:], y_true_vals[: n - sp]], axis=0
+            )
         return naive_source
 
     def _evaluate(self, y_true, y_pred, **kwargs):
@@ -277,15 +281,24 @@ class TheilU2(_ScaledMetricTags, BaseForecastingErrorMetric):
         mse_naive = sqe_naive_df.mean(axis=0)
         full_val = (mse_forecast / np.maximum(mse_naive, eps)).pow(0.5)
 
-        # jackknife leave-one-out
-        total_forecast = sqe_forecast_df.sum(axis=0)
-        total_naive = sqe_naive_df.sum(axis=0)
+        if n == 0:
+            pseudo_values = pd.DataFrame(
+                columns=y_true.columns, index=y_true.index, dtype=float
+            )
+        elif n == 1:
+            pseudo_values = pd.DataFrame(
+                [full_val.values], index=y_true.index, columns=y_true.columns
+            )
+        else:
+            # jackknife leave-one-out
+            total_forecast = sqe_forecast_df.sum(axis=0)
+            total_naive = sqe_naive_df.sum(axis=0)
 
-        jack_mse_forecast = (total_forecast - sqe_forecast_df) / (n - 1)
-        jack_mse_naive = (total_naive - sqe_naive_df) / (n - 1)
-        jack_val = (jack_mse_forecast / np.maximum(jack_mse_naive, eps)).pow(0.5)
+            jack_mse_forecast = (total_forecast - sqe_forecast_df) / (n - 1)
+            jack_mse_naive = (total_naive - sqe_naive_df) / (n - 1)
+            jack_val = (jack_mse_forecast / np.maximum(jack_mse_naive, eps)).pow(0.5)
 
-        pseudo_values = n * full_val - (n - 1) * jack_val
+            pseudo_values = n * full_val - (n - 1) * jack_val
 
         return self._handle_multioutput(pseudo_values, multioutput)
 
