@@ -161,3 +161,100 @@ def test_fit_transform_month_start_outputs():
         .assign(cos_12_2=[np.cos(4 * np.pi * i / 12) for i in range(3)])
     )
     assert_frame_equal(y_transformed, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "freq, sp",
+    [("30min", 48), ("15min", 96), ("2h", 12), ("4h", 6), ("h", 24)],
+)
+def test_integer_sp_counts_index_steps(freq, sp):
+    """Integer sp is in index steps, so it should agree with the offset "D", see #5933.
+
+    For a multiplied frequency such as ``30min``, the integer ordinals of the
+    period index advance by the multiplier per step, which used to be applied
+    directly, so that ``sp=48`` was interpreted as 48 minutes rather than 48
+    half-hourly steps.
+    """
+    n = 3 * sp
+    y = pd.DataFrame(
+        {"x": np.arange(n, dtype=float)},
+        index=pd.date_range("2000-01-01", periods=n, freq=freq),
+    )
+    transformer = FourierFeatures(sp_list=[sp, "D"], fourier_terms_list=[1, 1])
+    y_transformed = transformer.fit_transform(y)
+
+    # integer sp should be equal to the daily offset, since sp steps make up a day
+    np.testing.assert_allclose(
+        y_transformed[f"sin_{sp}_1"].to_numpy(),
+        y_transformed["sin_D_1"].to_numpy(),
+        atol=1e-12,
+    )
+    np.testing.assert_allclose(
+        y_transformed[f"cos_{sp}_1"].to_numpy(),
+        y_transformed["cos_D_1"].to_numpy(),
+        atol=1e-12,
+    )
+
+    # and equal to the explicit definition in time steps since the start of fit
+    t = np.arange(n)
+    np.testing.assert_allclose(
+        y_transformed[f"sin_{sp}_1"].to_numpy(), np.sin(2 * np.pi * t / sp)
+    )
+    np.testing.assert_allclose(
+        y_transformed[f"cos_{sp}_1"].to_numpy(), np.cos(2 * np.pi * t / sp)
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_integer_sp_multiplied_freq_transform_continues_from_fit():
+    """Integer sp with multiplied frequency, transform on data after the fit data."""
+    n_fit, n_transform = 100, 50
+    idx = pd.date_range("2000-01-01", periods=n_fit + n_transform, freq="30min")
+    y = pd.DataFrame({"x": np.arange(len(idx), dtype=float)}, index=idx)
+
+    transformer = FourierFeatures(sp_list=[48], fourier_terms_list=[2])
+    transformer.fit(y.iloc[:n_fit])
+    y_transformed = transformer.transform(y.iloc[n_fit:])
+
+    t = np.arange(n_fit, n_fit + n_transform)
+    expected = pd.DataFrame(
+        {
+            "sin_48_1": np.sin(2 * np.pi * t / 48),
+            "cos_48_1": np.cos(2 * np.pi * t / 48),
+            "sin_48_2": np.sin(4 * np.pi * t / 48),
+            "cos_48_2": np.cos(4 * np.pi * t / 48),
+        },
+        index=idx[n_fit:],
+    )
+    assert_frame_equal(y_transformed, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_integer_sp_period_index_multiplied_freq():
+    """Integer sp counts index steps for a pd.PeriodIndex with multiplied freq."""
+    n = 60
+    y = pd.Series(
+        np.arange(n, dtype=float),
+        index=pd.period_range("2000-01-01", periods=n, freq="2h"),
+    )
+    y_transformed = FourierFeatures(sp_list=[12], fourier_terms_list=[1]).fit_transform(
+        y
+    )
+
+    t = np.arange(n)
+    np.testing.assert_allclose(
+        y_transformed["sin_12_1"].to_numpy(), np.sin(2 * np.pi * t / 12)
+    )
+    np.testing.assert_allclose(
+        y_transformed["cos_12_1"].to_numpy(), np.cos(2 * np.pi * t / 12)
+    )
