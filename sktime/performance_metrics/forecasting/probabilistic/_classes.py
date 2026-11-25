@@ -971,15 +971,30 @@ class _BaseDistrForecastingMetric(_BaseProbaForecastingErrorMetric):
         Returns
         -------
         loss : float or 1-column pd.DataFrame with calculated metric value(s)
-            float if multioutput = "uniform_average"
+            float if multioutput = "uniform_average" or array-like
             metric is always averaged (arithmetic) over fh values
         """
         index_df = self.evaluate_by_index(y_true, y_pred, multioutput)
         out_df = pd.DataFrame(index_df.mean(axis=0)).T
         out_df.columns = index_df.columns
 
-        if multioutput == "uniform_average":
-            out_df = _coerce_to_scalar(out_df)
+        if isinstance(multioutput, str):
+            if multioutput == "uniform_average":
+                out_df = _coerce_to_scalar(out_df.mean(axis=1))
+        elif multioutput is not None:
+            # 1D array-like of weights, one per variable
+            if self.multivariate:
+                # one score for the entire row, no variables to weight
+                return _coerce_to_scalar(out_df)
+            weights = np.asarray(multioutput, dtype=float)
+            if weights.shape != (out_df.shape[1],):
+                raise ValueError(
+                    f"There must be equally many custom weights ({weights.size}) "
+                    f"as outputs ({out_df.shape[1]})."
+                )
+            out_df = _coerce_to_scalar(
+                np.average(out_df.to_numpy()[0], weights=weights)
+            )
         return out_df
 
     def evaluate_by_index(

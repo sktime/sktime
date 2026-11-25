@@ -54,6 +54,36 @@ def test_distr_evaluate(normal, metric, multivariate):
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+@pytest.mark.parametrize("metric", DISTR_METRICS)
+def test_distr_multioutput_aggregates_variables(metric):
+    """multioutput averages the per-variable scores of multivariate y."""
+    import numpy as np
+
+    idx = pd.date_range("2020-01-01", periods=3, freq="D")
+    y_true = pd.DataFrame({"a": [0.0, 1, 2], "b": [10.0, 20, 30]}, index=idx)
+    mu = pd.DataFrame({"a": [0.0, 0, 0], "b": [10.0, 10, 10]}, index=idx)
+    y_pred = Normal(mu=mu, sigma=1.0, index=idx, columns=y_true.columns)
+
+    raw = metric(multioutput="raw_values")(y_true, y_pred)
+    assert isinstance(raw, pd.DataFrame)
+    assert raw.shape == (1, 2)
+    raw = raw.to_numpy()[0]
+
+    uniform = metric(multioutput="uniform_average")(y_true, y_pred)
+    assert np.isscalar(uniform)
+    assert np.isclose(uniform, raw.mean())
+
+    weights = [0.9, 0.1]
+    for w in [weights, np.array(weights)]:
+        weighted = metric(multioutput=w)(y_true, y_pred)
+        assert np.isscalar(weighted)
+        assert np.isclose(weighted, raw @ np.array(weights))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_squared_distr_loss_uses_pdf(monkeypatch):
     """SquaredDistrLoss must be -2 * pdf(y) + ||pdf||^2, not -2 * log_pdf(y)."""
     import numpy as np
