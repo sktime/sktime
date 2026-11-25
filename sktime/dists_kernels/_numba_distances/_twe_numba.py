@@ -70,8 +70,10 @@ def _twe_cost_matrix(
 
     Returns
     -------
-    cost_matrix: np.ndarray (of shape (n, m) where n is the len(x) and m is len(y))
-        The dtw cost matrix.
+    cost_matrix: np.ndarray of shape (x.shape[1] + 1, y.shape[1] + 1)
+        Accumulated TWE costs, including the leading zero-padded origin.
+        The origin is zero; the rest of the first row and column are infinite.
+        Cells outside the bounding matrix or unreachable from the origin are infinite.
     """
     x = pad_ts(x)
     y = pad_ts(y)
@@ -79,9 +81,9 @@ def _twe_cost_matrix(
     y_size = y.shape[1]
     dimensions = x.shape[0]
 
-    cost_matrix = np.zeros((x_size, y_size))
-    cost_matrix[0, 1:] = np.inf
-    cost_matrix[1:, 0] = np.inf
+    # 窗口外的单元格不可达, 不能作为零代价前驱重新开始一条路径。
+    cost_matrix = np.full((x_size, y_size), np.inf)
+    cost_matrix[0, 0] = 0.0
 
     delete_addition = nu + lmbda
 
