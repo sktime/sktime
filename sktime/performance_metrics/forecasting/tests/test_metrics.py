@@ -15,6 +15,29 @@ from sktime.tests.test_switch import run_test_module_changed
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_gmae_class():
+    """Doctest from GeometricMeanAbsoluteError."""
+    from sktime.performance_metrics.forecasting import GeometricMeanAbsoluteError
+
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    gmae = GeometricMeanAbsoluteError()
+    assert np.allclose(gmae(y_true, y_pred), 0.000529527232030127)
+
+    y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+    gmae = GeometricMeanAbsoluteError()
+    assert np.allclose(gmae(y_true, y_pred), 0.5000024031086919)
+    gmae = GeometricMeanAbsoluteError(multioutput="raw_values")
+    assert np.allclose(gmae(y_true, y_pred), np.array([4.80621738e-06, 1.00000000e00]))
+    gmae = GeometricMeanAbsoluteError(multioutput=[0.3, 0.7])
+    assert np.allclose(gmae(y_true, y_pred), 0.7000014418652152)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_gmse_class():
     """Doctest from GeometricMeanSquaredError."""
     from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
