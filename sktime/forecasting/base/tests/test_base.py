@@ -598,3 +598,87 @@ def test_pretrain_respects_preexisting_attrs():
     msg = "pretrain should not misclassify preexisting attrs as set by pretrain"
     assert len(forecaster._pretrained_attrs) == 0, msg
     assert len(forecaster.get_pretrained_params()) == 0, msg
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+@pytest.mark.parametrize("scitype", ["Panel", "Hierarchical"])
+def test_Xy_index_missing_times_raises(scitype):
+    """X missing y time stamps should raise for Panel and Hierarchical.
+
+    Regression test for #3161: the contains-check must run beyond Series.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    if scitype == "Panel":
+        y = _make_panel(n_instances=2, n_timepoints=8, n_columns=1, random_state=0)
+    else:
+        y = _make_hierarchical(
+            hierarchy_levels=(2, 2), min_timepoints=8, max_timepoints=8, random_state=0
+        )
+
+    X = pd.DataFrame({"x": 1.0}, index=y.index)
+    last_time = y.index.get_level_values(-1).unique()[-1]
+    X_missing = X.loc[X.index.get_level_values(-1) != last_time]
+
+    f = YfromX(LinearRegression())
+    with pytest.raises(ValueError, match="not contained"):
+        f.fit(y, X=X_missing, fh=1)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+@pytest.mark.parametrize("scitype", ["Panel", "Hierarchical"])
+def test_Xy_index_X_covers_y_and_predict(scitype):
+    """X may be longer than y so it can cover fh, for Panel and Hierarchical.
+
+    Regression test for #3161: contains-check, not equal-length.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    n_train = 8
+    n_fh = 2
+    n_total = n_train + n_fh
+
+    if scitype == "Panel":
+        y_full = _make_panel(
+            n_instances=2, n_timepoints=n_total, n_columns=1, random_state=0
+        )
+        X_full = _make_panel(
+            n_instances=2, n_timepoints=n_total, n_columns=1, random_state=1
+        )
+    else:
+        y_full = _make_hierarchical(
+            hierarchy_levels=(2, 2),
+            min_timepoints=n_total,
+            max_timepoints=n_total,
+            random_state=0,
+        )
+        X_full = _make_hierarchical(
+            hierarchy_levels=(2, 2),
+            min_timepoints=n_total,
+            max_timepoints=n_total,
+            n_columns=1,
+            random_state=1,
+        )
+
+    times = y_full.index.get_level_values(-1).unique()
+    train_times = times[:n_train]
+    y = y_full.loc[y_full.index.get_level_values(-1).isin(train_times)]
+    X_train = X_full.loc[X_full.index.get_level_values(-1).isin(train_times)]
+
+    # X longer than y is allowed: it only has to contain y's times (to cover fh)
+    f_long = NaiveForecaster()
+    f_long.set_tags(**{"capability:exogenous": True, "X-y-must-have-same-index": True})
+    f_long.fit(y, X=X_full, fh=list(range(1, n_fh + 1)))
+    y_pred_long = f_long.predict(fh=list(range(1, n_fh + 1)), X=X_full)
+    assert len(y_pred_long) > 0
+
+    f = YfromX(LinearRegression())
+    f.fit(y, X=X_train, fh=list(range(1, n_fh + 1)))
+    y_pred = f.predict(X=X_full)
+    assert len(y_pred) > 0
