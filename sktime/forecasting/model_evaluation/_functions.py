@@ -347,7 +347,10 @@ def _evaluate_window(x, meta):
     if return_model:
         temp_result["fitted_forecaster"] = [deepcopy(forecaster)]
     result = pd.DataFrame(temp_result)
-    result = result.astype({"len_train_window": int, "cutoff": cutoff_dtype})
+    astype_dict = {"len_train_window": int}
+    if not pd.isna(cutoff_ind):
+        astype_dict["cutoff"] = cutoff_dtype
+    result = result.astype(astype_dict)
     if old_naming:
         result = result.rename(columns=old_name_mapping)
     column_order = _get_column_order_and_datatype(

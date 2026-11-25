@@ -674,3 +674,18 @@ def test_evaluate_hierarchical_unequal_X_y():
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+def test_evaluate_error_score_integer_cutoff():
+    """Test evaluate with integer index when fit fails and error_score is used.
+
+    Regression test for #2178.
+    """
+    y = pd.Series([-10, -5, 20, 30])
+    cv = SingleWindowSplitter(fh=[1], window_length=3)
+    f = ExponentialSmoothing(trend="multiplicative", seasonal="multiplicative", sp=2)
+
+    res = evaluate(f, cv=cv, y=y, error_score=0.0)
+    assert isinstance(res, pd.DataFrame)
+    assert res["test_MeanAbsolutePercentageError"].iloc[0] == 0.0
+    assert pd.isna(res["cutoff"].iloc[0])
