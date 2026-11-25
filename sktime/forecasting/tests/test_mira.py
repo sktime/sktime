@@ -103,3 +103,54 @@ def test_mira_airline_predictions_match_source_reference(
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.parametrize("freq", ["D", "h", "min", "s"])
+def test_mira_prepare_context_high_frequency(freq):
+    """Test that _prepare_context avoids float32 precision collapse."""
+    import pandas as pd
+
+    from sktime.forecasting.mira import _prepare_context
+
+    idx = pd.date_range("2026-01-01", periods=48, freq=freq)
+    y = pd.DataFrame({"y": np.arange(48.0)}, index=idx)
+    _, times = _prepare_context(y, pred_len=4, cutoff=idx[-1:], context_length=None)
+    # All 52 timestamps must be distinct after origin subtraction.
+    assert len(np.unique(times.numpy())) == 52
+    assert times.numpy().ravel()[0] == pytest.approx(0.0)
+
+
+def test_mira_prepare_context_float_index():
+    """Test that _prepare_context preserves irregular float indices."""
+    import pandas as pd
+
+    from sktime.forecasting.mira import _prepare_context
+
+    # Irregular float timestamps — would collapse to [0, 0, 1] if converted via int64.
+    float_times = [0.0, 0.5, 1.25, 2.0, 3.75]
+    idx = pd.Index(float_times)
+    y = pd.DataFrame({"y": np.arange(5.0)}, index=idx)
+    _, times = _prepare_context(y, pred_len=2, cutoff=idx[-1:], context_length=None)
+    times_np = times.numpy().ravel()
+    assert times_np[0] == pytest.approx(0.0)
+    assert len(np.unique(times_np)) == 7
+    # Context offsets must preserve the original float spacings.
+    expected_ctx = np.array([0.0, 0.5, 1.25, 2.0, 3.75], dtype=np.float32)
+    np.testing.assert_allclose(times_np[:5], expected_ctx, atol=1e-5)
+
+
+def test_mira_prepare_context_large_int_index():
+    """Test that _prepare_context handles large integer indices without collapse."""
+    import pandas as pd
+
+    from sktime.forecasting.mira import _prepare_context
+
+    # Large epoch-second integers — would overflow float32 directly.
+    origin = 1_700_000_000
+    int_times = [origin + i for i in range(50)]
+    idx = pd.Index(int_times)
+    y = pd.DataFrame({"y": np.arange(50.0)}, index=idx)
+    _, times = _prepare_context(y, pred_len=4, cutoff=idx[-1:], context_length=None)
+    times_np = times.numpy().ravel()
+    assert len(np.unique(times_np)) == 54
+    assert times_np[0] == pytest.approx(0.0)
