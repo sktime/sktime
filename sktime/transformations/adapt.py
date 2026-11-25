@@ -397,6 +397,16 @@ class TabularToSeriesAdaptor(BaseTransformer):
             Xt = self.transformer_.fit(X, **fit_args).inverse_transform(X, **it_args)
         else:
             Xt = self.transformer_.inverse_transform(**it_args)
+
+        # Restore the time and instance index, as in _transform.
+        if isinstance(X, pd.DataFrame):
+            if isinstance(Xt, pd.Series):
+                Xt = Xt.to_frame()
+            if isinstance(Xt, pd.DataFrame):
+                Xt = Xt.set_axis(X.index.copy(), axis=0)
+            else:
+                Xt = pd.DataFrame(Xt, index=X.index.copy())
+
         return Xt
 
     @classmethod
