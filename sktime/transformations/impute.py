@@ -179,6 +179,13 @@ class Imputer(BaseTransformer):
         self: reference to self
         """
         self._check_method()
+
+        # Forecaster-based methods use data remembered by BaseTransformer as
+        # their training series. Convert custom missing-value markers there too,
+        # so they are filled before the forecaster is fitted.
+        if self.missing_values and self.method in ["drift", "forecaster"]:
+            self._X = self._X.replace(to_replace=self.missing_values, value=np.nan)
+
         # all methods of Imputer that are actually doing a fit are
         # implemented here. Some methods don't need to fit, so they are just
         # implemented in _transform
