@@ -302,3 +302,37 @@ def test_gibbs():
     actual = sampling[[6, 8],]
 
     assert np.allclose(actual, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("K", [1, 2, 3])
+def test_estimate_zeta(K):
+    """Test that zeta is sampled when estimate_zeta=True, for any number of manifolds.
+
+    The log posterior of zeta sums the partition function terms over manifolds.
+    For K > 1, the terms used to be subtracted elementwise, which raised a
+    ``ValueError`` on comparing the resulting array with the running maximum.
+    """
+    model = Hidalgo(
+        K=K, n_iter=20, burn_in=0.5, sampling_rate=2, seed=1, estimate_zeta=True
+    )
+    _rng = check_random_state(model.seed)
+
+    N, mu, Iin, Iout, Iout_count, Iout_track = model._get_neighbourhood_params(X)
+    V, NN, a1, b1, c1, Z, f1, N_in = model._initialise_params(N, mu, Iin, _rng)
+    sampling = model._gibbs_sampling(
+        N, mu, Iin, Iout, Iout_count, Iout_track, V, NN, a1, b1, c1, Z, f1, N_in, _rng
+    )
+    sampling = np.reshape(sampling, (model.n_iter, N + 2 * K + 2 + 1))
+
+    # zeta is at position 2 * K, it is sampled from the first iteration on
+    zeta_samples = sampling[:, 2 * K]
+    assert np.all((zeta_samples > 0) & (zeta_samples < 1))
+    assert zeta_samples[0] == model.zeta
+    assert len(np.unique(zeta_samples[1:])) > 1
+
+    model.fit(X)
+    assert model._Z.shape == (N,)
