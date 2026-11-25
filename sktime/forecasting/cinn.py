@@ -42,7 +42,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
     Parameters
     ----------
-    n_coupling_layers : int, optional (default=15)
+    n_coupling_layers : int, optional (default=10)
         Number of coupling layers in the cINN.
     hidden_dim_size : int, optional (default=64)
         Number of hidden units in the subnet.
@@ -126,7 +126,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     def __init__(
         self,
         n_coupling_layers=10,
-        hidden_dim_size=32,
+        hidden_dim_size=64,
         sample_dim=24,
         batch_size=64,
         encoded_cond_size=64,
@@ -311,6 +311,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             cond_features=self.n_cond_features,
             encoded_cond_size=self.encoded_cond_size,
             num_coupling_layers=self.n_coupling_layers,
+            hidden_dim_size=self.hidden_dim_size,
         ).build()
 
     def _prepare_pretrain_series_data(self, series):
@@ -741,6 +742,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 cond_features=cinn_forecaster.n_cond_features,
                 encoded_cond_size=cinn_forecaster.encoded_cond_size,
                 num_coupling_layers=cinn_forecaster.n_coupling_layers,
+                hidden_dim_size=cinn_forecaster.hidden_dim_size,
             ).build()
             cinn_forecaster.network.load_state_dict(cinn_forecaster._state_dict)
         if hasattr(cinn_forecaster, "_stored_forecasters"):
