@@ -237,15 +237,20 @@ def plot_interval(ax, interval_df):
 
     import seaborn as sns
 
-    var_name = interval_df.columns.levels[0][0]
+    # Use get_level_values instead of .levels to avoid stale categories
+    # when interval_df is a subset of a larger MultiIndex DataFrame.
+    # .levels retains all categories from the original index, even after slicing,
+    # which causes a KeyError when accessing a column that no longer exists.
+    var_name = interval_df.columns.get_level_values(0)[0]
+    coverage_values = interval_df.columns.get_level_values(1).unique()
 
-    n = len(interval_df.columns.levels[1])
+    n = len(coverage_values)
     if n == 1:
         colors = [ax.get_lines()[-1].get_c()]
     else:
         colors = sns.color_palette("colorblind", n_colors=n)
 
-    for i, cov in enumerate(interval_df.columns.levels[1]):
+    for i, cov in enumerate(coverage_values):
         ax.fill_between(
             interval_df.index,
             interval_df[var_name][cov]["lower"].astype("float64").to_numpy(),
