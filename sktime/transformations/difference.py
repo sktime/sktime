@@ -148,8 +148,20 @@ def _inverse_diff(X, lags, X_diff_seq=None):
         # to match the original time series index
         X_ix_shift = _shift(X.index, -lag_last)
         # Get the original time series values for the intersecting
-        # indices between the shifted index and the original index
-        X_update = X_diff_orig.loc[X_ix_shift.intersection(X_diff_orig.index)]
+        # indices between the shifted index and the original index.
+        # The strided cumsum below is position based, so the remembered values
+        # must form a contiguous block with X. If X is shorter than the lag,
+        # the shifted indices alone leave a gap, so we also take all remembered
+        # values between the shifted index and X, see #5515.
+        orig_ix = X_diff_orig.index
+        X_update_ix = X_ix_shift.intersection(orig_ix)
+        if len(X) > 0:
+            ix_lo = min(X_ix_shift.min(), X.index.min())
+            ix_hi = max(X_ix_shift.max(), X.index.max())
+            in_gap = (orig_ix >= ix_lo) & (orig_ix <= ix_hi)
+            in_gap &= (orig_ix < X.index.min()) | (orig_ix > X.index.max())
+            X_update_ix = orig_ix[in_gap].union(X_update_ix)
+        X_update = X_diff_orig.loc[X_update_ix]
         # Set the values of the differenced time series to nan for all indices
         # that are in the indices of the original and the by the sum of all lags
         # shifted original time series that are available in the differenced time
