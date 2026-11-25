@@ -849,6 +849,14 @@ Domain agnostic foundation models
 
     TimesFM3Forecaster
 
+.. currentmodule:: sktime.forecasting.timestral
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimestralForecaster
+
 .. currentmodule:: sktime.forecasting.ttm
 
 .. autosummary::
