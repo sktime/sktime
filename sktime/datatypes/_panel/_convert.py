@@ -1100,7 +1100,7 @@ def from_numpyflat_to_numpy3d(obj, store=None):
         and shape[1] % store["numpy_second_dim"] == 0
     ):
         shape_1 = store["numpy_second_dim"]
-        target_shape = (shape[0], shape_1, shape[1] / shape_1)
+        target_shape = (shape[0], shape_1, shape[1] // shape_1)
     else:
         target_shape = (shape[0], 1, shape[1])
 
