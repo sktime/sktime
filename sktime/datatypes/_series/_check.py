@@ -526,8 +526,11 @@ def _index_equally_spaced(index):
     if isinstance(index, pd.RangeIndex):
         return True
 
+    # same check as PeriodIndex.is_full, which is deprecated from pandas 3.1:
+    # consecutive period ordinals differ by zero or one
     if isinstance(index, pd.PeriodIndex):
-        return index.is_full
+        steps = np.diff(index.asi8)
+        return bool(np.all((steps >= 0) & (steps <= 1)))
 
     # we now treat a necessary condition for being equally spaced:
     # the first two spaces are equal. From now on, we know this.
