@@ -672,20 +672,13 @@ def _nested_dataframe_has_unequal(X: pd.DataFrame) -> bool:
 
     Returns
     -------
-    True if x contains any NaNs, False otherwise.
+    True if X contains series of different lengths, False otherwise.
     """
-    rows = len(X)
-    cols = len(X.columns)
-    s = X.iloc[0, 0]
-    length = len(s)
-
-    for i in range(0, rows):
-        for j in range(0, cols):
-            s = X.iloc[i, j]
-            temp = len(s)
-            if temp != length:
-                return True
-    return False
+    cells = X.to_numpy().ravel()
+    if len(cells) == 0:
+        return False
+    length = len(cells[0])
+    return any(len(s) != length for s in cells)
 
 
 def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
@@ -699,17 +692,13 @@ def _nested_dataframe_has_nans(X: pd.DataFrame) -> bool:
     -------
     True if x contains any NaNs, False otherwise.
     """
-    cases = len(X)
-    dimensions = len(X.columns)
-    for i in range(cases):
-        for j in range(dimensions):
-            s = X.iloc[i, j]
-            if hasattr(s, "size"):
-                for k in range(s.size):
-                    if pd.isna(s.iloc[k]):
-                        return True
-            elif pd.isna(s):
+    for s in X.to_numpy().ravel():
+        if hasattr(s, "size"):
+            # pd.Series or np.ndarray cell, check all elements at once
+            if s.size > 0 and np.any(pd.isna(s)):
                 return True
+        elif pd.isna(s):
+            return True
     return False
 
 
