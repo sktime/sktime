@@ -66,6 +66,10 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 
 * `timemoe` - partial fork of `time-moe` package, from [Time-MoE/Time-MoE](https://github.com/Time-MoE/Time-MoE). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
 
+* `timestral` - a package implementing Timestral inference. Unofficial fork of the
+  `mistralai/timestral` package from https://github.com/mistralai/timestral (commit `a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff`).
+  An official package on PyPI is not available. Licensed under Apache 2.0.
+
 * `timesfm` - partial fork of TimesFM, adapted from [google-research/timesfm](https://github.com/google-research/timesfm). This is an unofficial fork created to address the lack of recent updates of `timesfm` package on [pypi](https://pypi.org/project/timesfm/) and the instability caused by significant interface changes in recent versions without prior deprecation warnings. The fork has minimal dependencies and focuses on the core features required for compatibility with the `sktime` forecaster.
 
 * `uni2ts` - a package implementing the MOIRAIForecaster. Unofficial fork of
