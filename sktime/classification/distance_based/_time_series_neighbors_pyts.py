@@ -98,8 +98,10 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": ["pyts<0.14", "scikit-learn<1.8"],
-        # todo 1.4.0: check whether the sklearn bound can be removed, see #11209
+        # pyts < 0.14 calls check_array with the force_all_finite keyword,
+        # which scikit-learn removed in 1.8, so one of the two is required:
+        # pyts 0.14 or later, or scikit-learn earlier than 1.8
+        "python_dependencies": ["pyts", ["pyts>=0.14", "scikit-learn<1.8"]],
         # estimator type
         # --------------
         "capability:multivariate": False,
