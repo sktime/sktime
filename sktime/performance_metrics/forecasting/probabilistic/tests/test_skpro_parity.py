@@ -30,29 +30,6 @@ def _get_class_definition(cls):
     }
 
 
-def _get_all_classes_in_module(module):
-    """Get all classes defined in a module.
-
-    Parameters
-    ----------
-    module : module
-        The module to inspect.
-
-    Returns
-    -------
-    dict
-        A dictionary mapping class names to class objects defined in the module.
-    """
-    import inspect
-
-    classes = {
-        name: cls
-        for name, cls in inspect.getmembers(module, inspect.isclass)
-        if cls.__module__ == module.__name__
-    }
-    return classes
-
-
 @pytest.mark.skipif(
     not _check_soft_dependencies("skpro", severity="none"),
     reason="requires skpro",
@@ -62,11 +39,13 @@ def test_skpro_sktime_metrics_parity():
 
     This is a parity check preceding a refactor where metrics move to skpro.
     """
+    from skpro.utils.retrieval import _all_classes
+
     module_a = SKTIME_PROBA_METRICS
     module_b = SKPRO_PROBA_METRICS
 
-    classes_a = _get_all_classes_in_module(module_a)
-    classes_b = _get_all_classes_in_module(module_b)
+    classes_a = _all_classes(module_a)
+    classes_b = _all_classes(module_b)
 
     shared_classes = classes_a.keys() & classes_b.keys()
 
