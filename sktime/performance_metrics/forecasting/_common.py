@@ -14,7 +14,7 @@ def _relative_error(y_true, y_pred, y_pred_benchmark, eps=None):
     defined as
 
     .. math::
-        \frac{y - \widehat{y}}{\widehat{y} - \widehat{y}_b}
+        \frac{y - \widehat{y}}{y - \widehat{y}_b}
 
     where all operations are element-wise.
 
