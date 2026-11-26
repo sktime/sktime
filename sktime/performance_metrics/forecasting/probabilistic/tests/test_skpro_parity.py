@@ -50,7 +50,7 @@ def test_skpro_sktime_metrics_parity():
     classes_a_dict = {cls[0]: cls[1] for cls in classes_a}
     classes_b_dict = {cls[0]: cls[1] for cls in classes_b}
 
-    shared_classes = classes_a.keys() & classes_b.keys()
+    shared_classes = classes_a_dict.keys() & classes_b_dict.keys()
 
     for name in sorted(shared_classes):
         definition_a = _get_class_definition(classes_a_dict[name])
