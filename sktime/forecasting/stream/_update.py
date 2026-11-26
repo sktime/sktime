@@ -11,6 +11,15 @@ from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
+class _StreamUpdatePredictMixin:
+    """Apply stream policies before predicting, including in rolling forecasts."""
+
+    def _update_predict_single(self, y, fh, X=None, update_params=True):
+        """Update through the wrapper instead of delegating the combined call."""
+        self.update(y=y, X=X, update_params=update_params)
+        return self.predict(fh=fh, X=X)
+
+
 class _StreamDataPoolMixin:
     """Pool training data as ``_y`` / ``_X`` on stream compositors.
 
@@ -41,7 +50,9 @@ class _StreamDataPoolMixin:
                 self._X = update_data(self._X, X)
 
 
-class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
+class UpdateRefitsEvery(
+    _StreamUpdatePredictMixin, _StreamDataPoolMixin, _DelegatedForecaster
+):
     """Refits periodically when update is called.
 
     If update is called with ``update_params=True`` and ``refit_interval`` or more has
@@ -294,7 +305,9 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         return [param1, param2]
 
 
-class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
+class UpdateEvery(
+    _StreamUpdatePredictMixin, _StreamDataPoolMixin, _DelegatedForecaster
+):
     """Update only periodically when update is called.
 
     If ``update`` is called, behaves like ``update_params=False``,
@@ -501,7 +514,7 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         return [param1, param2]
 
 
-class DontUpdate(_DelegatedForecaster):
+class DontUpdate(_StreamUpdatePredictMixin, _DelegatedForecaster):
     """Turns off updates, i.e., ensures that forecaster is only fit and never updated.
 
     This is useful when comparing forecasters that update with forecasters that don't,
