@@ -47,8 +47,8 @@ def test_skpro_sktime_metrics_parity():
     classes_a = _all_classes(module_a)
     classes_b = _all_classes(module_b)
 
-    classes_a_dict = {cls.__name__: cls for cls in classes_a}
-    classes_b_dict = {cls.__name__: cls for cls in classes_b}
+    classes_a_dict = {cls[0]: cls[1] for cls in classes_a}
+    classes_b_dict = {cls[0]: cls[1] for cls in classes_b}
 
     shared_classes = classes_a.keys() & classes_b.keys()
 
