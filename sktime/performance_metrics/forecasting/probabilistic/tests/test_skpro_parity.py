@@ -53,7 +53,10 @@ def _get_all_classes_in_module(module):
     return classes
 
 
-@pytest.mark.skipif(not _check_soft_dependencies("skpro"), reason="requires skpro")
+@pytest.mark.skipif(
+    not _check_soft_dependencies("skpro", severity="none"),
+    reason="requires skpro",
+)
 def test_skpro_sktime_metrics_parity():
     """Check that metrics in sktime are 1:1 copies of those in skpro.
 
