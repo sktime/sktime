@@ -369,8 +369,9 @@ def mean_absolute_scaled_error(
         Forecasted values.
 
     y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-             (n_timepoints, n_outputs), default = None
-        Observed training values.
+             (n_timepoints, n_outputs)
+        Observed training values. Required keyword argument (passed via
+        ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     sp : int
         Seasonal periodicity of training data.
@@ -499,8 +500,9 @@ def median_absolute_scaled_error(
         Forecasted values.
 
     y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-             (n_timepoints, n_outputs), default = None
-        Observed training values.
+             (n_timepoints, n_outputs)
+        Observed training values. Required keyword argument (passed via
+        ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     sp : int
         Seasonal periodicity of training data.
@@ -636,8 +638,9 @@ def mean_squared_scaled_error(
         Forecasted values.
 
     y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-             (n_timepoints, n_outputs), default = None
-        Observed training values.
+             (n_timepoints, n_outputs)
+        Observed training values. Required keyword argument (passed via
+        ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     sp : int
         Seasonal periodicity of training data.
@@ -776,8 +779,9 @@ def median_squared_scaled_error(
              where fh is the forecasting horizon
         Forecasted values.
     y_train : pd.Series, pd.DataFrame or np.array of shape (n_timepoints,) or \
-             (n_timepoints, n_outputs), default = None
-        Observed training values.
+             (n_timepoints, n_outputs)
+        Observed training values. Required keyword argument (passed via
+        ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
     sp : int
         Seasonal periodicity of training data.
     horizon_weight : array-like of shape (fh,), default=None
@@ -2076,8 +2080,9 @@ def mean_relative_absolute_error(
         Forecasted values.
 
     y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
+             (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values from benchmark method. Required keyword argument
+        (passed via ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
@@ -2190,8 +2195,9 @@ def median_relative_absolute_error(
         Forecasted values.
 
     y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
+             (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values from benchmark method. Required keyword argument
+        (passed via ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
@@ -2305,8 +2311,9 @@ def geometric_mean_relative_absolute_error(
         Forecasted values.
 
     y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
+             (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values from benchmark method. Required keyword argument
+        (passed via ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
@@ -2429,8 +2436,9 @@ def geometric_mean_relative_squared_error(
         Forecasted values.
 
     y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
+             (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values from benchmark method. Required keyword argument
+        (passed via ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     horizon_weight : array-like of shape (fh,), default=None
         Forecast horizon weights.
@@ -2570,8 +2578,9 @@ def relative_loss(
         Forecasted values.
 
     y_pred_benchmark : pd.Series, pd.DataFrame or np.array of shape (fh,) or \
-             (fh, n_outputs) where fh is the forecasting horizon, default=None
-        Forecasted values from benchmark method.
+             (fh, n_outputs) where fh is the forecasting horizon
+        Forecasted values from benchmark method. Required keyword argument
+        (passed via ``**kwargs``; a ``ValueError`` is raised if omitted or ``None``).
 
     relative_loss_function : function, default=mean_absolute_error
         Function to use in calculation relative loss. The function must comply
