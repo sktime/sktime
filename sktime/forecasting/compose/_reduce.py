@@ -2031,6 +2031,219 @@ class _ReducerMixin:
         return fh_idx
 
 
+def _concat_indices(indices):
+    """Concatenate pandas Index or MultiIndex objects preserving dtype and names."""
+    if len(indices) == 1:
+        return indices[0]
+    return pd.concat([pd.Series(index=idx, dtype=float) for idx in indices]).index
+
+
+def _coerce_dist_param(value, n_rows, n_cols, param_name, dist_name):
+    """Coerce a distribution parameter to 2D array shape ``(n_rows, n_cols)``."""
+    arr = np.asarray(value)
+    if arr.ndim == 0:
+        return np.full((n_rows, n_cols), arr)
+    if arr.ndim == 1:
+        if n_cols == 1 and arr.shape[0] == n_rows:
+            return arr.reshape(-1, 1)
+        if n_rows == 1 and arr.shape[0] == n_cols:
+            return arr.reshape(1, -1)
+        raise RuntimeError(
+            f"Unsupported shape {arr.shape} for parameter `{param_name}` in "
+            f"{dist_name}; expected compatible with {(n_rows, n_cols)}."
+        )
+    if arr.ndim == 2:
+        if arr.shape != (n_rows, n_cols):
+            raise RuntimeError(
+                f"Unsupported shape {arr.shape} for parameter `{param_name}` in "
+                f"{dist_name}; expected {(n_rows, n_cols)}."
+            )
+        return arr
+    raise RuntimeError(
+        f"Unsupported parameter rank ({arr.ndim}) for `{param_name}` in "
+        f"{dist_name}; expected scalar, 1D, or 2D array-like."
+    )
+
+
+def _concat_empirical_distributions(dist_list, row_indices, full_index, columns):
+    """Concatenate skpro Empirical distributions along rows."""
+    from skpro.distributions.empirical import Empirical
+
+    spl_dfs = []
+    weight_parts = []
+    has_weights = any(dist.weights is not None for dist in dist_list)
+
+    for dist, r_idx in zip(dist_list, row_indices):
+        spl = dist.spl.copy()
+        spl.columns = columns
+
+        sample_level = spl.index.get_level_values(0)
+        row_level = spl.index.droplevel(0)
+        positions = dist.index.get_indexer(row_level)
+
+        if isinstance(r_idx, pd.MultiIndex):
+            level_arrays = [sample_level.to_numpy()] + [
+                r_idx.get_level_values(i).take(positions) for i in range(r_idx.nlevels)
+            ]
+            new_names = ["sample"] + list(r_idx.names)
+        else:
+            row_name = r_idx.name if r_idx.name is not None else "time"
+            level_arrays = [sample_level.to_numpy(), r_idx.take(positions)]
+            new_names = ["sample", row_name]
+
+        new_spl_index = pd.MultiIndex.from_arrays(level_arrays, names=new_names)
+        spl.index = new_spl_index
+        spl_dfs.append(spl)
+
+        if has_weights:
+            if dist.weights is not None:
+                w = dist.weights.copy()
+                w.index = new_spl_index
+            else:
+                w = pd.Series(1.0, index=new_spl_index)
+            weight_parts.append(w)
+
+    combined_spl = pd.concat(spl_dfs, axis=0)
+    combined_weights = pd.concat(weight_parts, axis=0) if has_weights else None
+
+    return Empirical(
+        spl=combined_spl,
+        weights=combined_weights,
+        time_indep=dist_list[0].time_indep,
+        skip_init_sorted=dist_list[0].skip_init_sorted,
+        index=full_index,
+        columns=columns,
+    )
+
+
+def _convert_delta_to_dist(delta_dist, target_dist):
+    """Convert a constant Delta fallback distribution to match ``target_dist`` class."""
+    from skpro.distributions.empirical import Empirical
+
+    c_vals = np.asarray(delta_dist.mean())
+    if isinstance(target_dist, Empirical):
+        sample_arr = np.zeros(len(delta_dist.index), dtype=int)
+        if isinstance(delta_dist.index, pd.MultiIndex):
+            arrays = [sample_arr] + [
+                delta_dist.index.get_level_values(i)
+                for i in range(delta_dist.index.nlevels)
+            ]
+            names = ["sample"] + list(delta_dist.index.names)
+        else:
+            row_name = (
+                delta_dist.index.name if delta_dist.index.name is not None else "time"
+            )
+            arrays = [sample_arr, delta_dist.index]
+            names = ["sample", row_name]
+        spl_idx = pd.MultiIndex.from_arrays(arrays, names=names)
+        spl_df = pd.DataFrame(c_vals, index=spl_idx, columns=delta_dist.columns)
+        return Empirical(spl=spl_df, index=delta_dist.index, columns=delta_dist.columns)
+
+    target_params = target_dist.get_params(deep=False)
+    target_cls = type(target_dist)
+    loc_key = "mu" if "mu" in target_params else "loc"
+    scale_key = "sigma" if "sigma" in target_params else "scale"
+    extra_params = {
+        k: v
+        for k, v in target_params.items()
+        if k not in ["index", "columns", loc_key, scale_key]
+    }
+    if loc_key in target_params and scale_key in target_params:
+        return target_cls(
+            **{loc_key: c_vals, scale_key: np.full_like(c_vals, 1e-10, dtype=float)},
+            **extra_params,
+            index=delta_dist.index,
+            columns=delta_dist.columns,
+        )
+    raise TypeError(
+        f"Cannot align fallback Delta distribution with {target_cls.__name__}."
+    )
+
+
+def _concat_distributions(
+    dist_list, row_indices, columns, full_index=None, _sort_multiindex=True
+):
+    """Concatenate skpro BaseDistribution predictions along rows."""
+    from skpro.distributions.delta import Delta
+    from skpro.distributions.empirical import Empirical
+    from skpro.distributions.trafo import TransformedDistribution
+
+    if full_index is None:
+        full_index = _concat_indices(row_indices)
+
+    dist_types = {type(d) for d in dist_list}
+    if len(dist_types) > 1 and Delta in dist_types:
+        non_delta = next(d for d in dist_list if not isinstance(d, Delta))
+        dist_list = [
+            _convert_delta_to_dist(d, non_delta) if isinstance(d, Delta) else d
+            for d in dist_list
+        ]
+        dist_types = {type(d) for d in dist_list}
+
+    if len(dist_types) > 1:
+        raise TypeError(
+            "Cannot concatenate distributions of different types across horizons: "
+            f"{[type(d).__name__ for d in dist_list]}."
+        )
+
+    is_multiindex = isinstance(full_index, pd.MultiIndex)
+
+    if all(isinstance(d, Empirical) for d in dist_list):
+        if is_multiindex:
+            full_index, _ = full_index.sortlevel()
+        pred_dist = _concat_empirical_distributions(
+            dist_list, row_indices, full_index, columns
+        )
+    elif all(isinstance(d, TransformedDistribution) for d in dist_list):
+        inner_dist = _concat_distributions(
+            [d.distribution for d in dist_list],
+            row_indices,
+            columns,
+            full_index=full_index,
+            _sort_multiindex=False,
+        )
+        ref = dist_list[0]
+        pred_dist = TransformedDistribution(
+            distribution=inner_dist,
+            transform=ref.transform,
+            inverse_transform=ref.inverse_transform,
+            assume_monotonic=ref.assume_monotonic,
+            index=full_index,
+            columns=columns,
+        )
+    else:
+        dist_class = type(dist_list[0])
+        first_params = dist_list[0].get_params(deep=False)
+        param_names = [k for k in first_params if k not in ["index", "columns"]]
+        n_cols = len(columns)
+        stacked_params = {}
+
+        for param in param_names:
+            vals = [d.get_params(deep=False)[param] for d in dist_list]
+            if all(
+                v is None or isinstance(v, (bool, str)) or callable(v) for v in vals
+            ):
+                stacked_params[param] = vals[0]
+            elif all(np.isscalar(v) and v == vals[0] for v in vals):
+                stacked_params[param] = vals[0]
+            else:
+                coerced = [
+                    _coerce_dist_param(
+                        val, len(d.index), n_cols, param, dist_class.__name__
+                    )
+                    for d, val in zip(dist_list, vals)
+                ]
+                stacked_params[param] = np.vstack(coerced)
+
+        pred_dist = dist_class(**stacked_params, index=full_index, columns=columns)
+
+    if _sort_multiindex and is_multiindex and not isinstance(pred_dist, Empirical):
+        _, sorter = full_index.sortlevel()
+        pred_dist = pred_dist.iloc[sorter]
+
+    return pred_dist
+
+
 class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     """Direct reduction forecaster, incl single-output, multi-output, exogenous Dir.
 
@@ -2042,6 +2255,10 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
 
     Direct single-output with concurrent ``X`` behaviour can be configured
     by passing a single-output ``scikit-learn`` compatible transformer.
+
+    If ``estimator`` is an ``skpro`` probabilistic regressor, the resulting
+    forecaster will also support probabilistic predictions (``predict_interval``,
+    ``predict_quantiles``, ``predict_var``, and ``predict_proba``).
 
     Algorithm details:
 
@@ -2060,7 +2277,8 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
       labels = ``y(t+h_1)``, ..., ``y(t+h_k)`` for ``h_j`` in the forecasting horizon
       ranging over all ``t`` where the above have been observed (are in the index)
       estimator is fitted as a multi-output estimator (for all ``h_j``
-      simultaneously)
+      simultaneously) for point regressors, or separately per ``h`` for
+      probabilistic ``skpro`` regressors
 
     In ``predict``, given possibly exogenous ``X``, at cutoff time ``c``,
 
@@ -2079,8 +2297,10 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
 
     Parameters
     ----------
-    estimator : sklearn regressor, must be compatible with sklearn interface
+    estimator : sklearn regressor or skpro probabilistic regressor,
+        must be compatible with sklearn or skpro interface
         tabular regression algorithm used in reduction algorithm
+        if skpro regressor, resulting forecaster will have probabilistic capability
 
     window_length : int, optional, default=10
         window length used in the reduction algorithm
@@ -2145,6 +2365,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         "capability:exogenous": True,
         "capability:unequal_length": False,
         "capability:update": True,
+        "capability:pred_int": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
@@ -2175,11 +2396,32 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         self._lags = list(range(window_length))
         super().__init__()
 
+        _est_type = self._get_est_type()
+        if _est_type not in ["regressor", "regressor_proba"]:
+            raise TypeError(
+                f"error in {type(self).__name__}, "
+                "estimator must be either an sklearn compatible "
+                "regressor, or an skpro probabilistic regressor."
+            )
+        # has probabilistic mode iff the estimator is of type regressor_proba
+        self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
+        self._est_type = _est_type
+
+    def _get_est_type(self):
+        """Determine whether wrapped estimator is point regressor or skpro proba."""
+        estimator = self.estimator
+        if hasattr(estimator, "get_tags"):
+            return estimator.get_tag("object_type", "regressor", False)
+        return "regressor"
+
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values condition on parameters.
 
         This method should be used for setting dynamic tags only.
         """
+        _est_type = self._get_est_type()
+        self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
+
         pooling = self.pooling
         if pooling == "local":
             mtypes = "pd.DataFrame"
@@ -2207,21 +2449,65 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         """Fit dispatcher based on X_treatment and windows_identical."""
         self._store_fit_data(y, X)
         # shifted X (future X unknown) and identical windows reduce to
-        # multioutput regression, o/w fit multiple individual estimators
-        if (self.X_treatment == "shifted") and (self.windows_identical is True):
+        # multioutput regression for point regressors, o/w fit multiple estimators
+        if (
+            self._get_est_type() == "regressor"
+            and (self.X_treatment == "shifted")
+            and (self.windows_identical is True)
+        ):
             return self._fit_multioutput(y=y, X=X, fh=fh)
         else:
             return self._fit_multiple(y=y, X=X, fh=fh)
 
     def _predict(self, fh=None, X=None):
-        """Predict dispatcher based on X_treatment and windows_identical."""
-        if self.X_treatment == "shifted":
-            if self.windows_identical is True:
-                return self._predict_multioutput(X=X, fh=fh)
-            else:
-                return self._predict_multiple(X=self._cur_X, fh=fh)
+        """Predict point forecasts via shared reduction prediction pipeline."""
+        return self._predict_common(fh=fh, X=X, method="predict")
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast."""
+        return self._predict_common(
+            fh=fh, X=X, method="predict_quantiles", method_kwargs={"alpha": alpha}
+        )
+
+    def _predict_interval(self, fh, X, coverage):
+        """Compute/return prediction intervals for a forecast."""
+        return self._predict_common(
+            fh=fh, X=X, method="predict_interval", method_kwargs={"coverage": coverage}
+        )
+
+    def _predict_var(self, fh, X=None, cov=False):
+        """Compute/return variance forecasts for a forecast."""
+        if cov:
+            raise NotImplementedError(
+                "Computing covariance matrix (`cov=True`) is not supported in "
+                "DirectReductionForecaster."
+            )
+        return self._predict_common(fh=fh, X=X, method="predict_var")
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic distribution forecasts."""
+        return self._predict_common(
+            fh=fh, X=X, method="predict_proba", method_kwargs={"marginal": marginal}
+        )
+
+    def _predict_common(self, fh=None, X=None, method="predict", method_kwargs=None):
+        """Predict dispatcher based on X_treatment, windows_identical, and estimator."""
+        if (
+            self._get_est_type() == "regressor"
+            and (self.X_treatment == "shifted")
+            and (self.windows_identical is True)
+        ):
+            return self._predict_multioutput(
+                X=X, fh=fh, method=method, method_kwargs=method_kwargs
+            )
+        elif self.X_treatment == "shifted":
+            return self._predict_multiple(
+                X=self._cur_X, fh=fh, method=method, method_kwargs=method_kwargs
+            )
         else:
-            return self._predict_multiple(X=X, fh=fh)
+            return self._predict_multiple(
+                X=X, fh=fh, method=method, method_kwargs=method_kwargs
+            )
 
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
@@ -2274,7 +2560,9 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
 
         return self
 
-    def _predict_multioutput(self, fh=None, X=None):
+    def _predict_multioutput(
+        self, fh=None, X=None, method="predict", method_kwargs=None
+    ):
         """Predict core logic."""
         y_cols = self._cur_y.columns
         y_fit_index = self._cur_y.index
@@ -2293,8 +2581,9 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         Xt_lastrow = prep_skl_df(Xt_lastrow)
 
         estimator = self.estimator_
+        kwargs = method_kwargs or {}
         # 2D numpy array with col index = (fh, var) and 1 row
-        y_pred = estimator.predict(Xt_lastrow)
+        y_pred = getattr(estimator, method)(Xt_lastrow, **kwargs)
         y_pred = y_pred.reshape((len(fh_idx), len(y_cols)))
 
         y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
@@ -2311,6 +2600,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         impute_method = self.impute_method
         X_treatment = self.X_treatment
         windows_identical = self.windows_identical
+        est_type = self._get_est_type()
 
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
@@ -2372,17 +2662,41 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
             # we now check whether the set of full lags is empty
             # if yes, we set a flag, since we cannot fit the reducer
             # instead, later, we return a dummy prediction
-            if len(notna_idx) == 0:
+            if len(notna_idx) == 0 or len(yt) == 0:
                 self.estimators_.append(y.mean())
             else:
+                if est_type == "regressor_proba":
+                    Xtt = Xtt.reset_index(drop=True)
+                    yt = yt.reset_index(drop=True)
                 estimator = clone(self.estimator)
                 estimator.fit(Xtt, yt)
                 self.estimators_.append(estimator)
 
         return self
 
-    def _predict_multiple(self, X=None, fh=None):
-        """Fit to training data."""
+    def _predict_fallback_step(self, estimator, row_idx, method, expected_cols, y_cols):
+        """Construct fallback prediction for empty-lag step."""
+        n_rows = len(row_idx)
+        if method == "predict_proba":
+            from skpro.distributions.delta import Delta
+
+            c_arr = np.tile(estimator.to_numpy(), (n_rows, 1))
+            return Delta(c=c_arr, index=row_idx, columns=y_cols)
+        if method == "predict_var":
+            return pd.DataFrame(
+                np.zeros((n_rows, len(y_cols))), index=row_idx, columns=expected_cols
+            )
+        if method == "predict":
+            values = np.tile(estimator.to_numpy(), (n_rows, 1))
+            return pd.DataFrame(values, index=row_idx, columns=expected_cols)
+
+        y_pred_i = pd.DataFrame(index=row_idx, columns=expected_cols, dtype=float)
+        for col in expected_cols:
+            y_pred_i[col] = estimator[col[0]]
+        return y_pred_i
+
+    def _predict_multiple(self, X=None, fh=None, method="predict", method_kwargs=None):
+        """Predict core logic across separate horizon estimators."""
         from sktime.transformations.lag import Lag
 
         if X is not None and self._cur_X is not None:
@@ -2395,6 +2709,18 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         y_fit_index = self._cur_y.index
         fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         y_cols = self._cur_y.columns
+        est_type = self._get_est_type()
+
+        kwargs = method_kwargs or {}
+        if method == "predict_proba":
+            expected_cols = y_cols
+            est_kwargs = {}
+        elif method == "predict_var":
+            expected_cols = self._get_columns(method=method)
+            est_kwargs = {}
+        else:
+            expected_cols = self._get_columns(method=method, **kwargs)
+            est_kwargs = kwargs
 
         lagger_y_to_X = self.lagger_y_to_X_
 
@@ -2404,6 +2730,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         y_abs = list(fh_abs)
 
         y_pred_list = []
+        row_indices = []
 
         for i, lag in enumerate(y_lags):
             predict_idx = y_abs[i]
@@ -2415,23 +2742,55 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             Xtt_predrow = prep_skl_df(Xtt_predrow)
 
+            row_idx = Xtt_predrow.index
+            row_indices.append(row_idx)
             estimator = self.estimators_[i]
 
             # if = no training indices in _fit, fill in y training mean
             if isinstance(estimator, pd.Series):
-                y_pred_i = pd.DataFrame(index=[0], columns=y_cols)
-                y_pred_i.iloc[0] = estimator
+                y_pred_i = self._predict_fallback_step(
+                    estimator, row_idx, method, expected_cols, y_cols
+                )
             # otherwise proceed as per direct reduction algorithm
             else:
-                y_pred_i = estimator.predict(Xtt_predrow)
-            # 2D numpy array with col index = (var) and 1 row
+                X_est = (
+                    Xtt_predrow.reset_index(drop=True)
+                    if est_type == "regressor_proba"
+                    else Xtt_predrow
+                )
+                y_pred_i = getattr(estimator, method)(X_est, **est_kwargs)
+                if method != "predict_proba":
+                    if not isinstance(y_pred_i, pd.DataFrame):
+                        y_arr = np.asarray(y_pred_i).reshape(
+                            len(row_idx), len(expected_cols)
+                        )
+                        y_pred_i = pd.DataFrame(
+                            y_arr, index=row_idx, columns=expected_cols
+                        )
+                    else:
+                        y_pred_i = y_pred_i.copy()
+                        y_pred_i.index = row_idx
+                        y_pred_i.columns = expected_cols
+
             y_pred_list.append(y_pred_i)
 
-        y_pred = np.concatenate(y_pred_list)
-        y_pred = pd.DataFrame(y_pred, columns=y_cols, index=fh_idx)
+        if method == "predict_proba":
+            is_multiindex = isinstance(y_fit_index, pd.MultiIndex)
+            target_full_index = None if is_multiindex else fh_idx
+            return _concat_distributions(
+                y_pred_list,
+                row_indices=row_indices,
+                columns=y_cols,
+                full_index=target_full_index,
+            )
+
+        y_pred = pd.concat(y_pred_list, axis=0)
 
         if isinstance(y_pred.index, pd.MultiIndex):
+            y_pred.index.names = y_fit_index.names
             y_pred = y_pred.sort_index()
+        else:
+            y_pred.index = fh_idx
 
         return y_pred
 
@@ -2454,6 +2813,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
 
         est = LinearRegression()
@@ -2488,6 +2848,18 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         params5 = {"estimator": est, "window_length": 0}
 
         params = [params1, params2, params3, params4, params5]
+
+        if _check_soft_dependencies("skpro", severity="none"):
+            from skpro.regression.residual import ResidualDouble
+
+            params_proba_global = {
+                "estimator": ResidualDouble(estimator=LinearRegression()),
+                "window_length": 2,
+                "X_treatment": "concurrent",
+                "pooling": "global",
+                "windows_identical": False,
+            }
+            params = params + [params_proba_global]
 
         # this fails because catboost is not sklearn compatible
         # and fails set_params contracts already in sklearn;
