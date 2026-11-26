@@ -169,7 +169,10 @@ class DegreeDayFeatures(BaseTransformer):
         feats["hdd"] = hdd
         feats["cdd"] = cdd
 
-        return X.join(feats) if self.keep_original_columns else feats
+        if self.keep_original_columns:
+            cols_to_keep = [col for col in X.columns if col not in feats.columns]
+            return pd.concat([X[cols_to_keep], feats], axis=1)
+        return feats
 
     # ---- helpers ----
 
