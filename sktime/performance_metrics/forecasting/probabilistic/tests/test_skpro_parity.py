@@ -2,6 +2,8 @@
 
 import pytest
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 SKTIME_PROBA_METRICS = "sktime.performance_metrics.forecasting.probabilistic"
 SKPRO_PROBA_METRICS = "skpro.metrics"
 
@@ -42,6 +44,8 @@ def _get_all_classes_in_module(module):
     dict
         A dictionary mapping class names to class objects defined in the module.
     """
+    import inspect
+
     classes = {
         name: cls
         for name, cls in inspect.getmembers(module, inspect.isclass)
