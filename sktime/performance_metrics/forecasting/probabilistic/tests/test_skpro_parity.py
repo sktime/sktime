@@ -1,7 +1,6 @@
 """Test parity between metrics in sktime and skpro."""
 
 import pytest
-
 from skbase.utils.dependencies import _check_soft_dependencies
 
 SKTIME_PROBA_METRICS = "sktime.performance_metrics.forecasting.probabilistic"
