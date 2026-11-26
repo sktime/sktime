@@ -97,7 +97,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     >>> model = CINNForecaster(window_size=100) # doctest: +SKIP
     >>> model.fit(y) # doctest: +SKIP
     CINNForecaster(...)
-    >>> y_pred = model.predict(fh=[1,2,3]) # doctest: +SKIP
+    >>> y_pred = model.predict(fh=3) # doctest: +SKIP
     """
 
     _tags = {
@@ -107,6 +107,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "python_dependencies": ["FrEIA", "torch"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,

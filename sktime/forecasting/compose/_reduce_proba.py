@@ -233,8 +233,14 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     """
 
     _tags = {
+        # packaging data
+        # --------------
         "authors": ["marrov"],
+        "maintainers": ["marrov"],
         "python_dependencies": ["skpro>=2,<3.0.0"],
+        # estimator type
+        # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": False,
         "capability:multivariate": True,
         "capability:exogenous": True,
@@ -244,7 +250,15 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         "capability:random_state": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "tests:libs": ["sktime.transformations.series.lag"],
+        # CI and test flags
+        # -----------------
+        "tests:libs": [
+            "sktime.forecasting.base._base_proba",
+            "sktime.transformations.series.lag",
+        ],
+        "tests:specific": ["sktime.forecasting.compose.tests.test_reduce_proba"],
+        "tests:vm": True,
+        "tests:core": True,  # core to test BaseProbaForecaster
     }
 
     def __init__(
@@ -327,6 +341,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         from sktime.transformations.series.lag import Lag
 
         self._y_fit_index = y.index
+
+        self._cur_X = X
+        self._cur_y = y
 
         impute_method = self.impute_method
         lags = self._lags
@@ -419,13 +436,13 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             Predictive distribution.
             Returns an Empirical distribution from the MC samples.
         """
-        if self._X is not None:
-            X_pool = _pool_exogenous(self._X, X)
+        if self._cur_X is not None:
+            X_pool = _pool_exogenous(self._cur_X, X)
         else:
             X_pool = X
 
         fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=self._y_fit_index)
-        y_cols = self._y.columns
+        y_cols = self._cur_y.columns
 
         # Fallback for edge case: no valid training data
         if self._fit_fallback_mean_:
@@ -496,7 +513,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         """
         from sktime.transformations.series.lag import Lag
 
-        Xt_initial = self.lagger_y_to_X_.transform(self._y)
+        Xt_initial = self.lagger_y_to_X_.transform(self._cur_y)
         lag_plus_init = Lag(lags=1, index_out="extend")
         if isinstance(self.impute_method, str):
             from sktime.transformations.series.impute import Imputer
@@ -504,7 +521,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             lag_plus_init = lag_plus_init * Imputer(method=self.impute_method)
 
         Xtt_initial = lag_plus_init.fit_transform(Xt_initial)
-        y_plus_one_init = lag_plus_init.fit_transform(self._y)
+        y_plus_one_init = lag_plus_init.fit_transform(self._cur_y)
 
         if isinstance(y_plus_one_init.index, pd.MultiIndex):
             instance_levels = list(range(y_plus_one_init.index.nlevels - 1))
@@ -549,7 +566,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
             The time index for the forecasting horizon (without instance levels).
         """
         n_samples = self.n_samples
-        y_cols = self._y.columns
+        y_cols = self._cur_y.columns
         n_y_cols = len(y_cols)
 
         rng = np.random.default_rng(self.random_state)
@@ -567,7 +584,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         estimator = self.estimator_
 
-        y_index = self._y.index
+        y_index = self._cur_y.index
         is_hierarchical = isinstance(y_index, pd.MultiIndex)
 
         if is_hierarchical:

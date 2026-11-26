@@ -123,7 +123,7 @@ class STLForecaster(BaseForecaster):
     >>> forecaster = STLForecaster(sp=12)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     STLForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     See Also
     --------
@@ -146,6 +146,7 @@ class STLForecaster(BaseForecaster):
         "python_dependencies": "statsmodels",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?

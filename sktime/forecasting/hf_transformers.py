@@ -212,7 +212,7 @@ class HFTransformersForecaster(BaseForecaster):
     ...    },
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y) # doctest: +SKIP
-    >>> fh = [1, 2, 3]
+    >>> fh = 3
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
 
     **Using PEFT for Fine-Tuning**
@@ -244,7 +244,7 @@ class HFTransformersForecaster(BaseForecaster):
     ...    ) # doctest: +SKIP
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y) # doctest: +SKIP
-    >>> fh = [1, 2, 3]
+    >>> fh = 3
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
 
     **Using an Initialized Model**
@@ -280,7 +280,7 @@ class HFTransformersForecaster(BaseForecaster):
     ... )
 
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> fh = [1, 2, 3] # doctest: +SKIP
+    >>> fh = 3 # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh) # doctest: +SKIP
     """
 
@@ -291,6 +291,7 @@ class HFTransformersForecaster(BaseForecaster):
         "maintainers": ["benheid", "geetu040"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
