@@ -887,3 +887,196 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("skpro", severity="none"),
+    reason="skip test if required soft dependency for skpro not available",
+)
+def test_direct_reduction_proba_tags_and_validation():
+    """Test capability:pred_int tag and validation for DirectReductionForecaster."""
+    from skpro.regression.residual import ResidualDouble
+
+    from sktime.transformations.series.impute import Imputer
+
+    f_point = DirectReductionForecaster(LinearRegression(), window_length=2)
+    f_proba = DirectReductionForecaster(
+        ResidualDouble(LinearRegression()), window_length=2
+    )
+
+    assert f_point.get_tag("capability:pred_int") is False
+    assert f_proba.get_tag("capability:pred_int") is True
+
+    y = load_airline().iloc[:24]
+    f_point.fit(y, fh=[1, 2])
+    for method_name in [
+        "predict_interval",
+        "predict_quantiles",
+        "predict_var",
+        "predict_proba",
+    ]:
+        with pytest.raises(NotImplementedError):
+            getattr(f_point, method_name)()
+
+    with pytest.raises(TypeError, match="skpro probabilistic regressor"):
+        DirectReductionForecaster(Imputer())
+
+    f_proba.fit(y, fh=[1, 2])
+    with pytest.raises(NotImplementedError, match="cov=True"):
+        f_proba.predict_var(cov=True)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("skpro", severity="none"),
+    reason="skip test if required soft dependency for skpro not available",
+)
+@pytest.mark.parametrize("x_treatment", ["shifted", "concurrent"])
+def test_direct_reduction_proba_parity_with_direct_tabular(x_treatment):
+    """Test parity between DirectReduction and DirectTabular forecasters."""
+    from skpro.regression.residual import ResidualDouble
+
+    y = load_airline().iloc[:60]
+    y_train, y_test = temporal_train_test_split(y, test_size=4)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    est = ResidualDouble(LinearRegression())
+    f_tab = DirectTabularRegressionForecaster(
+        est, window_length=4, windows_identical=False
+    ).fit(y_train, fh=fh)
+    f_red = DirectReductionForecaster(
+        est,
+        window_length=4,
+        X_treatment=x_treatment,
+        impute_method=None,
+        windows_identical=False,
+    ).fit(y_train, fh=fh)
+
+    pd.testing.assert_series_equal(f_red.predict(fh), f_tab.predict(fh))
+    pd.testing.assert_frame_equal(
+        f_red.predict_interval(fh, coverage=[0.5, 0.9]),
+        f_tab.predict_interval(fh, coverage=[0.5, 0.9]),
+    )
+    pd.testing.assert_frame_equal(
+        f_red.predict_quantiles(fh, alpha=[0.1, 0.9]),
+        f_tab.predict_quantiles(fh, alpha=[0.1, 0.9]),
+    )
+    pd.testing.assert_frame_equal(f_red.predict_var(fh), f_tab.predict_var(fh))
+
+    dist_red = f_red.predict_proba(fh)
+    dist_tab = f_tab.predict_proba(fh)
+    pd.testing.assert_frame_equal(dist_red.mean(), dist_tab.mean())
+    pd.testing.assert_frame_equal(dist_red.var(), dist_tab.var())
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("skpro", severity="none"),
+    reason="skip test if required soft dependency for skpro not available",
+)
+@pytest.mark.parametrize("x_treatment", ["concurrent", "shifted"])
+@pytest.mark.parametrize("windows_identical", [True, False])
+def test_direct_reduction_proba_with_exogenous(x_treatment, windows_identical):
+    """Test DirectReductionForecaster probabilistic outputs with exogenous X."""
+    from skpro.distributions.empirical import Empirical
+    from skpro.regression.dummy import DummyProbaRegressor
+    from skpro.regression.residual import ResidualDouble
+
+    from sktime.datasets import load_longley
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+    X_pred = X_test if x_treatment == "concurrent" else None
+
+    for est, expected_dist_type in [
+        (ResidualDouble(LinearRegression(), dist="t", distr_params={"df": 5}), None),
+        (DummyProbaRegressor(strategy="empirical"), Empirical),
+    ]:
+        forecaster = DirectReductionForecaster(
+            est,
+            window_length=3,
+            X_treatment=x_treatment,
+            windows_identical=windows_identical,
+        )
+        forecaster.fit(y_train, X=X_train, fh=fh)
+
+        y_pred = forecaster.predict(X=X_pred)
+        pred_int = forecaster.predict_interval(X=X_pred, coverage=[0.5, 0.9])
+        pred_q = forecaster.predict_quantiles(X=X_pred, alpha=[0.9, 0.1])
+        pred_var = forecaster.predict_var(X=X_pred)
+        pred_dist = forecaster.predict_proba(X=X_pred)
+
+        assert y_pred.index.equals(y_test.index)
+        assert pred_int.index.equals(y_test.index)
+        assert pred_q.columns.tolist() == [("TOTEMP", 0.9), ("TOTEMP", 0.1)]
+        assert pred_var.index.equals(y_test.index)
+        assert pred_dist.index.equals(y_test.index)
+        assert list(pred_dist.columns) == ["TOTEMP"]
+        if expected_dist_type is not None:
+            assert isinstance(pred_dist, expected_dist_type)
+        assert pred_dist.mean().shape == (len(fh), 1)
+        assert pred_dist.quantile([0.1, 0.9]).shape == (len(fh), 2)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("skpro", severity="none"),
+    reason="skip test if required soft dependency for skpro not available",
+)
+@pytest.mark.parametrize("pooling", ["local", "panel", "global"])
+def test_direct_reduction_proba_pooling(pooling):
+    """Test DirectReductionForecaster probabilistic outputs across pooling modes."""
+    from skpro.regression.dummy import DummyProbaRegressor
+    from skpro.regression.residual import ResidualDouble
+
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    hierarchy_levels = (2,) if pooling == "panel" else (2, 2)
+    y = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels,
+        min_timepoints=14,
+        max_timepoints=14,
+        n_columns=1,
+        index_type="period",
+    )
+
+    for est in [ResidualDouble(LinearRegression()), DummyProbaRegressor()]:
+        forecaster = DirectReductionForecaster(
+            est, window_length=2, pooling=pooling, windows_identical=False
+        )
+        forecaster.fit(y, fh=[1, 2])
+
+        y_pred = forecaster.predict()
+        pred_int = forecaster.predict_interval(coverage=0.9)
+        pred_q = forecaster.predict_quantiles(alpha=[0.05, 0.95])
+        pred_var = forecaster.predict_var()
+
+        assert pred_int.index.equals(y_pred.index)
+        assert pred_q.index.equals(y_pred.index)
+        assert pred_var.index.equals(y_pred.index)
+
+        if pooling != "local":
+            pred_dist = forecaster.predict_proba()
+            assert pred_dist.index.equals(y_pred.index)
+            assert list(pred_dist.columns) == list(y_pred.columns)
+            pd.testing.assert_frame_equal(pred_dist.mean(), y_pred)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("skpro", severity="none"),
+    reason="skip test if required soft dependency for skpro not available",
+)
+def test_direct_reduction_proba_empty_lags_fallback():
+    """Test short-series Delta fallback when some horizons lack training windows."""
+    from skpro.regression.dummy import DummyProbaRegressor
+    from skpro.regression.residual import ResidualDouble
+
+    y_short = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
+    for est in [ResidualDouble(LinearRegression()), DummyProbaRegressor()]:
+        forecaster = DirectReductionForecaster(
+            est, window_length=2, windows_identical=False
+        )
+        forecaster.fit(y_short, fh=[1, 2, 3, 4])
+
+        assert forecaster.predict_interval().shape == (4, 2)
+        assert forecaster.predict_quantiles().shape == (4, 2)
+        assert forecaster.predict_var().shape == (4, 1)
+        assert forecaster.predict_proba().shape == (4, 1)
