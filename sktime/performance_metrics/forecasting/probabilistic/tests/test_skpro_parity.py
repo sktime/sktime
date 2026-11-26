@@ -47,11 +47,14 @@ def test_skpro_sktime_metrics_parity():
     classes_a = _all_classes(module_a)
     classes_b = _all_classes(module_b)
 
+    classes_a_dict = {cls.__name__: cls for cls in classes_a}
+    classes_b_dict = {cls.__name__: cls for cls in classes_b}
+
     shared_classes = classes_a.keys() & classes_b.keys()
 
     for name in sorted(shared_classes):
-        definition_a = _get_class_definition(classes_a[name])
-        definition_b = _get_class_definition(classes_b[name])
+        definition_a = _get_class_definition(classes_a_dict[name])
+        definition_b = _get_class_definition(classes_b_dict[name])
 
         msg = f"Class {name} differs between sktime and skpro"
 
