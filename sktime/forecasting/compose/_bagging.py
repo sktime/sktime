@@ -396,17 +396,25 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # Need to construct a completely new y out of old self._cur_y and y and then
-        # fit_treansform the transformer and re-fit the forecaster.
-        _y = update_data(self._cur_y, y)
+        self._cur_y = update_data(self._cur_y, y)
+        self._cur_X = update_data(self._cur_X, X)
 
-        y_bootstraps = self.bootstrap_transformer_.fit_transform(X=_y)
+        if update_params:
+            y_bootstraps = self.bootstrap_transformer_.fit_transform(X=self._cur_y)
+        else:
+            y_bootstraps = self.bootstrap_transformer_.transform(X=self._cur_y)
+        self._y_bs_ix = y_bootstraps.index
 
         # generate replicates of exogenous data for bootstrap
-        _X = update_data(self._cur_X, X)
-        X_inner = self._gen_X_bootstraps(_X)
+        X_inner = self._gen_X_bootstraps(self._cur_X)
 
-        self.forecaster_.update(y=y_bootstraps, X=X_inner, update_params=update_params)
+        if update_params:
+            # Regeneration replaces historical synthetic observations as well as
+            # adding new ones. Refit so the model sees exactly this bootstrap,
+            # rather than mixing it with an earlier synthetic history.
+            self.forecaster_.fit(y=y_bootstraps, X=X_inner, fh=self._fh)
+        else:
+            self.forecaster_.update(y=y_bootstraps, X=X_inner, update_params=False)
         return self
 
     @classmethod
