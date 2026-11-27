@@ -83,11 +83,12 @@ class PAAlegacy(BaseTransformer):
         return result
 
     def _perform_paa_along_dim(self, X):
+        index = X.index
         X = from_nested_to_2d_array(X, return_numpy=True)
 
         num_atts = X.shape[1]
         num_insts = X.shape[0]
-        dims = pd.DataFrame()
+        dims = pd.DataFrame(index=index)
         data = []
 
         for i in range(num_insts):
