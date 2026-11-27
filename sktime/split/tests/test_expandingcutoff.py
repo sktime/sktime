@@ -301,3 +301,26 @@ def test_expandingcutoff_step_length():
         for step_length in step_lengths:
             cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
             list(cv.split_series(y))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_expandingcutoff_integer_fh():
+    """Test ExpandingCutoffSplitter with integer fh (regression test for #11981)."""
+    y = pd.Series(np.arange(10.0))
+    cv_int = ExpandingCutoffSplitter(cutoff=5, fh=2, step_length=1)
+    cv_list = ExpandingCutoffSplitter(cutoff=5, fh=[1, 2], step_length=1)
+
+    np.testing.assert_array_equal(cv_int.get_cutoffs(y), cv_list.get_cutoffs(y))
+
+    splits_int = list(cv_int.split(y))
+    splits_list = list(cv_list.split(y))
+
+    assert len(splits_int) == len(splits_list)
+    for (train_int, test_int), (train_list, test_list) in zip(
+        splits_int, splits_list
+    ):
+        np.testing.assert_array_equal(train_int, train_list)
+        np.testing.assert_array_equal(test_int, test_list)
