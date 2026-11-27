@@ -98,7 +98,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         "object_type": ["metric_forecasting", "metric"],
         "scitype:y_pred": "pred",  # point forecasts
         "requires_y_train": False,
-        "requires-y-pred-benchmark": False,
+        "requires_y_pred_benchmark": False,
         "capability:multivariate": True,
         "lower_is_better": True,
         # "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
@@ -157,7 +157,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
             Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
             Required only if metric requires benchmark predictions,
-            as indicated by tag ``requires-y-pred-benchmark``.
+            as indicated by tag ``requires_y_pred_benchmark``.
             Otherwise, can be passed to ensure interface consistency, but is ignored.
             Must be of same format as ``y_true``, same indices and columns if indexed.
 
@@ -252,7 +252,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
             Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
             Required only if metric requires benchmark predictions,
-            as indicated by tag ``requires-y-pred-benchmark``.
+            as indicated by tag ``requires_y_pred_benchmark``.
             Otherwise, can be passed to ensure interface consistency, but is ignored.
             Must be of same format as ``y_true``, same indices and columns if indexed.
 
@@ -503,7 +503,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_pred_benchmark : optional, time series in ``sktime`` compatible data container format
             Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
             Required only if metric requires benchmark predictions,
-            as indicated by tag ``requires-y-pred-benchmark``.
+            as indicated by tag ``requires_y_pred_benchmark``.
             Otherwise, can be passed to ensure interface consistency, but is ignored.
             Must be of same format as ``y_true``, same indices and columns if indexed.
 
@@ -621,7 +621,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             * y_pred_benchmark : pandas.DataFrame, same format as y_pred
               Benchmark predictions to compare ``y_pred`` to, used for relative metrics.
               Required only if metric requires benchmark predictions,
-              as indicated by tag ``requires-y-pred-benchmark``.
+              as indicated by tag ``requires_y_pred_benchmark``.
               Otherwise, can be passed to ensure interface consistency, but is ignored.
             * y_train : pandas.DataFrame, same format as y_true
               Training data used to normalize the error metric.
@@ -1033,7 +1033,7 @@ class _ScaledMetricTags:
 
     _tags = {
         "requires_y_train": True,
-        "requires-y-pred-benchmark": False,
+        "requires_y_pred_benchmark": False,
         "capability:multivariate": True,
     }
 

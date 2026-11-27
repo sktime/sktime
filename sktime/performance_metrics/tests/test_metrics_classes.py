@@ -108,40 +108,56 @@ def test_custom_metric(greater_is_better):
     not run_test_module_changed(["sktime.performance_metrics", "sktime.base"]),
     reason="run test only if performance_metrics or base module has changed",
 )
-def test_requires_y_train_tag_deprecation():
-    """Test deprecation and aliasing of requires-y-train to requires_y_train."""
+@pytest.mark.parametrize(
+    "old_tag,new_tag,true_cls_name,false_cls_name",
+    [
+        (
+            "requires-y-train",
+            "requires_y_train",
+            "MeanAbsoluteScaledError",
+            "MeanSquaredError",
+        ),
+        (
+            "requires-y-pred-benchmark",
+            "requires_y_pred_benchmark",
+            "RelativeLoss",
+            "MeanSquaredError",
+        ),
+    ],
+)
+def test_deprecated_metric_tags(old_tag, new_tag, true_cls_name, false_cls_name):
+    """Test deprecation and aliasing of dashed metric tags."""
     import warnings
 
-    from sktime.performance_metrics.forecasting import (
-        MeanAbsoluteScaledError,
-        MeanSquaredError,
-    )
+    import sktime.performance_metrics.forecasting as fc_metrics
 
-    mase = MeanAbsoluteScaledError()
-    mse = MeanSquaredError()
+    true_cls = getattr(fc_metrics, true_cls_name)
+    false_cls = getattr(fc_metrics, false_cls_name)
+    true_est = true_cls()
+    false_est = false_cls()
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always", FutureWarning)
-        assert MeanAbsoluteScaledError.get_class_tag("requires_y_train") is True
-        assert MeanSquaredError.get_class_tag("requires_y_train") is False
-        assert mase.get_tag("requires_y_train") is True
-        assert mse.get_tag("requires_y_train") is False
-        mse.set_tags(requires_y_train=True)
-        assert mse.get_tag("requires_y_train") is True
+        assert true_cls.get_class_tag(new_tag) is True
+        assert false_cls.get_class_tag(new_tag) is False
+        assert true_est.get_tag(new_tag) is True
+        assert false_est.get_tag(new_tag) is False
+        false_est.set_tags(**{new_tag: True})
+        assert false_est.get_tag(new_tag) is True
     assert not [w for w in record if issubclass(w.category, FutureWarning)]
 
-    msg = r"requires-y-train.*1\.5\.0.*requires_y_train"
+    msg = rf"{old_tag}.*1\.5\.0.*{new_tag}"
     with pytest.warns(FutureWarning, match=msg):
-        assert MeanAbsoluteScaledError.get_class_tag("requires-y-train") is True
+        assert true_cls.get_class_tag(old_tag) is True
     with pytest.warns(FutureWarning, match=msg):
-        assert mase.get_tag("requires-y-train") is True
+        assert true_est.get_tag(old_tag) is True
     with pytest.warns(FutureWarning, match=msg):
-        mse_override = MeanSquaredError().set_tags(**{"requires-y-train": True})
-    assert mse_override.get_tag("requires_y_train") is True
+        override = false_cls().set_tags(**{old_tag: True})
+    assert override.get_tag(new_tag) is True
 
-    class _LegacyMetric(MeanSquaredError):
-        _tags = {"requires-y-train": True}
+    class _LegacyMetric(false_cls):
+        _tags = {old_tag: True}
 
-    assert _LegacyMetric.get_class_tag("requires_y_train") is True
-    with pytest.warns(FutureWarning, match="requires-y-train"):
-        assert _LegacyMetric.get_class_tag("requires-y-train") is True
+    assert _LegacyMetric.get_class_tag(new_tag) is True
+    with pytest.warns(FutureWarning, match=old_tag):
+        assert _LegacyMetric.get_class_tag(old_tag) is True

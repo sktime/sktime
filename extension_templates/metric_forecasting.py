@@ -133,7 +133,7 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
         # whether the metric requires training data y_train to be passed
         "requires_y_train": False,
         # whether the metric requires a benchmark forecast y_pred_benchmark
-        "requires-y-pred-benchmark": False,
+        "requires_y_pred_benchmark": False,
         # whether the metric supports multivariate (multi-column) inputs
         "capability:multivariate": True,
         # whether lower values of the metric are better (True) or worse (False)
@@ -223,7 +223,7 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
                 Training data, required if ``requires_y_train`` tag is True.
             y_pred_benchmark : pd.DataFrame, same format as y_pred
                 Benchmark predictions, required if tag
-                ``requires-y-pred-benchmark`` is True.
+                ``requires_y_pred_benchmark`` is True.
             sample_weight : 1D array-like of length len(y_true), default=None
                 Per-time-point sample weights.
 

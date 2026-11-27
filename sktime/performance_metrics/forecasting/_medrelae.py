@@ -90,7 +90,7 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
 
     _tags = {
         "requires_y_train": False,
-        "requires-y-pred-benchmark": True,
+        "requires_y_pred_benchmark": True,
         "capability:multivariate": True,
         "tests:skip_by_name": ["test_doctest_examples"],
     }
