@@ -7,6 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a value to minimize:
 the lower the better.
 """
 
+import numbers
+
 import numpy as np
 import sklearn
 from scipy.stats import gmean
@@ -78,6 +80,11 @@ def _handle_output(obj, multioutput):
     else:
         obj = _coerce_to_scalar(obj)
     return obj
+
+
+def _is_real_number(x):
+    """Check whether x is a real number scalar, including numpy scalars, not a bool."""
+    return isinstance(x, numbers.Real) and not isinstance(x, (bool, np.bool_))
 
 
 def mean_linex_error(
@@ -2699,14 +2706,21 @@ def _asymmetric_error(
     Thomson, South-Western: Ohio, US.
     """
     functions = {"squared": np.square, "absolute": np.abs}
+    for name, value in [
+        ("left_error_function", left_error_function),
+        ("right_error_function", right_error_function),
+    ]:
+        if not (isinstance(value, str) and value in functions):
+            raise ValueError(
+                f"`{name}` must be one of {list(functions)}, but found {value!r}."
+            )
     left_func, right_func = (
         functions[left_error_function],
         functions[right_error_function],
     )
 
     if not (
-        isinstance(left_error_penalty, (int, float))
-        and isinstance(right_error_penalty, (int, float))
+        _is_real_number(left_error_penalty) and _is_real_number(right_error_penalty)
     ):
         msg = "`left_error_penalty` and `right_error_penalty` must be int or float."
         raise ValueError(msg)
@@ -2751,9 +2765,9 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
     Thomson, South-Western: Ohio, US.
     """
-    if not (isinstance(a, (int, float)) and a != 0):
+    if not (_is_real_number(a) and a != 0):
         raise ValueError("`a` must be int or float not equal to zero.")
-    if not (isinstance(b, (int, float)) and b > 0):
+    if not (_is_real_number(b) and b > 0):
         raise ValueError("`b` must be an int or float greater than zero.")
     error = y_true - y_pred
     a_error = a * error

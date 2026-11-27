@@ -140,6 +140,52 @@ def test_linex_function():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_asymmetric_metrics_parameter_validation():
+    """Test numeric parameter and error function validation, bugfix for #11984."""
+    from sktime.performance_metrics.forecasting import (
+        mean_asymmetric_error,
+        mean_linex_error,
+    )
+
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+
+    # numpy real scalars are valid numeric parameters, same result as python scalars
+    assert np.isclose(
+        mean_linex_error(y_true, y_pred, a=np.int64(1), b=np.float32(1)),
+        mean_linex_error(y_true, y_pred, a=1, b=1),
+    )
+    assert np.isclose(
+        mean_asymmetric_error(
+            y_true,
+            y_pred,
+            left_error_penalty=np.int64(2),
+            right_error_penalty=np.float64(3),
+        ),
+        mean_asymmetric_error(
+            y_true, y_pred, left_error_penalty=2, right_error_penalty=3
+        ),
+    )
+
+    # booleans are not meaningful numeric parameters
+    for bad in [True, np.bool_(True)]:
+        with pytest.raises(ValueError, match="`a` must be int or float"):
+            mean_linex_error(y_true, y_pred, a=bad)
+        with pytest.raises(ValueError, match="`b` must be an int or float"):
+            mean_linex_error(y_true, y_pred, b=bad)
+        with pytest.raises(ValueError, match="must be int or float"):
+            mean_asymmetric_error(y_true, y_pred, left_error_penalty=bad)
+
+    # unsupported error function names give a clear ValueError
+    for kwarg in ["left_error_function", "right_error_function"]:
+        with pytest.raises(ValueError, match=rf"`{kwarg}` must be one of"):
+            mean_asymmetric_error(y_true, y_pred, **{kwarg: "abs"})
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_make_scorer():
     """Test make_forecasting_scorer and the failure case in #4827."""
     import functools
