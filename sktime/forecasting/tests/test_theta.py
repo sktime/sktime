@@ -144,3 +144,24 @@ def check_panel_theta_quantiles():
     forecaster.fit(y)
     forecaster.predict(fh=[1, 3])
     forecaster.predict_quantiles(fh=[1, 3], alpha=[0.1, 0.5, 0.9])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ThetaForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("sp", [1, 52])
+def test_theta_anchored_weekly_datetime(sp):
+    """Test ThetaForecaster on a W-SUN DatetimeIndex matches PeriodIndex."""
+    y = load_airline()
+    y_datetime = y.copy()
+    y_datetime.index = pd.date_range("2020-01-05", periods=len(y), freq="W-SUN")
+    y_period = y_datetime.to_period()
+
+    fh = [1, 2, 3]
+    y_pred = ThetaForecaster(sp=sp).fit(y_datetime).predict(fh=fh)
+    y_pred_period = ThetaForecaster(sp=sp).fit(y_period).predict(fh=fh)
+
+    assert isinstance(y_pred.index, pd.DatetimeIndex)
+    assert len(y_pred) == len(fh)
+    np.testing.assert_allclose(y_pred.values, y_pred_period.values)

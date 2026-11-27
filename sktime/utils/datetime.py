@@ -90,7 +90,7 @@ def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
         raise ValueError("frequency is missing")
     else:
         offset = _to_offset_compat(freq)
-        count, unit = offset.n, offset.base.freqstr
+        count, unit = offset.n, offset.base.freqstr.split("-")[0]
         return count, unit
 
 
