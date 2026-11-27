@@ -150,3 +150,34 @@ def test_invalid_aggfuncs(forecasters, aggfunc):
     forecaster.fit(y, fh=2)
     with pytest.raises(ValueError, match=r"not recognized"):
         forecaster.predict()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_unnamed_forecasters():
+    """Estimators passed without names get class-based names, as documented."""
+    y = make_forecasting_problem()
+
+    forecaster = EnsembleForecaster([PolynomialTrendForecaster(), NaiveForecaster()])
+    forecaster.fit(y, fh=[1, 2, 3])
+    names = [name for name, _ in forecaster.forecasters_]
+    assert names == ["PolynomialTrendForecaster", "NaiveForecaster"]
+
+    named = EnsembleForecaster(
+        [
+            ("PolynomialTrendForecaster", PolynomialTrendForecaster()),
+            ("NaiveForecaster", NaiveForecaster()),
+        ]
+    )
+    named.fit(y, fh=[1, 2, 3])
+    pd.testing.assert_series_equal(forecaster.predict(), named.predict())
+
+    # unnamed estimators can be mixed with (str, estimator, count) tuples
+    mixed = EnsembleForecaster(
+        [NaiveForecaster(), ("trend", PolynomialTrendForecaster(), 2)]
+    )
+    mixed.fit(y, fh=1)
+    names = [name for name, _ in mixed.forecasters_]
+    assert names == ["NaiveForecaster", "trend_1", "trend_2"]

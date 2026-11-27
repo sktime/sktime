@@ -361,8 +361,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         fc = []
         for forecaster in forecasters:
-            if len(forecaster) <= 2:
-                # Handle the (str, est) tuple
+            if not isinstance(forecaster, (tuple, list)) or len(forecaster) <= 2:
+                # Handle the estimator, or the (str, est) tuple
                 fc.append(forecaster)
             elif len(forecaster) == 3:
                 # Handle the (str, est, num_replicates) tuple
