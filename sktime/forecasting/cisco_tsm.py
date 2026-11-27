@@ -109,8 +109,8 @@ class CiscoTSMForecaster(BaseForecaster):
     >>> forecaster = CiscoTSMForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     CiscoTSMForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
-    >>> pred_int = forecaster.predict_interval(fh=[1, 2, 3],coverage=0.9)#doctest:+SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
+    >>> pred_int = forecaster.predict_interval(fh=3,coverage=0.9)#doctest:+SKIP
     """
 
     _DEFAULT_QUANTILES = _DEFAULT_QUANTILES  # module-level constant
