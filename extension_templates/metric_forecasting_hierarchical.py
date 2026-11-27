@@ -149,7 +149,7 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
         # "pred_var" = variance forecasts
         "scitype:y_pred": "pred",
         # whether the metric requires training data y_train to be passed
-        "requires-y-train": False,
+        "requires_y_train": False,
         # whether the metric requires a benchmark forecast y_pred_benchmark
         "requires-y-pred-benchmark": False,
         # whether the metric supports multivariate (multi-column) inputs
@@ -244,7 +244,7 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
             Optional keyword arguments, may include:
 
             y_train : pd.DataFrame
-                Training data, required if ``requires-y-train`` tag is True.
+                Training data, required if ``requires_y_train`` tag is True.
             y_pred_benchmark : pd.DataFrame, same format as y_pred
                 Benchmark predictions, required if tag
                 ``requires-y-pred-benchmark`` is True.

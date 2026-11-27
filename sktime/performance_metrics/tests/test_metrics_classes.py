@@ -101,3 +101,47 @@ def test_custom_metric(greater_is_better):
     assert isinstance(score, float)
 
     check_estimator(fc_scorer, raise_exceptions=True)
+
+
+# TODO 1.5.0: remove this test
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics", "sktime.base"]),
+    reason="run test only if performance_metrics or base module has changed",
+)
+def test_requires_y_train_tag_deprecation():
+    """Test deprecation and aliasing of requires-y-train to requires_y_train."""
+    import warnings
+
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteScaledError,
+        MeanSquaredError,
+    )
+
+    mase = MeanAbsoluteScaledError()
+    mse = MeanSquaredError()
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always", FutureWarning)
+        assert MeanAbsoluteScaledError.get_class_tag("requires_y_train") is True
+        assert MeanSquaredError.get_class_tag("requires_y_train") is False
+        assert mase.get_tag("requires_y_train") is True
+        assert mse.get_tag("requires_y_train") is False
+        mse.set_tags(requires_y_train=True)
+        assert mse.get_tag("requires_y_train") is True
+    assert not [w for w in record if issubclass(w.category, FutureWarning)]
+
+    msg = r"requires-y-train.*1\.5\.0.*requires_y_train"
+    with pytest.warns(FutureWarning, match=msg):
+        assert MeanAbsoluteScaledError.get_class_tag("requires-y-train") is True
+    with pytest.warns(FutureWarning, match=msg):
+        assert mase.get_tag("requires-y-train") is True
+    with pytest.warns(FutureWarning, match=msg):
+        mse_override = MeanSquaredError().set_tags(**{"requires-y-train": True})
+    assert mse_override.get_tag("requires_y_train") is True
+
+    class _LegacyMetric(MeanSquaredError):
+        _tags = {"requires-y-train": True}
+
+    assert _LegacyMetric.get_class_tag("requires_y_train") is True
+    with pytest.warns(FutureWarning, match="requires-y-train"):
+        assert _LegacyMetric.get_class_tag("requires-y-train") is True

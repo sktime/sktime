@@ -8,9 +8,11 @@ __all__ = ["BaseMetric"]
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseObject
+from sktime.base._base import TagAliaserMixin
 
 
-class BaseMetric(BaseObject):
+# TODO 1.5.0: remove TagAliaserMixin from inheritance
+class BaseMetric(TagAliaserMixin, BaseObject):
     """Base class for defining metrics in sktime.
 
     Extends sktime BaseObject.

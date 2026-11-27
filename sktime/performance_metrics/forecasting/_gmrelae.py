@@ -91,7 +91,7 @@ class GeometricMeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     """
 
     _tags = {
-        "requires-y-train": False,
+        "requires_y_train": False,
         "requires-y-pred-benchmark": True,
         "capability:multivariate": True,
         "tests:skip_by_name": ["test_doctest_examples"],

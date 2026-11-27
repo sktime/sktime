@@ -428,8 +428,9 @@ class TagAliaserMixin(_TagAliaserMixin):
     # when removing tags from here,
     # add to LEGACY_DEPRECATED_TAGS in TestAllObjects
     # (permanent graveyard to check for legacy tags in CI)
-    alias_dict = {}
-    deprecate_dict = {}
+    # TODO 1.5.0: remove "requires-y-train" alias
+    alias_dict = {"requires-y-train": "requires_y_train"}
+    deprecate_dict = {"requires-y-train": "1.5.0"}
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):

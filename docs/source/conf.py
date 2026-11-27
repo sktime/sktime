@@ -468,7 +468,7 @@ def _make_estimator_overview(app):
         ],
         "metric": [
             "lower_is_better",
-            "requires-y-train",
+            "requires_y_train",
             "requires-y-pred-benchmark",
             "capability:multivariate",
             "scitype:y_pred",
