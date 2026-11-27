@@ -78,6 +78,12 @@ class ForecastingHorizonSplitter(BaseSplitter):
             steps = np.asarray(idx) - min_step
 
             n_train = len(y) - max_step
+            if n_train < 1:
+                raise ValueError(
+                    f"Forecasting horizon {idx.tolist()} leaves no training "
+                    f"indices for a series of length {len(y)}. For a relative "
+                    f"forecasting horizon, require max(fh) < len(y)."
+                )
             first_test_ix = n_train - 1 + min_step
 
             train_ix = np.arange(n_train)
