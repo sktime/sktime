@@ -5,7 +5,6 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.simons import SimonsForecaster
-from sktime.libs.simons import QUANTILES
 from sktime.tests.test_switch import run_test_for_class
 
 pytestmark = pytest.mark.skipif(
@@ -14,7 +13,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 # Generate using the upstream package:
-# pip install "git+https://github.com/Abel-ai-lab/Simons@0d0042f8da45140172bd36980be08654c0017d8b"
+# pip install simons-forecasting==0.1.3.post3
 # import numpy as np
 # import torch
 # from simons import QUANTILES, Simons
@@ -92,8 +91,7 @@ def test_simons_golden_outputs():
     )
 
     import torch
-
-    from sktime.libs.simons import Simons
+    from simons import QUANTILES, Simons
 
     history = np.asarray(_make_y(), dtype=np.float32)[None, None, :]
     raw = Simons.from_pretrained(
@@ -137,6 +135,8 @@ def test_simons_update_matches_full_fit():
 
 def test_simons_predict_proba_matches_native_quantiles():
     """The histogram distribution preserves Simons' native quantiles."""
+    from simons import QUANTILES
+
     forecaster = SimonsForecaster(model_path="abel-lab/Simons-25M").fit(_make_y())
     distribution = forecaster.predict_proba(fh=[1, 2, 3])
     quantiles = forecaster.predict_quantiles(fh=[1, 2, 3], alpha=QUANTILES)
@@ -169,6 +169,7 @@ def test_simons_accepts_categorical_covariates():
 
 def test_simons_numeric_categorical_covariates_share_codes(monkeypatch):
     """Numeric labels use shared codes across fit and predict."""
+    from simons import QUANTILES
 
     class CovariateEchoModel:
         def forecast(self, history, horizon, covariates):

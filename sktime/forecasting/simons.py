@@ -24,9 +24,11 @@ class SimonsForecaster(BaseForecaster):
     maximum requested forecasting horizon. Past-only covariates are not
     supported.
 
-    The Simons inference code is licensed under Apache-2.0. Simons model
-    weights are licensed separately under OpenMDW-1.1 and are downloaded at
-    runtime; weights are not bundled with ``sktime``.
+    The inference code is provided by the optional ``simons-forecasting``
+    dependency, licensed under Apache-2.0. Simons model weights are licensed
+    separately under OpenMDW-1.1 and are downloaded at runtime; weights are
+    not bundled with ``sktime``. Install the dependency with
+    ``pip install simons-forecasting``.
 
     Parameters
     ----------
@@ -43,6 +45,7 @@ class SimonsForecaster(BaseForecaster):
     .. [1] https://huggingface.co/collections/abel-lab/simons-1
     .. [2] https://github.com/Abel-ai-lab/Simons
     .. [3] https://abel.ai/research/introducing-simons/
+    .. [4] https://pypi.org/project/simons-forecasting/
 
     Examples
     --------
@@ -69,12 +72,12 @@ class SimonsForecaster(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "python_dependencies": [
+            "simons-forecasting>=0.1.3,<0.2.0",
             "torch>=2.5",
             "numpy>=1.24",
             "safetensors>=0.4",
             "huggingface_hub>=0.23",
         ],
-        "tests:libs": ["sktime.libs.simons"],
         "tests:specific": ["sktime.forecasting.tests.test_simons"],
         "tests:vm": True,
         "tests:skip_by_name": ["test_get_test_params_coverage"],
@@ -123,7 +126,7 @@ class SimonsForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Return point forecasts from Simons."""
-        from sktime.libs.simons import QUANTILES
+        from simons import QUANTILES
 
         predictions, index = self._run_forecast(fh, X=X)
         values = predictions[:, :, QUANTILES.index(0.5)].T
@@ -136,7 +139,7 @@ class SimonsForecaster(BaseForecaster):
         interpolated from Simons' nine output quantiles. Levels outside that
         range are clamped to the nearest supported endpoint with a warning.
         """
-        from sktime.libs.simons import QUANTILES
+        from simons import QUANTILES
 
         if alpha is None:
             alpha = [0.1, 0.5, 0.9]
@@ -165,9 +168,8 @@ class SimonsForecaster(BaseForecaster):
 
     def _predict_proba(self, fh, X=None, marginal=True):
         """Return a histogram distribution from Simons' native quantiles."""
+        from simons import QUANTILES
         from skpro.distributions import HistogramQPD
-
-        from sktime.libs.simons import QUANTILES
 
         predictions, index = self._run_forecast(fh, X=X)
         levels = np.asarray(QUANTILES, dtype=np.float64)
@@ -226,8 +228,9 @@ class SimonsForecaster(BaseForecaster):
                 "X columns during predict must match the columns used during fit."
             )
 
+        from simons import prepare_covariates
+
         from sktime.forecasting.base import ForecastingHorizon
-        from sktime.libs.simons import prepare_covariates
 
         future_index = (
             ForecastingHorizon(range(1, horizon + 1))
@@ -325,7 +328,7 @@ class _CachedSimons:
         if self.model_ is not None:
             return self.model_
 
-        from sktime.libs.simons import Simons
+        from simons import Simons
 
         self.model_ = Simons.from_pretrained(
             self.model_path,
