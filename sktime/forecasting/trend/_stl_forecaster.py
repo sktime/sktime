@@ -123,7 +123,7 @@ class STLForecaster(BaseForecaster):
     >>> forecaster = STLForecaster(sp=12)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     STLForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     See Also
     --------
