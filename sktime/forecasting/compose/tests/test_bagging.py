@@ -77,7 +77,7 @@ def test_calculate_data_quantiles():
     y = load_airline()
 
     series_names = ["s1", "s2", "s3"]
-    fh = [1, 2]
+    fh = 2
     alpha = [0, 0.5, 1]
 
     index = pd.MultiIndex.from_product(
