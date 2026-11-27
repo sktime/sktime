@@ -14,7 +14,35 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Mean relative absolute error (MRAE).
+    r"""Mean relative absolute error (MRAE).
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n`,
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    and benchmark predictions
+    :math:`\widehat{y}^{(b)}_1, \dots, \widehat{y}^{(b)}_n` (all in :math:`\mathbb{R}`),
+    at time indices :math:`t_1, \dots, t_n`,
+    the relative error at index :math:`t_i` is the ratio of the forecast error
+    to the benchmark forecast error,
+    :math:`r_i = \frac{y_i - \widehat{y}_i}{y_i - \widehat{y}^{(b)}_i}`.
+
+    ``evaluate`` or call returns the Mean Relative Absolute Error,
+    the arithmetic mean of the absolute relative errors,
+    :math:`\frac{1}{n} \sum_{i=1}^n |r_i|`.
+    (the time indices are not used)
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    jackknife pseudo-samples of the MRAE at that time index,
+    :math:`n \cdot \bar{\varepsilon} - (n-1) \cdot \varepsilon_i`,
+    where :math:`\bar{\varepsilon}` is the MRAE over all time indices,
+    and :math:`\varepsilon_i` is the MRAE with the i-th time index removed.
+    As the MRAE is an arithmetic mean of pointwise terms, these pseudo-samples
+    coincide with the pointwise absolute relative errors :math:`|r_i|`.
+
+    MRAE output is non-negative floating point, with best possible value 0.0.
 
     In relative error metrics, relative errors are first calculated by
     scaling (dividing) the individual forecast errors by the error calculated
@@ -59,6 +87,13 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     MedianRelativeAbsoluteError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+    Notes
+    -----
+    If the benchmark forecast error (``y_true`` minus ``y_pred_benchmark``) is
+    zero, or close to zero, the denominator of the relative error is bounded away
+    from zero by a small epsilon, so that a large relative error is returned at
+    that time index rather than a division by zero.
 
     References
     ----------
