@@ -1,7 +1,5 @@
 """Symbolic Aggregate approXimation (SAX) transformer."""
 
-import sys
-
 import numpy as np
 import pandas as pd
 import scipy.stats
@@ -186,14 +184,14 @@ class SAXlegacy(BaseTransformer):
     def _generate_breakpoints(self):
         # Pre-made gaussian curve breakpoints from UEA TSC codebase
         return {
-            2: [0, sys.float_info.max],
-            3: [-0.43, 0.43, sys.float_info.max],
-            4: [-0.67, 0, 0.67, sys.float_info.max],
-            5: [-0.84, -0.25, 0.25, 0.84, sys.float_info.max],
-            6: [-0.97, -0.43, 0, 0.43, 0.97, sys.float_info.max],
-            7: [-1.07, -0.57, -0.18, 0.18, 0.57, 1.07, sys.float_info.max],
-            8: [-1.15, -0.67, -0.32, 0, 0.32, 0.67, 1.15, sys.float_info.max],
-            9: [-1.22, -0.76, -0.43, -0.14, 0.14, 0.43, 0.76, 1.22, sys.float_info.max],
+            2: [0, np.inf],
+            3: [-0.43, 0.43, np.inf],
+            4: [-0.67, 0, 0.67, np.inf],
+            5: [-0.84, -0.25, 0.25, 0.84, np.inf],
+            6: [-0.97, -0.43, 0, 0.43, 0.97, np.inf],
+            7: [-1.07, -0.57, -0.18, 0.18, 0.57, 1.07, np.inf],
+            8: [-1.15, -0.67, -0.32, 0, 0.32, 0.67, 1.15, np.inf],
+            9: [-1.22, -0.76, -0.43, -0.14, 0.14, 0.43, 0.76, 1.22, np.inf],
             10: [
                 -1.28,
                 -0.84,
@@ -204,7 +202,7 @@ class SAXlegacy(BaseTransformer):
                 0.52,
                 0.84,
                 1.28,
-                sys.float_info.max,
+                np.inf,
             ],
         }[self.alphabet_size]
 
