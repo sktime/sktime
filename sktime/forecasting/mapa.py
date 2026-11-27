@@ -129,6 +129,20 @@ class MAPAForecaster(BaseForecaster):
         Only used if forecast_combine="weighted_mean".
         Must have same length as aggregation_levels.
         Weights are normalized to sum to 1.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.mapa import MAPAForecaster  # doctest: +SKIP
+    >>> from sktime.forecasting.naive import NaiveForecaster  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline  # doctest: +SKIP
+    >>> y = load_airline()  # doctest: +SKIP
+    >>> forecaster = MAPAForecaster(  # doctest: +SKIP
+    ...     base_forecaster=NaiveForecaster(strategy="mean"),
+    ...     aggregation_levels=[1, 2],
+    ...     sp=12,
+    ... )
+    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {

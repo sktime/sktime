@@ -97,6 +97,15 @@ class SFA(BaseTransformer):
     .. [1] Schäfer, Patrick, and Mikael Högqvist. "SFA: a symbolic fourier approximation
     and  index for similarity search in high dimensional datasets." Proceedings of the
     15th international conference on extending database technology. 2012.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.dictionary_based._sfa import SFA
+    >>> X = np.random.rand(5, 1, 20)
+    >>> y = ["a", "b", "a", "b", "a"]
+    >>> transformer = SFA(word_length=4, alphabet_size=4, window_size=10)
+    >>> X_transformed = transformer.fit_transform(X, y)  # doctest: +SKIP
     """
 
     _tags = {

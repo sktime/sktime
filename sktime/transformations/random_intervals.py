@@ -43,6 +43,14 @@ class RandomIntervals(BaseTransformer):
     See Also
     --------
     SupervisedIntervals
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.random_intervals import RandomIntervals
+    >>> X = np.ones((5, 1, 20))
+    >>> transformer = RandomIntervals(n_intervals=5, random_state=42)
+    >>> X_transformed = transformer.fit_transform(X)
     """
 
     _tags = {
