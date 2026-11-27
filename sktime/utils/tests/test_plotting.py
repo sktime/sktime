@@ -442,3 +442,53 @@ def test_plotting_basic_dataframe():
     plot_series(y, y_pred, labels=["y", "y_pred"], pred_interval=y_pred_ints)
     plt.gcf().canvas.draw_idle()
     plt.close()
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("matplotlib", severity="none"),
+    reason="run test only if matplotlib is present",
+)
+def test_plot_calibration():
+    """Test plot_calibration with and without histogram."""
+    import matplotlib
+    import matplotlib.pyplot as plt
+
+    from sktime.utils.plotting import plot_calibration
+
+    matplotlib.use("agg")
+
+    y_true = pd.Series([10.0, 20.0, 30.0, 40.0, 50.0])
+    y_pred = pd.DataFrame(
+        {
+            ("y", 0.1): [5.0, 15.0, 25.0, 35.0, 45.0],
+            ("y", 0.5): [10.0, 20.0, 30.0, 40.0, 50.0],
+            ("y", 0.9): [15.0, 25.0, 35.0, 45.0, 55.0],
+        }
+    )
+
+    # 1. Default (plot_hist=False, ax=None)
+    fig1, ax1 = plot_calibration(y_true, y_pred, plot_hist=False)
+    assert fig1 is not None
+    assert ax1 is not None
+    plt.close(fig1)
+
+    # 2. plot_hist=True, ax=None
+    fig2, axes2 = plot_calibration(y_true, y_pred, plot_hist=True)
+    assert fig2 is not None
+    assert isinstance(axes2, tuple) and len(axes2) == 2
+    ax_curve, ax_hist = axes2
+    assert ax_curve is not None
+    assert ax_hist is not None
+    plt.close(fig2)
+
+    # 3. Passed custom single ax
+    fig3, ax3 = plt.subplots(1)
+    res_ax = plot_calibration(y_true, y_pred, ax=ax3, plot_hist=False)
+    assert res_ax is ax3
+    plt.close(fig3)
+
+    # 4. Passed custom pair of axes with plot_hist=True
+    fig4, (ax4_1, ax4_2) = plt.subplots(2, 1)
+    res_axes = plot_calibration(y_true, y_pred, ax=(ax4_1, ax4_2), plot_hist=True)
+    assert res_axes == (ax4_1, ax4_2)
+    plt.close(fig4)
