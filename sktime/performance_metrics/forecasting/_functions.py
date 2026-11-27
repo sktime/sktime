@@ -7,6 +7,8 @@ Function named as ``*_error`` or ``*_loss`` return a value to minimize:
 the lower the better.
 """
 
+import numbers
+
 import numpy as np
 import sklearn
 from scipy.stats import gmean
@@ -2699,16 +2701,30 @@ def _asymmetric_error(
     Thomson, South-Western: Ohio, US.
     """
     functions = {"squared": np.square, "absolute": np.abs}
+    if not (
+        isinstance(left_error_function, str)
+        and left_error_function in functions
+        and isinstance(right_error_function, str)
+        and right_error_function in functions
+    ):
+        msg = (
+            "`left_error_function` and `right_error_function` must be "
+            "'squared' or 'absolute'."
+        )
+        raise ValueError(msg)
+
     left_func, right_func = (
         functions[left_error_function],
         functions[right_error_function],
     )
 
     if not (
-        isinstance(left_error_penalty, (int, float))
-        and isinstance(right_error_penalty, (int, float))
+        isinstance(left_error_penalty, numbers.Real)
+        and not isinstance(left_error_penalty, bool)
+        and isinstance(right_error_penalty, numbers.Real)
+        and not isinstance(right_error_penalty, bool)
     ):
-        msg = "`left_error_penalty` and `right_error_penalty` must be int or float."
+        msg = "`left_error_penalty` and `right_error_penalty` must be real numbers."
         raise ValueError(msg)
 
     errors = np.where(
@@ -2751,10 +2767,14 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
     Diebold, Francis X. (2007). "Elements of Forecasting (4th ed.)",
     Thomson, South-Western: Ohio, US.
     """
-    if not (isinstance(a, (int, float)) and a != 0):
-        raise ValueError("`a` must be int or float not equal to zero.")
-    if not (isinstance(b, (int, float)) and b > 0):
-        raise ValueError("`b` must be an int or float greater than zero.")
+    if not (
+        isinstance(a, numbers.Real) and not isinstance(a, bool) and a != 0
+    ):
+        raise ValueError("`a` must be a real number not equal to zero.")
+    if not (
+        isinstance(b, numbers.Real) and not isinstance(b, bool) and b > 0
+    ):
+        raise ValueError("`b` must be a real number greater than zero.")
     error = y_true - y_pred
     a_error = a * error
     linex_error = b * (np.exp(a_error) - a_error - 1)
