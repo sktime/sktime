@@ -41,3 +41,16 @@ def test_forecasting_horizon_splitter_relative(fh, expected_train, expected_test
 
     with pytest.raises(StopIteration):
         next(fold_generator)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ForecastingHorizonSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_forecasting_horizon_splitter_relative_raises_empty_train():
+    """Relative fh with max(fh) >= len(y) must not yield empty training set (#11975)."""
+    y = pd.Series(range(10))
+    splitter = ForecastingHorizonSplitter(fh=10)
+
+    with pytest.raises(ValueError, match="no training indices"):
+        next(splitter.split(y))
