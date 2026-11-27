@@ -454,6 +454,26 @@ class splitter(_BaseScitypeOfObject):
         return TestAllSplitters
 
 
+class bootstrap(_BaseScitypeOfObject):
+    """Bootstrap resampling algorithm."""
+
+    _tags = {
+        "scitype_name": "bootstrap",
+        "short_descr": "bootstrap resampling algorithm",
+        "parent_scitype": "object",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.bootstrap.base import BaseBootstrap
+
+        return BaseBootstrap
+
+    @classmethod
+    def get_test_class(cls):
+        return None
+
+
 class transformer(_BaseScitypeOfObject):
     """Time series transformer.
 
