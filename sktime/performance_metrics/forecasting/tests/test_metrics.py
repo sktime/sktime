@@ -140,6 +140,69 @@ def test_linex_function():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_asymmetric_and_linex_accept_numpy_real_parameters():
+    """NumPy real scalars are valid numeric parameters for these metrics."""
+    from sktime.performance_metrics.forecasting import (
+        mean_asymmetric_error,
+        mean_linex_error,
+    )
+
+    assert np.allclose(
+        mean_linex_error([1], [0], a=np.int64(1), b=np.int64(2)),
+        2 * (np.exp(1) - 2),
+    )
+    assert np.allclose(
+        mean_asymmetric_error([-1], [0], left_error_penalty=np.int64(2)),
+        2,
+    )
+    assert np.allclose(
+        mean_asymmetric_error([1], [0], right_error_penalty=np.int64(2)),
+        2,
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_name, kwargs",
+    [
+        ("mean_linex_error", {"a": True}),
+        ("mean_linex_error", {"b": True}),
+        ("mean_asymmetric_error", {"left_error_penalty": True}),
+        ("mean_asymmetric_error", {"right_error_penalty": True}),
+    ],
+)
+def test_asymmetric_and_linex_reject_boolean_parameters(metric_name, kwargs):
+    """Booleans are not accepted as real-valued metric parameters."""
+    from sktime.performance_metrics import forecasting
+
+    metric = getattr(forecasting, metric_name)
+    with pytest.raises(ValueError):
+        metric([1], [0], **kwargs)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "function_name_parameter",
+    ["left_error_function", "right_error_function"],
+)
+def test_asymmetric_error_rejects_unknown_function_names(function_name_parameter):
+    """Unknown asymmetric error functions raise a clear ValueError."""
+    from sktime.performance_metrics.forecasting import mean_asymmetric_error
+
+    with pytest.raises(ValueError, match="must be 'squared' or 'absolute'"):
+        mean_asymmetric_error([1], [0], **{function_name_parameter: "abs"})
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_make_scorer():
     """Test make_forecasting_scorer and the failure case in #4827."""
     import functools
