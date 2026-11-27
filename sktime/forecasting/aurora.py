@@ -135,6 +135,7 @@ class AuroraForecaster(BaseForecaster):
         # since aurora is generative probabilistic
         # we skip the score test as it is not deterministic
         "tests:skip_by_name": ["test_score"],
+        "serialization:skip": ("model",),
     }
 
     def __init__(
@@ -164,16 +165,6 @@ class AuroraForecaster(BaseForecaster):
         self.vision = vision
         self.model = None
         super().__init__()
-
-    def __getstate__(self):
-        """Get state for pickling."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Set state for unpickling."""
-        self.__dict__.update(state)
 
     def __post_init__(self):
         """Post-initialization setup."""
@@ -223,7 +214,7 @@ class AuroraForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh, X=None):
-        if self.model is None:
+        if not hasattr(self, "model") or self.model is None:
             self.model = self._load_model()
             self.model.eval()
 
@@ -272,7 +263,7 @@ class AuroraForecaster(BaseForecaster):
                 f"num_samples >= 2; got num_samples={self.num_samples}."
             )
 
-        if self.model is None:
+        if not hasattr(self, "model") or self.model is None:
             self.model = self._load_model()
             self.model.eval()
 

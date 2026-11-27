@@ -76,8 +76,6 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         "tests:libs": ["sktime.networks.rnn._rnn_tf"],
         "tests:skip_by_name": [
             "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
             "test_multioutput",  # see 6201
             "test_classifier_on_unit_test_data",  # see 6201
         ],
