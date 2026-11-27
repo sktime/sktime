@@ -100,7 +100,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=3)
     AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -322,7 +322,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
-    >>> forecaster.fit(y=y, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=3)
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -415,14 +415,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names = [f[0] for f in self._forecasters]
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = (
-            y_pred.T.groupby(level=1)
-            .agg(
-                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
-                self.aggfunc,
-                self.weights,
-            )
-            .T
+        # aggregate over forecasters, separately per variable (column level 1);
+        # loop instead of groupby.agg, which passes Series not DataFrames in pandas>=3.1
+        y_pred = pd.concat(
+            {
+                var: _aggregate(y_var.T, self.aggfunc, self.weights)
+                for var, y_var in y_pred.T.groupby(level=1)
+            },
+            axis=1,
+            names=[y_pred.columns.names[1]],
         )
         return y_pred
 
