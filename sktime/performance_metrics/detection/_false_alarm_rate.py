@@ -47,10 +47,11 @@ class FalseAlarmRate(BaseDetectionMetric):
 
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
     and are mapped through ``X.index`` before matching, so ``X`` is required.
-    If ``X`` has a time index, the offsets are time offsets, for instance
-    ``pd.Timedelta("-3s")``, and the duration is counted in ``time_unit``,
-    by default hours. Otherwise all values are in the units of ``X.index``,
-    and ``time_unit`` is ignored.
+    If ``X`` has a time index (a ``pd.DatetimeIndex``), the offsets are time
+    offsets, for instance ``pd.Timedelta("-3s")``, and the duration is counted
+    in ``time_unit``, by default hours. With a ``pd.PeriodIndex``, values and
+    offsets are in period steps, and ``time_unit`` is ignored. Otherwise all
+    values are in the units of ``X.index``, and ``time_unit`` is ignored.
 
     With no true events the score is still defined, as every alarm is a false
     alarm. With no alarms the score is 0, as long as ``X`` has a span. If ``X``
@@ -74,10 +75,11 @@ class FalseAlarmRate(BaseDetectionMetric):
         0, alarms after the event are false alarms.
         Same unit as ``min_offset``. NaN raises a ``ValueError``.
     time_unit : str, default="hour"
-        Unit in which the duration is counted, if ``X`` has a time index,
-        so the score is false alarms per ``time_unit``.
+        Unit in which the duration is counted, if ``X`` has a time index
+        (``pd.DatetimeIndex``), so the score is false alarms per ``time_unit``.
         Any unit accepted by ``pd.Timedelta``, for instance ``"hour"``,
-        ``"min"``, or ``"s"``. Ignored if ``X`` does not have a time index.
+        ``"min"``, or ``"s"``. Ignored if ``X`` does not have a time index
+        or has a ``pd.PeriodIndex``.
 
     Examples
     --------
@@ -151,7 +153,9 @@ class FalseAlarmRate(BaseDetectionMetric):
             return np.nan
 
         duration = index[-1] - index[0]
-        if _is_time_index(index):
+        if isinstance(index, pd.PeriodIndex):
+            duration = duration.n / getattr(index.freq, "n", 1)
+        elif _is_time_index(index):
             duration = duration / pd.Timedelta(1, unit=self.time_unit)
 
         # a repeated index value can still give no span, and no rate

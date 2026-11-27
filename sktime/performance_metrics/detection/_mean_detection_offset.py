@@ -45,9 +45,11 @@ class MeanDetectionOffset(BaseDetectionMetric):
 
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
     and are mapped through ``X.index`` before matching, so ``X`` is required.
-    If ``X`` has a time index, the offsets are time offsets, for instance
-    ``pd.Timedelta("-3s")``, and the score is returned as a number of
-    ``time_unit``. Otherwise all values are in the units of ``X.index``.
+    If ``X`` has a time index (a ``pd.DatetimeIndex``), the offsets are time
+    offsets, for instance ``pd.Timedelta("-3s")``, and the score is returned as
+    a number of ``time_unit``. With a ``pd.PeriodIndex``, values and offsets are
+    in period steps, and ``time_unit`` is ignored. Otherwise all values are in
+    the units of ``X.index``, and ``time_unit`` is ignored.
 
     Only point events are scored, so interval ``ilocs`` (segments) in
     ``y_true`` or ``y_pred`` raise a ``ValueError``.
@@ -69,9 +71,10 @@ class MeanDetectionOffset(BaseDetectionMetric):
         means that alarms after the event do not count.
         Same unit as ``min_offset``. NaN raises a ``ValueError``.
     time_unit : str, default="s"
-        Unit of the returned score, if ``X`` has a time index.
-        Any unit accepted by ``pd.Timedelta``, for instance ``"s"``, ``"ms"``,
-        ``"min"``, or ``"h"``. Ignored if ``X`` does not have a time index.
+        Unit of the returned score, if ``X`` has a time index
+        (``pd.DatetimeIndex``). Any unit accepted by ``pd.Timedelta``, for
+        instance ``"s"``, ``"ms"``, ``"min"``, or ``"h"``. Ignored if ``X``
+        does not have a time index or has a ``pd.PeriodIndex``.
 
     Examples
     --------
@@ -146,7 +149,10 @@ class MeanDetectionOffset(BaseDetectionMetric):
 
         # a time index gives a TimedeltaIndex, which has a mean in time units,
         # a plain numeric Index has no mean method, so go through numpy
-        if _is_time_index(X.index):
+        if isinstance(X.index, pd.PeriodIndex):
+            freq_n = getattr(X.index.freq, "n", 1)
+            return float(np.mean([x.n for x in offset]) / freq_n)
+        elif _is_time_index(X.index):
             return float(offset.mean() / pd.Timedelta(1, unit=self.time_unit))
         return float(np.mean(offset.to_numpy()))
 

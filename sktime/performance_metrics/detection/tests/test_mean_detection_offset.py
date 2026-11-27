@@ -139,3 +139,16 @@ def test_mean_detection_offset_requires_X():
 
     with pytest.raises(TypeError):
         metric(_events([5]), _events([3]))
+
+
+@SKIP_IF_UNCHANGED
+@pytest.mark.parametrize("freq", ["D", "2D", "3h", "15min", "W", "2M", "Q"])
+def test_mean_detection_offset_period_index(freq):
+    """With a PeriodIndex, the offset is measured in period steps."""
+    index = pd.period_range("2020-01-01", periods=10, freq=freq)
+    X = pd.DataFrame({"foo": range(10)}, index=index)
+    y_true = _events([5])
+    y_pred = _events([3])
+
+    score = MeanDetectionOffset(min_offset=-3)(y_true, y_pred, X)
+    assert score == -2.0
