@@ -58,7 +58,7 @@ class MantisForecaster(BaseForecaster):
     >>> forecaster = MantisForecaster(context_length=24)
     >>> forecaster.fit(y)  # doctest: +SKIP
     MantisForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -82,6 +82,22 @@ class MantisForecaster(BaseForecaster):
         # -------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_mantis"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "mantis": (
+                'MantisForecaster(checkpoint="paris-noah/MantisV2", '
+                'model_version="v2", device="auto", context_length=127)'
+            ),
+            "mantis_8m": (
+                'MantisForecaster(checkpoint="paris-noah/Mantis-8M", '
+                'model_version="v1", device="auto", context_length=127)'
+            ),
+            "mantis_plus": (
+                'MantisForecaster(checkpoint="paris-noah/MantisPlus", '
+                'model_version="v1", device="auto", context_length=127)'
+            ),
+        },
     }
 
     def __init__(

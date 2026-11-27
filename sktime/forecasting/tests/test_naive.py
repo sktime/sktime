@@ -33,9 +33,10 @@ y_test = s.iloc[n_train:]
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-def test_strategy_last(fh):
+@pytest.mark.parametrize("sp", [1, None])
+def test_strategy_last(fh, sp):
     """Test last strategy."""
-    f = NaiveForecaster(strategy="last")
+    f = NaiveForecaster(strategy="last", sp=sp)
     f.fit(y_train)
     y_pred = f.predict(fh)
     expected = np.repeat(y_train.iloc[-1], len(f.fh))
@@ -238,11 +239,8 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
     freq = pd.Timedelta("1h")
-    kwargs = dict(closed="left") if pd.__version__ < "1.4.0" else dict(inclusive="left")
     data = pd.Series(
-        index=pd.date_range(
-            "2021-06-01 00:00", periods=n * window_length, freq=freq, **kwargs
-        ),
+        index=pd.date_range("2021-06-01 00:00", periods=n * window_length, freq=freq),
         data=([float(i) for i in range(1, sp + 1)] * n * window_length)[
             : n * window_length
         ],
@@ -473,7 +471,7 @@ def test_naive_sp_greater_1_not_nan(freq):
     model = NaiveForecaster(sp=2)
     model.fit(sample_dataset)
 
-    predictions: pd.Series = model.predict(fh=[1, 2, 3])
+    predictions: pd.Series = model.predict(fh=3)
     null_predictions_count = predictions.isna().sum()
 
     assert null_predictions_count == 0

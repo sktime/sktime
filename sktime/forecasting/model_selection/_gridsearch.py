@@ -213,7 +213,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
-    >>> fh = [1,2,3]
+    >>> fh = 3
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
@@ -243,7 +243,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     fh=[1,2,3])
+    ...     fh=3)
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=[{
@@ -264,7 +264,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ... )  # doctest: +SKIP
     >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = gscv.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
