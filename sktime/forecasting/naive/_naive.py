@@ -357,7 +357,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         from sktime.transformations.lag import Lag
 
         strategy = self.strategy
-        sp = self.sp
+        sp = self.sp_
         _y = self._y
         cutoff = self.cutoff
 
