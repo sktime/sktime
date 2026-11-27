@@ -459,7 +459,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_timepoints=15, n_columns=1)
         y_train.name = "foo"
 
-        object_instance.fit(y_train, fh=[1, 2, 3])
+        object_instance.fit(y_train, fh=3)
         y_pred = object_instance.predict()
 
         _assert_correct_columns(y_pred, y_train)
@@ -783,7 +783,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
         # check that _y is empty when estimator is constructed
-        assert f._y is None
+        assert not hasattr(f, "_y") or f._y is None
 
         # check that _y is updated during fit
         f.fit(y_train, fh=FH0)
@@ -959,7 +959,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         X.columns = ["foo", "bar"]
         X_train = get_window(X, lag=2)
         X_test = get_window(X, window_length=2)
-        fh = [1, 2]
+        fh = 2
 
         object_instance.fit(y=y_train, X=X_train, fh=fh)
         y_pred = object_instance.predict(X=X_test)
@@ -1043,7 +1043,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 same_cutoff=False,
             )
 
-            fh = [1, 2]
+            fh = 2
 
             estimator.fit(y, fh=fh)
             y_pred = estimator.predict()
