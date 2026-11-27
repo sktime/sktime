@@ -16,7 +16,7 @@ class MeanBias(BaseForecastingErrorMetric):
     MB output is a floating point number.
     MB is of the same unit as the input data.
     An MB of 0.0 indicates an unbiased forecast. A positive MB indicates
-    underforecasting, while a negative MB indicates overforecasting.
+    overforecasting, while a negative MB indicates underforecasting.
 
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
