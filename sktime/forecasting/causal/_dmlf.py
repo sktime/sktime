@@ -428,7 +428,7 @@ class DoubleMLForecaster(BaseForecaster):
 
         return self._add_det_to_proba(pred_quantiles_res, pred_base)
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Generate predictive variances for DoubleMLForecaster."""
         X_exposure, X_confounder = self._split_exogenous_data(X)
 

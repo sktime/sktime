@@ -397,7 +397,7 @@ class FhPlexForecaster(BaseForecaster):
         y_pred = self._get_preds(fh, "predict_interval", X=X, coverage=coverage)
         return y_pred
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Forecast variance at future horizon.
 
         private _predict_var containing the core logic, called from predict_var

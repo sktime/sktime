@@ -363,7 +363,7 @@ class SquaringResiduals(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self.forecaster_.predict(fh=fh_abs, X=X)
-        pred_var = self._predict_var(fh=fh, X=X)
+        pred_var = self._predict_var(fh=fh, X=X, cov=False)
         if self.distr_kwargs is not None:
             z_scores = dist_fun.ppf(alpha, **self.distr_kwargs)
         else:
@@ -383,7 +383,7 @@ class SquaringResiduals(BaseForecaster):
 
         return pred_quantiles
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Compute/return prediction variance for a forecast.
 
         Must be run *after* the forecaster has been fitted.
