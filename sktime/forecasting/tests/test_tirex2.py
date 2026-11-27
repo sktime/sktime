@@ -39,7 +39,7 @@ def _fitted_stub(y, X=None):
     """Fit a forecaster against ``_StubModel``, avoiding a checkpoint download."""
     forecaster = TiRex2Forecaster()
     forecaster._load_model = _StubModel
-    forecaster.fit(y, X=X, fh=[1, 2, 3])
+    forecaster.fit(y, X=X, fh=3)
     return forecaster
 
 
@@ -144,7 +144,7 @@ def test_predict_end_to_end():
     forecaster = TiRex2Forecaster(**TiRex2Forecaster.get_test_params()[0])
     forecaster.fit(y)
 
-    y_pred = forecaster.predict(fh=[1, 2, 3])
+    y_pred = forecaster.predict(fh=3)
 
     assert isinstance(y_pred, pd.DataFrame)
     assert y_pred.shape == (3, 1)
@@ -168,7 +168,7 @@ def test_multivariate_shape_and_column_order():
     forecaster = TiRex2Forecaster(**TiRex2Forecaster.get_test_params()[0])
     forecaster.fit(_series(columns=columns))
 
-    y_pred = forecaster.predict(fh=[1, 2])
+    y_pred = forecaster.predict(fh=2)
 
     assert y_pred.shape == (2, 3)
     assert list(y_pred.columns) == columns
@@ -196,7 +196,7 @@ def test_quantiles_outside_native_grid_are_clamped(lower, upper):
     forecaster = TiRex2Forecaster(**TiRex2Forecaster.get_test_params()[0])
     forecaster.fit(_series(128))
 
-    pred_q = forecaster.predict_quantiles(fh=[1, 2, 3], alpha=[lower, 0.1, 0.9, upper])
+    pred_q = forecaster.predict_quantiles(fh=3, alpha=[lower, 0.1, 0.9, upper])
 
     np.testing.assert_allclose(pred_q[("y", lower)], pred_q[("y", 0.1)])
     np.testing.assert_allclose(pred_q[("y", upper)], pred_q[("y", 0.9)])
@@ -207,8 +207,8 @@ def test_predict_quantiles_median_matches_predict():
     forecaster = TiRex2Forecaster(**TiRex2Forecaster.get_test_params()[0])
     forecaster.fit(_series(128))
 
-    y_pred = forecaster.predict(fh=[1, 2, 3])
-    pred_q = forecaster.predict_quantiles(fh=[1, 2, 3], alpha=[0.5])
+    y_pred = forecaster.predict(fh=3)
+    pred_q = forecaster.predict_quantiles(fh=3, alpha=[0.5])
 
     np.testing.assert_allclose(pred_q[("y", 0.5)], y_pred["y"])
 
@@ -236,7 +236,7 @@ def test_predict_with_exogenous_data():
     forecaster = TiRex2Forecaster(**TiRex2Forecaster.get_test_params()[0])
     forecaster.fit(_series(), X=_series(columns=("a", "b")))
 
-    y_pred = forecaster.predict(fh=[1, 2, 3], X=_series(3, columns=("a",), start=_N))
+    y_pred = forecaster.predict(fh=3, X=_series(3, columns=("a",), start=_N))
 
     assert y_pred.shape == (3, 1)
     assert np.isfinite(y_pred.to_numpy()).all()
