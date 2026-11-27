@@ -29,7 +29,7 @@ Optional methods to implement:
     updating                    - _update(self, y, X=None, update_params=True):
     predicting quantiles        - _predict_quantiles(self, fh, X=None, alpha=None)
     OR predicting intervals     - _predict_interval(self, fh, X=None, coverage=None)
-    predicting variance         - _predict_var(self, fh, X=None, cov=False)
+    predicting variance         - _predict_var(self, fh, X, cov)
     distribution forecast       - _predict_proba(self, fh, X=None)
     fitted parameter inspection - _get_fitted_params()
     pretraining (1st batch)     - _pretrain(self, y, X=None, fh=None)
@@ -580,7 +580,7 @@ class MyForecaster(BaseForecaster):
     #   implementation which uses _predict_proba or quantiles under normal assumption
     #
     # if not implementing, delete _predict_var
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Forecast variance at future horizon.
 
         private _predict_var containing the core logic, called from predict_var

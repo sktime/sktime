@@ -176,7 +176,7 @@ class _PredictProbaMixin:
 
         return pred_int
 
-    def _predict_var(self, cov=False, **kwargs):
+    def _predict_var(self, cov, **kwargs):
         """Compute/return variance forecasts.
 
         private _predict_var containing the core logic, called from predict_var
@@ -309,7 +309,7 @@ class _PredictProbaMixin:
 
         # if any of the above are implemented, predict_var will have a default
         #   we use predict_var to get scale, and predict to get location
-        pred_var = self._predict_var(**kwargs)
+        pred_var = self._predict_var(cov=False, **kwargs)
         pred_std = np.sqrt(pred_var)
         pred_mean = self.predict(**kwargs)
         # ensure that pred_mean is a pd.DataFrame

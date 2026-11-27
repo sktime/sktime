@@ -205,3 +205,75 @@ def test_predict_quantiles_from_interval_multivariate():
             # lower end for alpha < 0.5, upper end for alpha >= 0.5
             expected = y[var].mean() + 10 * (j + 1) * (2 * a - 1)
             np.testing.assert_allclose(pred_q[(var, a)].values, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.base"]),
+    reason="run only if forecasting or base module has changed",
+)
+def test_predict_var_no_private_defaults():
+    """Verify _predict_var works without private parameter defaults."""
+    import numpy as np
+    import pandas as pd
+
+    from sktime.forecasting.base import BaseForecaster
+    from sktime.forecasting.squaring_residuals import SquaringResiduals
+
+    class _VarOnlyForecaster(BaseForecaster):
+        _tags = {
+            "capability:pred_int": True,
+            "y_inner_mtype": "pd.DataFrame",
+            "requires-fh-in-fit": False,
+        }
+
+        def _fit(self, y, X, fh):
+            self.mean_ = float(y.iloc[:, 0].mean())
+            self.cols_ = y.columns
+            return self
+
+        def _predict(self, fh, X):
+            index = fh.to_absolute_index(self.cutoff)
+            return pd.DataFrame(
+                np.full((len(index), 1), self.mean_),
+                index=index,
+                columns=self.cols_,
+            )
+
+        def _predict_var(self, fh, X, cov):
+            index = fh.to_absolute_index(self.cutoff)
+            if cov:
+                cols = pd.MultiIndex.from_product([self.cols_, index])
+                return pd.DataFrame(
+                    np.eye(len(index)),
+                    index=index,
+                    columns=cols,
+                )
+            return pd.DataFrame(
+                np.ones((len(index), 1)),
+                index=index,
+                columns=self.cols_,
+            )
+
+    y = pd.Series(range(1, 21), dtype=float)
+    forecaster = _VarOnlyForecaster().fit(y, fh=[1, 2])
+
+    pred_var = forecaster.predict_var()
+    assert pred_var.shape == (2, 1)
+    assert np.allclose(pred_var.values, 1.0)
+
+    pred_cov = forecaster.predict_var(cov=True)
+    assert pred_cov.shape == (2, 2)
+    assert np.allclose(pred_cov.values, np.eye(2))
+
+    pred_proba = forecaster.predict_proba()
+    assert np.allclose(pred_proba.var().values, 1.0)
+
+    pred_int = forecaster.predict_interval(coverage=0.9)
+    assert pred_int.shape == (2, 2)
+
+    pred_q_var = forecaster.predict_quantiles(alpha=[0.25, 0.75])
+    assert pred_q_var.shape == (2, 2)
+
+    sq = SquaringResiduals(NaiveForecaster(), initial_window=5).fit(y, fh=[1, 2])
+    pred_q = sq.predict_quantiles(alpha=[0.25, 0.75])
+    assert pred_q.shape == (2, 2)

@@ -280,7 +280,7 @@ class _DelegatedForecaster(BaseForecaster):
         estimator = self._get_delegate()
         return estimator.predict_interval(fh=fh, X=X, coverage=coverage)
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Forecast variance at future horizon.
 
         private _predict_var containing the core logic, called from predict_var

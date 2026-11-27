@@ -186,7 +186,7 @@ class ResidualBoostingForecaster(BaseForecaster):
         q_res = self.residual_forecaster_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return self._add_det_to_proba(q_res, q_base)
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Combine predictive variances (or full covariances)."""
         v_res = self.residual_forecaster_.predict_var(fh=fh, X=X, cov=cov)
         return v_res

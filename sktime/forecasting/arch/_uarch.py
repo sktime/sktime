@@ -425,7 +425,7 @@ class ARCH(BaseForecaster):
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
         # includes already both in-sample and out-of-sample
-        std_err = np.sqrt(self._predict_var(fh=fh, X=X).values)
+        std_err = np.sqrt(self._predict_var(fh=fh, X=X, cov=False).values)
         mean_forecast = self._predict(fh=fh, X=X).values
 
         abs_idx = fh.to_absolute_int(self._cur_y.index[-1], self.cutoff)
@@ -484,7 +484,7 @@ class ARCH(BaseForecaster):
 
         return df
 
-    def _predict_var(self, fh=None, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Compute/return variance forecasts.
 
         Parameters

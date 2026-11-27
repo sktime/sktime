@@ -352,7 +352,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             out.columns = out.columns.droplevel(level=1)
         return out
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Forecast variance at future horizon.
 
         private _predict_var containing the core logic, called from predict_var

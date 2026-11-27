@@ -293,7 +293,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         y_pred = pd.DataFrame(y_pred_sklearn, index=fh, columns=cols)
         return y_pred
 
-    def _predict_var(self, fh=None, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Compute the variance at each forecast horizon."""
         if not self.prediction_intervals:
             raise ValueError(

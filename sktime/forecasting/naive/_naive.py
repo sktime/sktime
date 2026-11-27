@@ -490,7 +490,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return pred_quantiles
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Compute/return prediction variance for naive forecasts.
 
         Variance are computed according to formulas from (Table 5.2)
@@ -803,7 +803,7 @@ class NaiveVariance(BaseForecaster):
 
         return pred_quantiles
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Compute/return prediction variance for a forecast.
 
         Must be run *after* the forecaster has been fitted.

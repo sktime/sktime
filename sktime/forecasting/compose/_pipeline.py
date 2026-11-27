@@ -642,7 +642,7 @@ class ForecastingPipeline(_Pipeline):
         X = self._transform(X=X, y=fh)
         return self.forecaster_.predict_interval(fh=fh, X=X, coverage=coverage)
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Forecast variance at future horizon.
 
         private _predict_var containing the core logic, called from predict_var
@@ -1262,7 +1262,7 @@ class TransformedTargetForecaster(_Pipeline):
         )
         return pred_int_transformed
 
-    def _predict_var(self, fh=None, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Forecast variance at future horizon.
 
         Overrides the mixin default to avoid infinite recursion.
@@ -1901,7 +1901,7 @@ class ForecastX(BaseForecaster):
         y_pred = self.forecaster_y_.predict_quantiles(fh=fh, X=X, alpha=alpha)
         return y_pred
 
-    def _predict_var(self, fh=None, X=None, cov=False):
+    def _predict_var(self, fh, X, cov):
         """Compute/return variance forecasts.
 
         private _predict_var containing the core logic, called from predict_var
