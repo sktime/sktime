@@ -6,7 +6,6 @@ import numbers
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
 
 """
@@ -61,7 +60,7 @@ class HOG1DTransformer(BaseTransformer):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["vnicholson1"],
+        "authors": ["vnicholson1", "shubham5080"],
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -69,9 +68,11 @@ class HOG1DTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-multiindex",  # replace nested_univ (#10716)
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
         "capability:categorical_in_X": False,
     }
 
@@ -88,36 +89,34 @@ class HOG1DTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of X must contain pandas.Series
-            Data to fit transform to
+        X : pd.DataFrame with MultiIndex (instance, time)
+            Panel of equal-length series; columns are variables
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of Xt contains pandas.Series
-            transformed version of X
+        Xt : nested pandas DataFrame of shape [n_instances, n_variables]
+            each cell of Xt contains pandas.Series of HOG1D features
         """
-        # Get information about the dataframe
-        num_insts = X.shape[0]
-        col_names = X.columns
-        num_atts = len(X.iloc[0, 0])
+        instances = X.index.get_level_values(0).unique()
+        num_atts = len(X.xs(instances[0], level=0))
 
         # Check the parameters are appropriate
         self._check_parameters(num_atts)
 
         df = pd.DataFrame()
 
-        for x in col_names:
-            # Convert one of the columns in the dataframe to a numpy array
-            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_numpy=True)
+        for col in X.columns:
+            # shape (n_instances, n_timepoints)
+            arr = np.stack(
+                [X.xs(i, level=0)[col].to_numpy(dtype=float) for i in instances]
+            )
 
-            # Get the HOG1Ds of each time series
+            # Get the HOG1Ds of each time series for this variable
             transformedData = []
-            for y in range(num_insts):
-                inst = self._calculate_hog1ds(arr[y])
+            for i in range(len(instances)):
+                inst = self._calculate_hog1ds(arr[i])
                 transformedData.append(inst)
 
             # Convert to numpy array
@@ -129,7 +128,7 @@ class HOG1DTransformer(BaseTransformer):
                 inst = transformedData[i]
                 colToAdd.append(pd.Series(inst))
 
-            df[x] = colToAdd
+            df[col] = colToAdd
 
         return df
 
