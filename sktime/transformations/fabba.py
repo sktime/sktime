@@ -486,12 +486,12 @@ class FABBA(BaseTransformer):
         elif self.sorting == "pca":
             # data shape will be (num_samples, num_features), need 0 centered for pca
             cluster_data = data - np.mean(data, axis=0)
-            # need svd only if there more than 1 feature
-            if cluster_data.shape[1] > 1:
+            # need svd only if there more than 1 feature and more than 1 sample
+            if cluster_data.shape[1] > 1 and cluster_data.shape[0] > 1:
                 U1, s1, _ = svds(cluster_data, k=1, return_singular_vectors="u")
                 norm_data = U1[:, 0] * s1[0]
             else:
-                norm_data = norm_data[:, 0]
+                norm_data = np.linalg.norm(cluster_data, ord=2, axis=1)
             # keep direction of sorting consistent
             norm_data = norm_data * np.sign(-norm_data[0])
             # sort this projected data
@@ -499,6 +499,7 @@ class FABBA(BaseTransformer):
 
         # No sorting
         else:
+            cluster_data = data
             norm_data = np.zeros(num_pieces)
             sorted_indicies = np.arange(num_pieces)
 
@@ -925,7 +926,7 @@ class FABBA(BaseTransformer):
                     * (self.tolerance**2)
                     / (
                         max_k
-                        * (self.eta**2)
+                        * (self._eta**2)
                         * (3 * (sum_of_length**4) + 2 - 5 * (max_k**2))
                     ),
                     1 / 4,
@@ -958,7 +959,8 @@ class FABBA(BaseTransformer):
 
             # get labels and centers of clusters
             labels = kmeans.labels_
-            centers = kmeans.cluster_centers_ * self._std / np.array([self.scl, 1])
+            scl_factor = np.array([self.scl if self.scl != 0 else 1.0, 1])
+            centers = kmeans.cluster_centers_ * self._std / scl_factor
 
         # default to k-means clustering
         else:
@@ -981,7 +983,8 @@ class FABBA(BaseTransformer):
 
             # get labels and centers of clusters
             labels = kmeans.labels_
-            centers = kmeans.cluster_centers_ * self._std / np.array([self.scl, 1])
+            scl_factor = np.array([self.scl if self.scl != 0 else 1.0, 1])
+            centers = kmeans.cluster_centers_ * self._std / scl_factor
 
         # To get centers of length when scl is 0 we take cluster labels from clustering
         # using only inc, then taking mean of same labels to get len cluster centers.
