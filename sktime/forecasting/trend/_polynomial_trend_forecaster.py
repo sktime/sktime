@@ -315,7 +315,7 @@ class PolynomialTrendForecaster(BaseForecaster):
 
         # 2. get time vector t for the forecast horizons
         if fh.is_relative:
-            fh = fh.to_absolute(cutoff=self.train_index_[-1])
+            fh = fh.to_absolute(cutoff=self.cutoff)
 
         t_fh = fh.to_pandas()
         fh_periods = _get_X_numpy_int_from_pandas(t_fh) - self._trend_origin()
