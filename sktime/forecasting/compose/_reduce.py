@@ -34,6 +34,7 @@ from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.datatypes._utilities import get_time_index
+from sktime.exceptions import InsufficientDataError
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -156,7 +157,7 @@ def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
     fh_max = fh[-1]
 
     if window_length + fh_max >= n_timepoints:
-        raise ValueError(
+        raise InsufficientDataError(
             "The `window_length` and `fh` are incompatible with the length of `y`"
         )
 
