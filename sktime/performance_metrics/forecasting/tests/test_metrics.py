@@ -792,3 +792,42 @@ def test_default_evaluate_by_index_with_sample_weight():
 
     by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+def test_msle_negative_values():
+    from sktime.performance_metrics.forecasting import (
+        mean_squared_log_error,
+    )
+
+    y_true = np.array([0.0])
+    y_pred = np.array([-0.5])
+
+    expected = (np.log1p(y_true) - np.log1p(y_pred)) ** 2
+
+    result = mean_squared_log_error(y_true, y_pred)
+
+    np.testing.assert_allclose(result, expected.mean())
+
+
+@pytest.mark.parametrize("value", [-1.0, -1.5])
+def test_msle_rejects_values_outside_domain(value):
+    from sktime.performance_metrics.forecasting import (
+        mean_squared_log_error,
+    )
+
+    y_true = np.array([0.0])
+    y_pred = np.array([value])
+
+    with pytest.raises(ValueError, match="less than or equal to -1"):
+        mean_squared_log_error(y_true, y_pred)
+
+
+@pytest.mark.parametrize("value", [-1.0, -1.5])
+def test_msle_class_rejects_values_outside_domain(value):
+    from sktime.performance_metrics.forecasting import MeanSquaredLogError
+
+    y_true = np.array([0.0])
+    y_pred = np.array([value])
+
+    with pytest.raises(ValueError, match="less than or equal to -1"):
+        MeanSquaredLogError()(y_true, y_pred)

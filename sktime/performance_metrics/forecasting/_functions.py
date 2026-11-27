@@ -2800,8 +2800,11 @@ def mean_squared_log_error(
     y_pred_np = np.asanyarray(y_pred)
 
     # Clip negative values to 0 to avoid log domain errors
-    y_true_np = np.maximum(y_true_np, 0)
-    y_pred_np = np.maximum(y_pred_np, 0)
+    if np.any(y_true_np <= -1) or np.any(y_pred_np <= -1):
+        raise ValueError(
+            "Mean Squared Logarithmic Error cannot be used when "
+            "targets contain values less than or equal to -1."
+        )
 
     y_true_log = np.log1p(y_true_np)
     y_pred_log = np.log1p(y_pred_np)
