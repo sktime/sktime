@@ -17,11 +17,39 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
-    """Median squared scaled error (MdSSE) or root median squared scaled error (RMdSSE).
+    r"""Median squared scaled error (MdSSE), or its square root (RMdSSE).
 
     If ``square_root`` is False then calculates MdSSE, otherwise calculates RMdSSE if
     ``square_root`` is True. Both MdSSE and RMdSSE output is non-negative floating
     point. The best value is 0.0.
+
+    For a univariate, non-hierarchical sample without horizon weights, let
+    :math:`y_1, \ldots, y_n` be the true values,
+    :math:`\widehat{y}_1, \ldots, \widehat{y}_n` the predictions, and
+    :math:`z_1, \ldots, z_m` the training values supplied as ``y_train``.
+    With seasonal periodicity :math:`s` (``sp``), ``evaluate`` returns
+
+    .. math::
+
+        \mathrm{MdSSE} =
+        \frac{\operatorname{median}_{i=1,\ldots,n}
+            (y_i - \widehat{y}_i)^2}
+        {\max\left(\operatorname{median}_{j=s+1,\ldots,m}
+            (z_j - z_{j-s})^2, \epsilon\right)}.
+
+    The denominator is the median squared error of the in-sample seasonal
+    naive forecast, bounded below by
+    :math:`\epsilon = \texttt{np.finfo(np.float64).eps}`.
+    For ``square_root=True``, the result is
+    :math:`\mathrm{RMdSSE} = \sqrt{\mathrm{MdSSE}}`.
+
+    ``evaluate_by_index`` uses the inherited jackknife calculation. For
+    :math:`n > 1`, its value at index :math:`i` is
+    :math:`n M - (n-1) M_{-i}`, where :math:`M` is the metric on all test
+    observations and :math:`M_{-i}` omits test observation :math:`i`.
+    The training values and seasonal scaling denominator remain unchanged.
+    These are jackknife pseudo-values, rather than pointwise scaled squared
+    errors, and their mean need not equal the median-based metric.
 
     This is a squared variant of the MdASE loss metric. Like MASE and other
     scaled performance metrics this scale-free metric can be used to compare
@@ -38,9 +66,10 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     Parameters
     ----------
     sp : int, default = 1
-        Seasonal periodicity of data.
+        Seasonal lag used for the naive forecast on ``y_train``. The training
+        series must contain more than ``sp`` observations.
     square_root : bool, default = False
-        Whether to take the square root of the metric
+        If ``False``, return MdSSE. If ``True``, return its square root, RMdSSE.
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
