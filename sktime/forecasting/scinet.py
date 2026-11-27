@@ -107,7 +107,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.datasets import load_airline # doctest: +SKIP
     >>> model = SCINetForecaster(seq_len=8) # doctest: +SKIP
     >>> y = load_airline() # doctest: +SKIP
-    >>> model.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> model.fit(y, fh=3) # doctest: +SKIP
     SCINetForecaster(seq_len=8)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
@@ -131,6 +131,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["Sohaib-Ahmed21"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["deep_learning"],
         "capability:pretrain": True,
         # test skip flags
         # ---------------

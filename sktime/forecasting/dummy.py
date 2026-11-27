@@ -51,7 +51,7 @@ class ForecastKnownValues(BaseForecaster):
     >>> from sktime.forecasting.dummy import ForecastKnownValues
     >>>
     >>> fcst = ForecastKnownValues(y_known)
-    >>> fcst.fit(y_train, fh=[1, 2, 3])
+    >>> fcst.fit(y_train, fh=3)
     ForecastKnownValues(...)
 
     The forecast "plays back" the known/prescribed values from y_known
@@ -65,6 +65,7 @@ class ForecastKnownValues(BaseForecaster):
         "authors": ["fkiraly", "RobKuebler"],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,

@@ -26,7 +26,7 @@ def test_ignoreX(ignore_x):
     else:
         igx = IgnoreX(forecaster=fcst, ignore_x=ignore_x)
 
-    igx.fit(y, fh=[1, 2, 3], X=X)
+    igx.fit(y, fh=3, X=X)
 
     mock_fitted = igx.forecaster_.fit
     call_args_list = mock_fitted.call_args_list

@@ -49,11 +49,12 @@ class TafsutForecaster(BaseForecaster):
     ...     model_path=None, config=config, device="cpu"
     ... )
     >>> y = pd.Series(range(8))
-    >>> _ = forecaster.fit(y, fh=[1, 2, 3, 4])
+    >>> _ = forecaster.fit(y, fh=4)
     >>> y_pred = forecaster.predict()
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": ["tareq-si-salem", "aryamanDutta"],
         "maintainers": ["sktime developers"],
         "python_version": ">=3.10",
@@ -71,6 +72,12 @@ class TafsutForecaster(BaseForecaster):
         "capability:unequal_length": True,
         "requires-fh-in-fit": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_tafsut"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "tafsut": 'TafsutForecaster(model_path="Tafsut-FM/tafsut-univariate-base")',
+        },
     }
 
     def __init__(

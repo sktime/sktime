@@ -66,7 +66,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
 
     References
     ----------
-    .. [1] https://facebook.github.io/prophet
+    .. [1] https://meta.github.io/prophet/
 
     Examples
     --------
@@ -84,6 +84,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["sbuse", "bletham", "tcuongd"],
         # bletham, tcuongd for prophet
         "maintainers": ["sbuse"],

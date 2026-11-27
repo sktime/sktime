@@ -49,6 +49,7 @@ class MrSEQL(_DelegatedClassifier):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(

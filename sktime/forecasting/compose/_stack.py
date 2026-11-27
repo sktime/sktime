@@ -54,7 +54,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = StackingForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=3)
     StackingForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -65,6 +65,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "authors": ["mloning", "fkiraly", "indinewton"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
@@ -73,9 +74,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "capability:multivariate": False,
         "capability:update": True,
         "X-y-must-have-same-index": True,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):

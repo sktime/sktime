@@ -107,14 +107,14 @@ class NaiveForecaster(_BaseWindowForecaster):
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> forecaster.fit(y)
     NaiveForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     >>>
     >>> # Example 2: Seasonal Naive strategy
     >>> # The airline data is monthly, so we use sp=12 (12 months per year)
     >>> forecaster = NaiveForecaster(strategy="last", sp=12)
     >>> forecaster.fit(y)
     NaiveForecaster(sp=12)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {
@@ -132,6 +132,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
@@ -142,6 +143,13 @@ class NaiveForecaster(_BaseWindowForecaster):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "f_naive_last": 'NaiveForecaster(strategy="last")',
+            "f_naive_mean": 'NaiveForecaster(strategy="mean")',
+            "f_naive_drift": 'NaiveForecaster(strategy="drift")',
+        },
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
@@ -359,7 +367,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         from sktime.transformations.lag import Lag
 
         strategy = self.strategy
-        sp = self.sp
+        sp = self.sp_
         _y = self._cur_y
         cutoff = self.cutoff
 
@@ -680,7 +688,7 @@ class NaiveVariance(BaseForecaster):
     >>> variance_forecaster = NaiveVariance(forecaster)
     >>> variance_forecaster.fit(y)
     NaiveVariance(...)
-    >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
+    >>> var_pred = variance_forecaster.predict_var(fh=3)
     """
 
     _tags = {
@@ -689,6 +697,7 @@ class NaiveVariance(BaseForecaster):
         "authors": ["fkiraly", "bethrice44"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
