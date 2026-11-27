@@ -279,6 +279,14 @@ def convert(
     convert_dict = generate_convert_dict()
 
     if key not in convert_dict.keys():
+        from skbase.utils.dependencies import _check_estimator_deps
+
+        from sktime.datatypes._registry import _generate_mtype_cls_list
+
+        for cls in _generate_mtype_cls_list(soft_deps="all"):
+            if cls.get_class_tag("name") in (from_type, to_type):
+                _check_estimator_deps(cls, severity="error")
+
         raise NotImplementedError(
             "no conversion defined from type " + str(from_type) + " to " + str(to_type)
         )

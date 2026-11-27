@@ -257,7 +257,7 @@ class ARDL(_StatsModelsAdapter):
             if present:
                 raise ImportError(
                     "Using trend='ctt' requires statsmodels >= 0.15.0. "
-                    "Please install statsmodels."
+                    'Please upgrade via: `pip install "statsmodels>=0.15.0"`.'
                 )
         self.seasonal = seasonal
         self.deterministic = deterministic
