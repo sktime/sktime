@@ -29,6 +29,7 @@ Composition
     :template: class.rst
 
     DetectorPipeline
+    UpdateRefitsEveryDetector
     DetectorAsTransformer
 
 
