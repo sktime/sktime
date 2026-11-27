@@ -166,8 +166,11 @@ class HampelFilter(BaseTransformer):
 def _hampel_filter(Z, cv, n_sigma, half_window_length, k):
     for i in cv.split(Z):
         cv_window = i[0]
-        cv_median = np.nanmedian(Z.iloc[cv_window])
-        cv_sigma = k * np.nanmedian(np.abs(Z.iloc[cv_window] - cv_median))
+        window = Z.iloc[cv_window]
+        if not window.notna().any():
+            continue
+        cv_median = np.nanmedian(window)
+        cv_sigma = k * np.nanmedian(np.abs(window - cv_median))
 
         is_start_window = cv_window[-1] == cv.window_length - 1
         is_end_window = cv_window[-1] == len(Z) - 1

@@ -48,3 +48,26 @@ def test_hampel_filter_panel():
     result = hampel_filter.fit_transform(data)
 
     assert result.equals(expected_result)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HampelFilter),
+    reason="skip test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.filterwarnings("error:All-NaN slice encountered:RuntimeWarning")
+@pytest.mark.parametrize("return_bool", [False, True])
+@pytest.mark.parametrize("all_missing", [False, True])
+def test_hampel_filter_all_missing_window(return_bool, all_missing):
+    """Skip empty windows and continue checking windows with observations."""
+    values = [np.nan] * 7 if all_missing else [np.nan, np.nan, np.nan, 1, 100, 1, 1]
+    data = pd.Series(values, dtype=float, name="signal")
+    expected = data.replace(100, np.nan)
+    if return_bool:
+        expected = expected.isna()
+
+    with pytest.warns(UserWarning, match="Series contains nan values"):
+        result = HampelFilter(window_length=3, return_bool=return_bool).fit_transform(
+            data
+        )
+
+    pd.testing.assert_series_equal(result, expected)
