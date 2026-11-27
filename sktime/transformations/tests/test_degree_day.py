@@ -193,3 +193,38 @@ def test_keep_original_columns_appends_features():
     assert "tmean" in out.columns
     assert "hdd" in out.columns
     assert "cdd" in out.columns
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DegreeDayFeatures),
+    reason="run_test_for_class marks if the test should be run for this class",
+)
+def test_keep_original_columns_with_overlapping_columns():
+    """Test keep_original_columns with overlapping feature columns (#11956)."""
+    # 1. Input has 'tmean' column
+    X1 = pd.DataFrame({"tmean": [50.0, 65.0, 80.0]})
+    tx1 = DegreeDayFeatures(keep_original_columns=True, return_tmean=True)
+    out1 = tx1.fit_transform(X1)
+    assert list(out1.columns) == ["tmean", "hdd", "cdd"]
+    assert (out1["hdd"] == [15.0, 0.0, 0.0]).all()
+    assert (out1["cdd"] == [0.0, 0.0, 15.0]).all()
+
+    # 2. Input has 'tmax', 'tmin', and 'tmean'
+    X2 = pd.DataFrame(
+        {
+            "tmax": [70.0, 80.0],
+            "tmin": [50.0, 60.0],
+            "tmean": [60.0, 70.0],
+        }
+    )
+    tx2 = DegreeDayFeatures(
+        tmax_col="tmax", tmin_col="tmin", keep_original_columns=True
+    )
+    out2 = tx2.fit_transform(X2)
+    assert list(out2.columns) == ["tmax", "tmin", "tmean", "hdd", "cdd"]
+
+    # 3. Input is a pd.Series with name 'tmean'
+    s = pd.Series([50.0, 65.0, 80.0], name="tmean")
+    tx3 = DegreeDayFeatures(keep_original_columns=True)
+    out3 = tx3.fit_transform(s)
+    assert list(out3.columns) == ["tmean", "hdd", "cdd"]
