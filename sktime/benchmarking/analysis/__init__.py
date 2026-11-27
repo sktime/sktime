@@ -15,6 +15,7 @@ __all__ = [
     "SignTest",
     "RankSumTest",
     "TwoSampleTTest",
+    "DieboldMarianoTest",
     "CriticalDifferenceDiagram",
 ]
 
@@ -22,6 +23,7 @@ from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 from sktime.benchmarking.analysis._critical_difference import (
     CriticalDifferenceDiagram,
 )
+from sktime.benchmarking.analysis._diebold_mariano import DieboldMarianoTest
 from sktime.benchmarking.analysis._friedman import FriedmanTest
 from sktime.benchmarking.analysis._nemenyi import NemenyiTest
 from sktime.benchmarking.analysis._rank import AverageRank
