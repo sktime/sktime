@@ -64,7 +64,7 @@ class Toto2Forecaster(BaseForecaster):
 
     >>> forecaster = Toto2Forecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Probabilistic forecasting. Toto-2 emits a fixed quantile grid (0.1, ..., 0.9);
     other levels come from a HistogramQPD (linear interpolation, clamped tails):
@@ -74,7 +74,7 @@ class Toto2Forecaster(BaseForecaster):
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> intervals = forecaster.predict_interval(
-    ...     fh=[1, 2, 3], coverage=0.9
+    ...     fh=3, coverage=0.9
     ... )  # doctest: +SKIP
 
     Long-horizon forecasting with block decoding. Block decoding only engages
@@ -110,6 +110,15 @@ class Toto2Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_toto2"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "toto_2_0_4m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-4m")',
+            "toto_2_0_22m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-22m")',
+            "toto_2_0_313m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-313m")',
+            "toto_2_0_1b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-1B")',
+            "toto_2_0_2_5b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-2.5B")',
+        },
     }
 
     def __init__(
