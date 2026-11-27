@@ -660,7 +660,7 @@ def plot_windows(cv, y, title="", ax=None):
         return ax
 
 
-def plot_calibration(y_true, y_pred, ax=None):
+def plot_calibration(y_true, y_pred, ax=None, plot_hist=False):
     r"""Plot the calibration curve for a sample of quantile predictions.
 
     Visualizes calibration of the quantile predictions.
@@ -704,15 +704,20 @@ def plot_calibration(y_true, y_pred, ax=None):
         The quantile predictions,
         formatted as returned by ``BaseDistribution.quantile``,
         or ``predict_quantiles``
-    ax : matplotlib.axes.Axes, optional (default=None)
+    ax : matplotlib.axes.Axes or array-like of matplotlib.axes.Axes, optional (default=None)
         Axes on which to plot. If None, axes will be created and returned.
+        If ``plot_hist=True`` and ``ax`` is passed, ``ax`` can be an array-like of two
+        Axes (calibration curve axes, histogram axes).
+    plot_hist : bool, optional (default=False)
+        Whether to display a histogram beneath the calibration curve showing
+        the sample frequency distribution across the quantile bins.
 
     Returns
     -------
     fig : matplotlib.figure.Figure, returned only if ax is None
         matplotlib figure object
-    ax : matplotlib.axes.Axes
-        matplotlib axes object with the figure
+    ax : matplotlib.axes.Axes or tuple of matplotlib.axes.Axes
+        matplotlib axes object with the figure (tuple of (ax_curve, ax_hist) if plot_hist=True)
 
     Examples
     --------
@@ -736,8 +741,9 @@ def plot_calibration(y_true, y_pred, ax=None):
     """  # noqa: E501
     from skbase.utils.dependencies import _check_soft_dependencies
 
-    _check_soft_dependencies("matplotlib", "statsmodels")
+    _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
+    import numpy as np
     import pandas as pd
 
     from sktime.datatypes import convert_to
@@ -747,7 +753,22 @@ def plot_calibration(y_true, y_pred, ax=None):
     _ax_kwarg_is_none = True if ax is None else False
 
     if _ax_kwarg_is_none:
-        fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
+        if plot_hist:
+            fig, (ax_curve, ax_hist) = plt.subplots(
+                nrows=2,
+                ncols=1,
+                figsize=(8, 6),
+                sharex=True,
+                gridspec_kw={"height_ratios": [3, 1]},
+            )
+            ax = ax_curve
+        else:
+            fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
+            ax_hist = None
+    elif isinstance(ax, (list, tuple, np.ndarray)) and len(ax) == 2:
+        ax, ax_hist = ax[0], ax[1]
+    else:
+        ax_hist = None
 
     result = [0]
     ideal_calibration = [0]
@@ -769,8 +790,34 @@ def plot_calibration(y_true, y_pred, ax=None):
     )
 
     df.plot(ax=ax)
+    ax.set_ylabel("Calibration fractions")
+
+    if plot_hist and ax_hist is not None:
+        bin_edges = np.array(ideal_calibration)
+        bin_widths = np.diff(bin_edges)
+        bin_fractions = np.diff(result)
+        bin_centers = bin_edges[:-1] + bin_widths / 2
+        ax_hist.bar(
+            bin_centers,
+            bin_fractions,
+            width=bin_widths,
+            edgecolor="black",
+            alpha=0.6,
+            align="center",
+            color="tab:blue",
+        )
+        ax_hist.set_xlabel("Quantile points")
+        ax_hist.set_ylabel("Count fraction")
+        ax_hist.set_xlim(0, 1)
+        ax_hist.grid(True, linestyle="--", alpha=0.5)
 
     if _ax_kwarg_is_none:
-        return fig, ax
+        if plot_hist:
+            return fig, (ax, ax_hist)
+        else:
+            return fig, ax
     else:
-        return ax
+        if plot_hist and ax_hist is not None:
+            return (ax, ax_hist)
+        else:
+            return ax
