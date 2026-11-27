@@ -23,6 +23,31 @@ from sktime.libs.time_llm.layers.StandardNorm import Normalize
 
 transformers.logging.set_verbosity_error()
 
+_TINY_RANDOM_VOCAB = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
+
+
+def _tiny_random_bert_tokenizer():
+    """Build a 5-token BERT tokenizer matching TINY_RANDOM ``vocab_size``.
+
+    ``BertTokenizer()`` requires a ``vocab_file``. The tokens are the standard
+    BERT specials so prompt ids stay inside the tiny embedding table.
+    """
+    import os
+    import tempfile
+
+    fd, path = tempfile.mkstemp(
+        prefix="sktime_time_llm_tiny_", suffix=".txt", text=True
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write("\n".join(_TINY_RANDOM_VOCAB) + "\n")
+        return BertTokenizer(vocab_file=path, do_lower_case=False)
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
 
 class FlattenHead(nn.Module):
     """A module that flattens and transforms the input data."""
@@ -67,7 +92,7 @@ class Model(nn.Module):
                 self.llm_model = LlamaModel.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/",
                     "huggyllama/llama-7b",
-                    local_files_only=True,
+                    local_files_only=False,
                     config=self.llama_config,
                     # load_in_4bit=True
                 )
@@ -84,7 +109,7 @@ class Model(nn.Module):
                 self.tokenizer = LlamaTokenizer.from_pretrained(
                     # "/mnt/alps/modelhub/pretrained_model/LLaMA/7B_hf/tokenizer.model",
                     "huggyllama/llama-7b",
-                    local_files_only=True,
+                    local_files_only=False,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
                 print("Local tokenizer files not found. Attempting to download them..")
@@ -135,7 +160,7 @@ class Model(nn.Module):
             try:
                 self.llm_model = BertModel.from_pretrained(
                     "google-bert/bert-base-uncased",
-                    local_files_only=True,
+                    local_files_only=False,
                     config=self.bert_config,
                 )
             except OSError:  # downloads model from HF is not already done
@@ -149,7 +174,7 @@ class Model(nn.Module):
             try:
                 self.tokenizer = BertTokenizer.from_pretrained(
                     "google-bert/bert-base-uncased",
-                    local_files_only=True,
+                    local_files_only=False,
                 )
             except OSError:  # downloads the tokenizer from HF if not already done
                 print("Local tokenizer files not found. Attempting to download them..")
@@ -171,7 +196,7 @@ class Model(nn.Module):
             self.bert_config.output_hidden_states = True
 
             self.llm_model = BertModel(self.bert_config)
-            self.tokenizer = BertTokenizer()
+            self.tokenizer = _tiny_random_bert_tokenizer()
         else:
             raise Exception("LLM model is not defined")
 
@@ -188,8 +213,10 @@ class Model(nn.Module):
         if configs.prompt_domain:
             self.description = configs.content
         else:
-            self.description = "The Electricity Transformer Temperature (ETT) \
-                is a crucial indicator in the electric power long-term deployment."
+            self.description = (
+                "The Electricity Transformer Temperature (ETT) is a crucial "
+                "indicator in the electric power long-term deployment."
+            )
 
         self.dropout = nn.Dropout(configs.dropout)
 
@@ -255,8 +282,8 @@ class Model(nn.Module):
             lags_values_str = str(lags[b].tolist())
             prompt_ = (
                 f"<|start_prompt|>Dataset description: {self.description}"
-                f"Task description: forecast the next {str(self.pred_len)} steps \
-                    given the previous {str(self.seq_len)} steps information; "
+                f"Task description: forecast the next {str(self.pred_len)} steps "
+                f"given the previous {str(self.seq_len)} steps information; "
                 "Input statistics: "
                 f"min value {min_values_str}, "
                 f"max value {max_values_str}, "

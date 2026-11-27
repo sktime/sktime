@@ -31,7 +31,8 @@ class TimeLLMForecaster(BaseForecaster):
     pred_len : int, default=24
         Forecast horizon - number of time steps to predict.
     seq_len : int, default=96
-        Length of input sequence.
+        Length of input sequence. The forecast uses the last ``seq_len`` values
+        of ``y``, so ``y`` must have at least ``seq_len`` values.
     llm_model : str, default='GPT2'
         LLM model to use - can be one of ['GPT2', 'LLAMA', 'BERT'].
     llm_layers : int, default=3
@@ -85,10 +86,12 @@ class TimeLLMForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "requires-fh-in-fit": True,
+        "capability:insample": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.time_llm"],
+        "tests:specific": ["sktime.forecasting.tests.test_time_llm"],
     }
 
     def __init__(
@@ -136,12 +139,17 @@ class TimeLLMForecaster(BaseForecaster):
 
         self.fh_ = fh
 
-        if isinstance(fh, int):
-            self._pred_len = fh
-        elif hasattr(fh, "__len__"):
-            self._pred_len = len(fh)
-        else:
+        if fh is None:
             self._pred_len = self.pred_len
+        else:
+            # the model forecasts steps 1 to pred_len, fh selects from them
+            self._pred_len = int(max(fh.to_relative(self.cutoff)))
+
+        if len(y) < self.seq_len:
+            raise ValueError(
+                f"TimeLLMForecaster needs at least seq_len={self.seq_len} "
+                f"observations in y, but got {len(y)}."
+            )
 
         self._enc_in = y.shape[1]
         self.model_ = self._load_model()
@@ -241,9 +249,9 @@ class TimeLLMForecaster(BaseForecaster):
         self.model_ = self._load_model()
         self.model_.eval()
 
-        X_tensor = (
-            torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
-        )
+        # Time-LLM is built for inputs of exactly seq_len steps
+        context = self.last_values.values[-self.seq_len :]
+        X_tensor = torch.tensor(context).reshape(1, -1, 1).to(self.device_)
         X_tensor = X_tensor.to(torch.float32)
 
         with torch.no_grad():
@@ -252,9 +260,11 @@ class TimeLLMForecaster(BaseForecaster):
             )
 
         forecast_index = fh.to_absolute(self.cutoff).to_pandas()
+        steps = fh.to_relative(self.cutoff).to_numpy() - 1
+        values = res.detach().float().cpu().numpy().flatten()[steps]
 
         y_pred = pd.DataFrame(
-            data=res.detach().cpu().numpy().flatten(),
+            data=values,
             index=forecast_index,
             columns=self.last_values.columns,
         )
@@ -280,7 +290,7 @@ class TimeLLMForecaster(BaseForecaster):
         """Return testing parameter settings for the estimator."""
         minimal_params = {
             "pred_len": 1,
-            "seq_len": 5,
+            "seq_len": 8,
             "llm_model": "TINY_RANDOM",
             "llm_layers": 1,
             "llm_dim": 1,
