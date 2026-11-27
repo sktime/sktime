@@ -684,7 +684,7 @@ def test_direct_vs_recursive():
 def test_recursive_reducer_X_not_fit_to_fh():
     """Test recursive reducer with X that do not fit the fh.
 
-    I.e., either X is longer or smaller than max_fh
+    I.e., either X is longer or smaller than max_fh. Smaller X should raise ValueError.
     """
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
@@ -696,14 +696,57 @@ def test_recursive_reducer_X_not_fit_to_fh():
     )
     forecaster.fit(y_train, X_train)
 
-    pred1 = forecaster.predict(X=X_test[:1], fh=3)
-    assert pred1.shape == (3,)
-    pred2 = forecaster.predict(X=X_test[:2], fh=3)
-    assert pred2.shape == (3,)
+    with pytest.raises(
+        ValueError, match=r"`X` does not have enough time points"
+    ):
+        forecaster.predict(X=X_test[:1], fh=3)
+
+    with pytest.raises(
+        ValueError, match=r"`X` does not have enough time points"
+    ):
+        forecaster.predict(X=X_test[:2], fh=3)
+
     pred3 = forecaster.predict(X=X_test[:3], fh=3)
     assert pred3.shape == (3,)
     pred4 = forecaster.predict(X=X_test, fh=1)
     assert pred4.shape == (1,)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_recursive_reducer_short_X_raises():
+    """Test that recursive reducer raises ValueError when future X is insufficient.
+
+    Regression test for #11973.
+    """
+    y = pd.Series(np.arange(20.0), index=pd.date_range("2020-01-01", periods=20, freq="D"))
+    X = pd.DataFrame({"x": np.arange(20.0)}, index=y.index)
+    fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+
+    forecaster = make_reduction(
+        LinearRegression(), window_length=5, strategy="recursive"
+    )
+    forecaster.fit(y, X=X, fh=fh)
+
+    X_future_full = pd.DataFrame(
+        {"x": [20.0, 21.0, 22.0]},
+        index=pd.date_range("2020-01-21", periods=3, freq="D"),
+    )
+    pred_full = forecaster.predict(fh=fh, X=X_future_full)
+    assert len(pred_full) == 3
+
+    X_future_short = pd.DataFrame(
+        {"x": [20.0, 21.0]},
+        index=pd.date_range("2020-01-21", periods=2, freq="D"),
+    )
+    with pytest.raises(ValueError, match=r"`X` does not have enough time points"):
+        forecaster.predict(fh=fh, X=X_future_short)
+
+    X_past_only = X.iloc[:2]
+    with pytest.raises(ValueError, match=r"`X` does not have enough time points"):
+        forecaster.predict(fh=fh, X=X_past_only)
 
 
 @pytest.mark.skipif(

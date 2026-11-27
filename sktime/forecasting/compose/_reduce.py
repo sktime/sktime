@@ -1105,10 +1105,11 @@ class _RecursiveReducer(_Reducer):
                     [X_last.T, X.iloc[-(last.shape[2] - window_length) :, :].T], axis=1
                 )
                 if X_to_use.shape[1] < window_length + fh_max:
-                    X_to_use = np.pad(
-                        X_to_use,
-                        ((0, 0), (0, window_length + fh_max - X_to_use.shape[1])),
-                        "edge",
+                    raise ValueError(
+                        f"`X` does not have enough time points for the requested "
+                        f"forecasting horizon. Expected at least "
+                        f"{window_length + fh_max - X_last.shape[0]} rows covering the "
+                        f"future horizon, but got fewer."
                     )
                 elif X_to_use.shape[1] > window_length + fh_max:
                     X_to_use = X_to_use[:, : window_length + fh_max]
