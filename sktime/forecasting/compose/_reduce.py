@@ -1104,13 +1104,19 @@ class _RecursiveReducer(_Reducer):
                 X_to_use = np.concatenate(
                     [X_last.T, X.iloc[-(last.shape[2] - window_length) :, :].T], axis=1
                 )
-                if X_to_use.shape[1] < window_length + fh_max:
-                    X_to_use = np.pad(
-                        X_to_use,
-                        ((0, 0), (0, window_length + fh_max - X_to_use.shape[1])),
-                        "edge",
+                need_width = window_length + fh_max
+                if X_to_use.shape[1] < need_width:
+                    raise ValueError(
+                        "Recursive reduction with exogenous `X` needs "
+                        f"{need_width} time steps for prediction "
+                        f"(window_length={window_length}, furthest relative "
+                        f"forecasting horizon step={fh_max}), but only "
+                        f"{X_to_use.shape[1]} are available from the last "
+                        f"window and the provided `X` ({len(X)} row(s)). "
+                        "Pass enough future exogenous rows for the horizon, "
+                        "or use a shorter forecasting horizon."
                     )
-                elif X_to_use.shape[1] > window_length + fh_max:
+                elif X_to_use.shape[1] > need_width:
                     X_to_use = X_to_use[:, : window_length + fh_max]
                 # else X_to_use.shape[1] == window_length + fh_max
                 # and there are no additional steps to take
