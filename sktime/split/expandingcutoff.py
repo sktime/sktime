@@ -183,18 +183,12 @@ class ExpandingCutoffSplitter(BaseSplitter):
         cutoffs : 1D np.ndarray of int
             iloc location indices, in reference to y, of cutoff indices
         """
-        from sktime.forecasting.base import ForecastingHorizon
-
         if y is None:
             raise ValueError(
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         y = self._validate_y(y)
-        fh = self.fh
-        if isinstance(fh, list):
-            fh = np.asarray(fh, dtype=int)
-        if isinstance(fh, ForecastingHorizon):
-            fh = fh.to_relative(self.cutoff).to_numpy()
+        fh = self.get_fh().to_relative(self.cutoff).to_numpy()
         step_length = check_step_length(self.step_length)
         cutoff_index = self._get_first_cutoff_index(y)
         cutoffs = np.array([cutoff_index])
