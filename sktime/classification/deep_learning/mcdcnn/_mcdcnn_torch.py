@@ -81,7 +81,7 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         should be supported by PyTorch.
     criterion_kwargs : dict or None, optional (default=None)
         Additional keyword arguments to pass to the criterion.
-    optim : str or None or an instance of optimizers defined in torch.optim,
+    optim : str or None, or a class or instance of optimizers defined in torch.optim,
         optional (default=None)
         The optimizer to use for training the model. If left as None, SGD is used
         with momentum=0.9, weight_decay=0.0005.
@@ -131,6 +131,10 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         "maintainers": ["Faakhir30"],
         "python_dependencies": "torch",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.mcdcnn._mcdcnn_torch"],
     }
 
     def __init__(

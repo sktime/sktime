@@ -10,16 +10,6 @@ __all__ = [
 
 
 from sktime.split.base import BaseWindowSplitter
-from sktime.split.base._common import (
-    DEFAULT_FH,
-    DEFAULT_STEP_LENGTH,
-    DEFAULT_WINDOW_LENGTH,
-    SPLIT_GENERATOR_TYPE,
-)
-from sktime.utils.validation import (
-    ACCEPTED_WINDOW_LENGTH_TYPES,
-    NON_FLOAT_WINDOW_LENGTH_TYPES,
-)
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
@@ -104,21 +94,21 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
     def __init__(
         self,
-        fh=DEFAULT_FH,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-        step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
-        initial_window: ACCEPTED_WINDOW_LENGTH_TYPES | None = None,
+        fh=1,
+        window_length=10,
+        step_length=1,
+        initial_window=None,
         start_with_window: bool = True,
     ) -> None:
+        self.fh = fh
         super().__init__(
-            fh=fh,
             window_length=window_length,
             initial_window=initial_window,
             step_length=step_length,
             start_with_window=start_with_window,
         )
 
-    def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
+    def _split_windows(self, **kwargs):
         return self._split_windows_generic(expanding=False, **kwargs)
 
     @classmethod

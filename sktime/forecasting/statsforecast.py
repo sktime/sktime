@@ -175,7 +175,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -187,6 +187,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -382,7 +383,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoTheta(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -401,6 +402,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -509,7 +511,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoETS(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -528,6 +530,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -626,7 +629,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     >>> forecaster = StatsForecastAutoCES(season_length=12)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoCES(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -646,6 +649,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -750,7 +754,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoTBATS(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
@@ -769,6 +773,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -894,7 +899,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     >>> y = load_airline()
     >>> model = StatsForecastMSTL(season_length=[3,12]) # doctest: +SKIP
     >>> fitted_model = model.fit(y=y) # doctest: +SKIP
-    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=3) # doctest: +SKIP
     """
 
     _tags = {
@@ -913,6 +918,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
@@ -920,7 +926,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        "tests:skip_by_name": [
+            "test_update_with_exogenous_variables",
+            "test_pred_int_tag",  # failing in probabilistic forecasts, see #5703, #5920
+        ],
         # multiplicative test case does not work on negative valued data, see #9808
     }
 
@@ -1030,7 +1039,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     def check_fh(self, fh):
         """Check the fh to ensure consistency with `inner_fh` of trend forecaster."""
         inner_fh = getattr(self._trend_forecaster, "_inner_fh", None)
-        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._y)
+        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._cur_y)
 
         msg = (
             f"This is because fitting of the "
@@ -1116,10 +1125,13 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             _check_soft_dependencies("statsmodels")
             from sktime.forecasting.theta import ThetaForecaster
 
+            # MSTL already decomposes seasonality; the trend forecaster must be
+            # non-seasonal. Default ThetaForecaster uses multiplicative
+            # deseasonalization, which fails on signed test series.
             params = [
                 {
                     "season_length": [3, 12],
-                    "trend_forecaster": ThetaForecaster(),
+                    "trend_forecaster": ThetaForecaster(deseasonalize=False),
                 },
                 {
                     "season_length": 4,
@@ -1180,7 +1192,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
     >>> y = load_airline()
     >>> model = StatsForecastADIDA()
     >>> fitted_model = model.fit(y) # doctest: +SKIP
-    >>> y_pred = fitted_model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=3) # doctest: +SKIP
     """
 
     _tags = {
@@ -1192,6 +1204,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

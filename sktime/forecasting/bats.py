@@ -107,8 +107,12 @@ class BATS(_TbatsAdapter):
     ...     n_jobs=1)
     >>> forecaster.fit(y)  # doctest: +SKIP
     BATS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
+
+    _tags = {
+        "category": ["statistical"],
+    }
 
     _fitted_param_names = "aic"
 
@@ -116,7 +120,7 @@ class BATS(_TbatsAdapter):
         """Create model class."""
         # both bats and tbats inherit the same interface from the base class and only
         # instantiate a different model class internally
-        from tbats import BATS as _BATS
+        from sktime.libs.tbats import BATS as _BATS
 
         self._ModelClass = _BATS
 

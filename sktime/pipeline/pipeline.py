@@ -134,7 +134,7 @@ class Pipeline(BaseEstimator):
     ...      "name": "SARIMAX",
     ...      "edges": {"X": "exp", "y": "y"}}]:
     ...     general_pipeline = general_pipeline.add_step(**step)
-    >>> general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4]) # doctest: +SKIP
+    >>> general_pipeline.fit(y=y_train, X=X_train, fh=4) # doctest: +SKIP
     >>> result_general = general_pipeline.predict(X=X_test) # doctest: +SKIP
 
     **Acknowledgements**
@@ -156,6 +156,13 @@ class Pipeline(BaseEstimator):
       year={2021}
     }
     """
+
+    _tags = {
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_inheritance"],
+        # does not inherit from intermediate base classes
+    }
 
     def __init__(self, steps=None):
         warnings.warn(
@@ -306,7 +313,7 @@ class Pipeline(BaseEstimator):
             skobject if fit/predict/.. is called.
 
         """
-        step = {key: value for key, value in kwargs.items()}
+        step = {**kwargs}
         step.update(
             {
                 "skobject": skobject,

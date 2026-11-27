@@ -47,7 +47,8 @@ class SundialForecaster(BaseForecaster):
         fine-tuning is recommended before forecasting.
     device : str, int, or torch.device, default="cpu"
         Device on which to place the model, for example ``"cpu"``,
-        ``"cuda"``, or ``"cuda:0"``.
+        ``"cuda"``, ``"cuda:0"``, or ``"auto"``. ``"auto"`` is passed to
+        transformers ``device_map`` and selects an available accelerator.
     dtype : torch.dtype or str, optional (default=None)
         Data type used for model loading, following the ``transformers``
         ``dtype`` convention, for example ``torch.float16``,
@@ -95,7 +96,7 @@ class SundialForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = SundialForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Running with explicit device, dtype, and sampling settings:
 
@@ -109,7 +110,7 @@ class SundialForecaster(BaseForecaster):
     ...     forward_kwargs={"num_samples": 20},
     ...     random_state=42,
     ... )
-    >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.fit(y).predict(fh=3)  # doctest: +SKIP
 
     Passing Sundial and Transformers generation options through
     ``forward_kwargs``:
@@ -120,7 +121,7 @@ class SundialForecaster(BaseForecaster):
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
     ...     forward_kwargs={"num_samples": 20, "revin": False},
     ... )
-    >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.fit(y).predict(fh=3)  # doctest: +SKIP
 
     Quantile prediction from generated samples:
 
@@ -132,7 +133,7 @@ class SundialForecaster(BaseForecaster):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict_quantiles(  # doctest: +SKIP
-    ...     fh=[1, 2, 3],
+    ...     fh=3,
     ...     alpha=[0.1, 0.5, 0.9],
     ... )
 
@@ -170,10 +171,11 @@ class SundialForecaster(BaseForecaster):
     ... )
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,
@@ -661,8 +663,10 @@ class _CachedSundial:
             self.model_ = self._load_from_path()
         else:
             self.model_ = self._load_randomly()
-
-        self.model_ = self.model_.to(self.device, dtype=self.dtype)
+            if self.device not in (None, "auto"):
+                self.model_ = self.model_.to(self.device, dtype=self.dtype)
+            elif self.dtype is not None:
+                self.model_ = self.model_.to(dtype=self.dtype)
 
         return self.model_
 
@@ -675,7 +679,11 @@ class _CachedSundial:
             config = SundialConfig.from_dict(config)
 
         return SundialForPrediction.from_pretrained(
-            self.model_path, config=config, ignore_mismatched_sizes=True
+            self.model_path,
+            config=config,
+            ignore_mismatched_sizes=True,
+            device_map=self.device,
+            dtype=self.dtype,
         )
 
     def _load_randomly(self):

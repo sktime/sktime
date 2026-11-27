@@ -8,6 +8,7 @@ __all__ = ["SummaryClassifier"]
 
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
@@ -224,7 +225,14 @@ class SummaryClassifier(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"estimator": RandomForestClassifier(n_estimators=10)}
         else:
-            return {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "summary_functions": ("mean", "min", "max"),
-            }
+            return [
+                {
+                    "estimator": RandomForestClassifier(n_estimators=2),
+                    "summary_functions": ("mean", "min", "max"),
+                },
+                {
+                    "estimator": DecisionTreeClassifier(),
+                    "summary_functions": ("mean", "std", "min", "max"),
+                    "summary_quantiles": (0.25, 0.75),
+                },
+            ]

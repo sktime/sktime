@@ -237,10 +237,12 @@ class SARIMAX(_StatsModelsAdapter):
         # "python_dependencnies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": True,
+        "capability:random_state": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
-        "tests:skip_all": True,  # Unkown reason
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(

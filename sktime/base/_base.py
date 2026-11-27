@@ -179,18 +179,22 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     def __init__(self):
         super().__init__()
         self.__dynamic_tags__()
+        #
+        # set sktime_version tag as dynamic tag
+        # to ensure sktime_version is included in serialization dumps (e.g., pickle)
+        self.set_tags(sktime_version=SKTIME_VERSION)
 
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
-        Returns True iff result of get_params(deep=False) results in equal parameter
-        sets.
+        Returns True iff ``self`` and ``other`` are of the same class, and the
+        results of get_params(deep=False) are equal parameter sets.
 
         Nested BaseObject descendants from get_params are compared via __eq__ as well.
         """
         from sktime.utils.deep_equals import deep_equals
 
-        if not isinstance(other, BaseObject):
+        if type(self) is not type(other):
             return False
 
         self_params = self.get_params(deep=False)
@@ -369,8 +373,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             return pickle.loads(file.open("_obj").read())
 
 
-# todo 1.2.0: remove this class from inheritance in BaseObject
-# or bump removal version if new tags get deprecated
 class TagAliaserMixin(_TagAliaserMixin):
     """Mixin class for tag aliasing and deprecation of old tags.
 
@@ -426,8 +428,8 @@ class TagAliaserMixin(_TagAliaserMixin):
     # when removing tags from here,
     # add to LEGACY_DEPRECATED_TAGS in TestAllObjects
     # (permanent graveyard to check for legacy tags in CI)
-    alias_dict = {"capability:global_forecasting": ""}
-    deprecate_dict = {"capability:global_forecasting": "1.2.0"}
+    alias_dict = {}
+    deprecate_dict = {}
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -711,7 +713,7 @@ class TagAliaserMixin(_TagAliaserMixin):
     _package_name = "sktime"
 
 
-class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
+class BaseEstimator(_BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.

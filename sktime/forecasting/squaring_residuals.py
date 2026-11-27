@@ -7,6 +7,7 @@ __author__ = ["kcc-lion"]
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
+from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingWindowSplitter
@@ -95,6 +96,7 @@ class SquaringResiduals(BaseForecaster):
         "maintainers": ["kcc-lion"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": False,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -106,16 +108,7 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
-        # testing and CI flags
-        # --------------------
-        # issue when prediction intervals, see #3479 and #4504
-        # known issue with prediction intervals that needs fixing, tracked in #4181
-        "tests:skip_by_name": [
-            "test_predict_time_index",
-            "test_predict_residuals",
-            "test_predict_interval",
-            "test_predict_time_index_with_X",  # separate - refer to #4765
-        ],
+        "capability:update": True,  # can estimator update its parameters with new data?
     }
 
     def __init__(
@@ -193,20 +186,30 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         fh_rel = fh.to_relative(self.cutoff)
         self._res_forecasters = {}
-        self.forecaster_ = self._forecaster.clone()
+        # Rolling residual construction needs refit on expanding windows.
+        # BaseForecaster no longer pools/refits. stream wrapper owns that.
+        from sktime.forecasting.stream import UpdateRefitsEvery
+
+        self.forecaster_ = UpdateRefitsEvery(self._forecaster.clone(), refit_interval=0)
 
         y = convert_to(y, "pd.Series")
         cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
-        self.forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
+        self.forecaster_.fit(y=y.iloc[: self.initial_window], X=X, fh=fh_rel)
         y_pred = self.forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
 
         for step_ahead in fh_rel:
+            # Pass a length-1 sequence: bare int is interpreted as range(1, n+1).
+            step = int(step_ahead)
             if isinstance(y.index, pd.DatetimeIndex):
-                fh_current = ForecastingHorizon(step_ahead, freq=y.index.freq)
+                fh_current = ForecastingHorizon(
+                    [step], is_relative=True, freq=y.index.freq
+                )
             else:
-                fh_current = ForecastingHorizon(step_ahead)
+                fh_current = ForecastingHorizon([step], is_relative=True)
             # create current prediction series
             if len(fh_rel) == 1:
                 y_pred_current = y_pred
@@ -235,7 +238,7 @@ class SquaringResiduals(BaseForecaster):
             # fit to residuals
             res_step_forecaster_ = self._residual_forecaster.clone()
             res_step_forecaster_.fit(y=residuals)
-            self._res_forecasters[step_ahead] = res_step_forecaster_
+            self._res_forecasters[step] = res_step_forecaster_
         return self
 
     def _predict(self, fh, X):
@@ -266,7 +269,7 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self.forecaster_.predict(X=X, fh=fh_abs)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -306,9 +309,19 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self.forecaster_.update(X=X, y=y, update_params=update_params)
+        # Residual forecasters are fitted on transformed residuals, not on y.
+        # Updating them with raw y corrupts their remembered history (NaNs from
+        # column/name mismatch) and is semantically wrong.
+        self._cur_y = update_data(self._cur_y, y)
+        self._cur_X = update_data(self._cur_X, X)
+
+        if update_params:
+            # Rebuild point + residual models on pooled history (same as fit).
+            return self._fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
+
+        self.forecaster_.update(X=X, y=y, update_params=False)
         for forecaster in self._res_forecasters.values():
-            forecaster.update(X=X, y=y, update_params=update_params)
+            forecaster._set_cutoff_from_y(y)
         return self
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -404,7 +417,11 @@ class SquaringResiduals(BaseForecaster):
         fh_rel_index = fh_rel.to_pandas()
         pred_var = pd.Series(index=fh_rel_index, dtype="float64")
         for el in fh_rel:
-            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)
+            step = int(el)
+            y_res = self._res_forecasters[step].predict(
+                fh=ForecastingHorizon([step], is_relative=True)
+            )
+            pred_var.at[el] = y_res.iloc[0]
         if self.strategy == "square":
             pred_var = pred_var**0.5
         pred_var.index = fh_abs.to_pandas()

@@ -70,6 +70,10 @@ class SimpleRNNClassifier(BaseDeepClassifier):
         "property:randomness": "stochastic",
         "capability:random_state": True,
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.rnn._rnn_tf"],
         "tests:skip_by_name": [
             "test_fit_idempotent",
             "test_persistence_via_pickle",
@@ -220,7 +224,7 @@ class SimpleRNNClassifier(BaseDeepClassifier):
                     reduce_lr,
                 ]
             elif isinstance(self.callbacks, tuple):
-                self.callbacks_ = deepcopy([i for i in self.callbacks])
+                self.callbacks_ = deepcopy([*self.callbacks])
                 if not any(
                     isinstance(callback, keras.callbacks.ReduceLROnPlateau)
                     for callback in self.callbacks

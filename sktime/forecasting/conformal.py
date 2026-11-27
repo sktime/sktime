@@ -82,7 +82,7 @@ class ConformalIntervals(BaseForecaster):
     >>> y = load_airline()  # doctest: +SKIP
     >>> forecaster = NaiveForecaster(strategy="drift")  # doctest: +SKIP
     >>> conformal_forecaster = ConformalIntervals(forecaster)  # doctest: +SKIP
-    >>> conformal_forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> conformal_forecaster.fit(y, fh=3)  # doctest: +SKIP
     ConformalIntervals(...)
     >>> pred_int = conformal_forecaster.predict_interval()  # doctest: +SKIP
 
@@ -97,7 +97,7 @@ class ConformalIntervals(BaseForecaster):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> # part 1 = grid search
-    >>> cv = ExpandingWindowSplitter(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> cv = ExpandingWindowSplitter(fh=3)  # doctest: +SKIP
     >>> forecaster = NaiveForecaster()  # doctest: +SKIP
     >>> param_grid = {"strategy" : ["last", "mean", "drift"]}  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
@@ -113,7 +113,7 @@ class ConformalIntervals(BaseForecaster):
     ...     params={"forecaster": "best_forecaster"},
     ... )  # doctest: +SKIP
     >>> y = load_airline()  # doctest: +SKIP
-    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> gscv_with_conformal.fit(y, fh=3)  # doctest: +SKIP
     PluginParamsForecaster(...)
     >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()  # doctest: +SKIP
     """
@@ -125,12 +125,14 @@ class ConformalIntervals(BaseForecaster):
         "python_dependencies": ["joblib"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         "X_inner_mtype": MTYPE_LIST_SERIES,
         "y_inner_mtype": MTYPE_LIST_SERIES,
         # CI and test flags
@@ -178,10 +180,13 @@ class ConformalIntervals(BaseForecaster):
             "capability:missing_values",
             "X-y-must-have-same-index",
             "enforce_index_type",
+            "capability:update",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         self.fh_early_ = fh is not None
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -288,8 +293,8 @@ class ConformalIntervals(BaseForecaster):
             residuals_matrix = self.residuals_matrix_
         else:
             residuals_matrix = self._compute_sliding_residuals(
-                y=self._y,
-                X=self._X,
+                y=self._cur_y,
+                X=self._cur_X,
                 forecaster=self.forecaster,
                 initial_window=self.initial_window,
                 sample_frac=self.sample_frac,

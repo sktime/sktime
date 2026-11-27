@@ -58,7 +58,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.datasets import load_airline
     >>> model = LTSFLinearForecaster(10, 3) # doctest: +SKIP
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=3) # doctest: +SKIP
     LTSFLinearForecaster(pred_len=3, seq_len=10)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
@@ -76,6 +76,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -254,6 +255,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         """
+        self._cur_y = y
+        self._cur_X = X
         fh = fh.to_relative(self.cutoff)
 
         # Validate fh against pretrained network's output dimension
@@ -328,7 +331,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
-        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
+        # pred_len >= 3 because pretrain tests use fh=3
         params = [
             {
                 "seq_len": 3,
@@ -408,7 +411,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.datasets import load_airline
     >>> model = LTSFDLinearForecaster(10, 3) # doctest: +SKIP
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=3) # doctest: +SKIP
     LTSFDLinearForecaster(pred_len=3, seq_len=10)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
@@ -426,6 +429,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -601,7 +605,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.datasets import load_airline
     >>> model = LTSFNLinearForecaster(10, 3) # doctest: +SKIP
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=3) # doctest: +SKIP
     LTSFNLinearForecaster(pred_len=3, seq_len=10)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
@@ -619,6 +623,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -797,6 +802,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         """
+        self._cur_y = y
+        self._cur_X = X
         fh = fh.to_relative(self.cutoff)
 
         # Validate fh against pretrained network's output dimension
@@ -871,7 +878,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
-        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
+        # pred_len >= 3 because pretrain tests use fh=3
         params = [
             {
                 "seq_len": 3,
@@ -980,7 +987,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     >>> y = load_airline()
     >>>
     >>> model = LTSFTransformerForecaster(10, 5, 5) # doctest: +SKIP
-    >>> model.fit(y, fh=[1, 2, 3, 4, 5]) # doctest: +SKIP
+    >>> model.fit(y, fh=5) # doctest: +SKIP
     LTSFTransformerForecaster(context_len=5, pred_len=5, seq_len=10)
     >>> pred = model.predict() # doctest: +SKIP
     """
@@ -993,6 +1000,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["geetu040"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["deep_learning"],
         "capability:pretrain": True,
     }
 
@@ -1168,7 +1176,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
-        num_features = self._y.shape[-1]
+        num_features = self._cur_y.shape[-1]
         self.enc_in = num_features
         self.dec_in = num_features
         self.c_out = num_features
@@ -1178,7 +1186,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         self._pred_len = fh
 
         if self.temporal_encoding:
-            if isinstance(self._y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            if isinstance(self._cur_y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
                 self._temporal_encoding = self.temporal_encoding
             else:
                 self._temporal_encoding = False

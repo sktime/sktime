@@ -70,7 +70,7 @@ class FhPlexForecaster(BaseForecaster):
     Simple example - same parameters per fh element
     >>> y = load_airline()
     >>> f = FhPlexForecaster(NaiveForecaster())
-    >>> f.fit(y, fh=[1, 2, 3])
+    >>> f.fit(y, fh=3)
     FhPlexForecaster(...)
     >>> # get individual fitted forecasters
     >>> f.forecasters_  # doctest: +SKIP
@@ -82,7 +82,7 @@ class FhPlexForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> fh_params = [{}, {"strategy": "last"}, {"strategy": "mean"}]
     >>> f = FhPlexForecaster(NaiveForecaster(), fh_params=fh_params)
-    >>> f.fit(y, fh=[1, 2, 3])
+    >>> f.fit(y, fh=3)
     FhPlexForecaster(...)
     >>> # get individual fitted forecasters
     >>> f.forecasters_  # doctest: +SKIP
@@ -96,6 +96,7 @@ class FhPlexForecaster(BaseForecaster):
         "authors": "fkiraly",
         # estimator type
         # --------------
+        "category": ["composition"],
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
         "capability:multivariate": True,
@@ -103,6 +104,7 @@ class FhPlexForecaster(BaseForecaster):
         "X_inner_mtype": PANDAS_TS_MTYPES,
         "fit_is_empty": False,
         "capability:pred_int": True,
+        "capability:update": True,
     }
 
     def __init__(

@@ -412,6 +412,27 @@ class SlidingWindowSegmenter(BaseTransformer):
         length of sliding window interval
 
     Used by the ShapeDTW algorithm.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.segment import SlidingWindowSegmenter
+    >>> X = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
+    >>> t = SlidingWindowSegmenter(window_length=3)
+    >>> t.fit_transform(X)
+       0  1  2  3  4
+    0  1  1  2  3  4
+    1  1  2  3  4  5
+    2  2  3  4  5  5
+
+    The output always has ``window_length`` rows and as many columns as
+    there are original time points, regardless of the window size:
+
+    >>> t2 = SlidingWindowSegmenter(window_length=2)
+    >>> t2.fit_transform(X)
+       0  1  2  3  4
+    0  1  1  2  3  4
+    1  1  2  3  4  5
     """
 
     _tags = {
@@ -498,6 +519,27 @@ class SlidingWindowSegmenter(BaseTransformer):
                 + type(self.window_length).__name__
                 + "' instead."
             )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        return [{}, {"window_length": 3}]
 
 
 def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):

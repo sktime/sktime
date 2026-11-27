@@ -1,12 +1,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Grid search forecaster."""
 
-from collections.abc import Sequence
-
 import numpy as np
 from sklearn.model_selection import ParameterGrid
 
 from sktime.forecasting.model_selection._base import BaseGridSearch
+from sktime.utils.sklearn._model_selection import _check_param_grid
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
@@ -214,7 +213,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
-    >>> fh = [1,2,3]
+    >>> fh = 3
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> param_grid = {"strategy" : ["last", "mean", "drift"]}
@@ -244,7 +243,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     >>> cv = ExpandingWindowSplitter(
     ...     initial_window=24,
     ...     step_length=12,
-    ...     fh=[1,2,3])
+    ...     fh=3)
     >>> gscv = ForecastingGridSearchCV(
     ...     forecaster=pipe,
     ...     param_grid=[{
@@ -265,10 +264,11 @@ class ForecastingGridSearchCV(BaseGridSearch):
     ... )  # doctest: +SKIP
     >>> gscv.fit(y)  # doctest: +SKIP
     ForecastingGridSearchCV(...)
-    >>> y_pred = gscv.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = gscv.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {
+        "category": ["composition", "tuning"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -311,33 +311,9 @@ class ForecastingGridSearchCV(BaseGridSearch):
         )
         self.param_grid = param_grid
 
-    def _check_param_grid(self, param_grid):
-        """_check_param_grid from sklearn 1.0.2, before it was removed."""
-        if hasattr(param_grid, "items"):
-            param_grid = [param_grid]
-
-        for p in param_grid:
-            for name, v in p.items():
-                if isinstance(v, np.ndarray) and v.ndim > 1:
-                    raise ValueError("Parameter array should be one-dimensional.")
-
-                if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
-                    raise ValueError(
-                        f"Parameter grid for parameter ({name}) needs to"
-                        f" be a list or numpy array, but got ({type(v)})."
-                        " Single values need to be wrapped in a list"
-                        " with one element."
-                    )
-
-                if len(v) == 0:
-                    raise ValueError(
-                        f"Parameter values for parameter ({name}) need "
-                        "to be a non-empty sequence."
-                    )
-
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid."""
-        self._check_param_grid(self.param_grid)
+        _check_param_grid(self.param_grid)
         return evaluate_candidates(ParameterGrid(self.param_grid))
 
     @classmethod

@@ -53,7 +53,7 @@ def test_neural_forecast_univariate_y_without_X(model_class) -> None:
         model.fit(y_train, fh=[-2, -1, 0, 1, 2])
 
     # train model
-    model.fit(y_train, fh=[1, 2, 3, 4])
+    model.fit(y_train, fh=4)
 
     # predict with trained model
     y_pred = model.predict()
@@ -101,10 +101,10 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
     with pytest.raises(
         ValueError, match="Missing exogenous data, 'futr_exog_list' is non-empty."
     ):
-        model.fit(y_train, fh=[1, 2, 3, 4])
+        model.fit(y_train, fh=4)
 
     # train model with all X columns
-    model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])
+    model.fit(y_train, X=X_train, fh=4)
 
     # attempt predict without X
     with pytest.raises(
@@ -148,7 +148,7 @@ def test_neural_forecast_multivariate_y_without_X(model_class) -> None:
     model = model_class(freq="A-DEC", max_steps=5, trainer_kwargs={"logger": False})
 
     # train model
-    model.fit(X_train, fh=[1, 2, 3, 4])
+    model.fit(X_train, fh=4)
 
     # predict with trained model
     X_pred = model.predict()
@@ -194,7 +194,7 @@ def test_neural_forecast_with_non_default_loss(model_class) -> None:
     )
 
     # train model
-    model.fit(X_train, fh=[1, 2, 3, 4])
+    model.fit(X_train, fh=4)
 
     # predict with trained model
     X_pred = model.predict()
@@ -239,7 +239,7 @@ def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
     )
 
     # train model
-    model.fit(X_train, fh=[1, 2, 3, 4])
+    model.fit(X_train, fh=4)
 
     # attempt predict
     with pytest.raises(
@@ -276,7 +276,7 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
     model = model_class(freq="auto", max_steps=5, trainer_kwargs={"logger": False})
 
     # train model
-    model.fit(y_train, fh=[1, 2, 3, 4])
+    model.fit(y_train, fh=4)
 
     # predict with trained model
     y_pred = model.predict()
@@ -343,7 +343,7 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
     model = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
     # attempt train
-    model.fit(y, fh=[1, 2, 3, 4])
+    model.fit(y, fh=4)
 
     # convert freq str to DateOffset object for comparison
     offset_freq = pandas.tseries.frequencies.to_offset(freq)
@@ -401,8 +401,8 @@ def test_neural_forecast_with_auto_freq_on_valid_index(
     model = model_class(freq=freq, max_steps=1, trainer_kwargs={"logger": False})
     model_auto = model_class(freq="auto", max_steps=1, trainer_kwargs={"logger": False})
 
-    model.fit(y, fh=[1, 2, 3])
-    model_auto.fit(y, fh=[1, 2, 3])
+    model.fit(y, fh=3)
+    model_auto.fit(y, fh=3)
 
     pred = model.predict()
     pred_auto = model_auto.predict()
@@ -451,7 +451,7 @@ def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) 
         ValueError,
         match="(could not interpret freq).*(use a valid integer offset in index)",
     ):
-        model.fit(y, fh=[1, 2, 3])
+        model.fit(y, fh=3)
 
 
 @pytest.mark.parametrize(
@@ -496,4 +496,4 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
     with pytest.raises(
         ValueError, match="(could not interpret freq).*(use a valid offset in index)"
     ):
-        model.fit(y, fh=[1, 2, 3])
+        model.fit(y, fh=3)

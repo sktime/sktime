@@ -199,6 +199,7 @@ class ForecastingOptCV(_DelegatedForecaster):
     """
 
     _tags = {
+        "category": ["composition", "tuning"],
         "authors": "fkiraly",
         "maintainers": "fkiraly",
         "python_dependencies": "hyperactive>=5",

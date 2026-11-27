@@ -238,7 +238,7 @@ def test_vectorization_preserves_row_index_names(method):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
 
     est = _get_exog_proba_fcst()
-    est.fit(y, fh=[1, 2, 3])
+    est.fit(y, fh=3)
     y_pred = getattr(est, method)()
 
     msg = (
@@ -274,7 +274,7 @@ def test_vectorization_multivariate(mtype, exogeneous):
         X_pred = None
 
     est = YfromX.create_test_instance()
-    est.fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
+    est.fit(y=y_fit, X=X_fit, fh=3)
     y_pred = est.predict(X=X_pred)
     valid, _, metadata = check_is_mtype(
         y_pred, mtype, return_metadata=True, msg_return_dict="list"
@@ -326,7 +326,7 @@ def test_col_vectorization_correct_col_order():
     # force univariate tag to trigger vectorization over columns for sure
     f.set_tags(**{"capability:multivariate": False})
 
-    f.fit(y=y, fh=[1])
+    f.fit(y=y, fh=1)
     y_pred = f.predict()
 
     # last value, so entries of last y column and y_pred should all be exactly equal
@@ -351,13 +351,13 @@ def test_row_vectorization_correct_row_order():
     t_ix = pd.date_range(start="2022-07-01", periods=n_points * n_instances, freq="D")
     y = pd.DataFrame(
         {
-            "y": [i for i in range(n_points * n_instances)],
+            "y": [*range(n_points * n_instances)],
             "id": ["T1"] * n_points + ["T2"] * n_points + ["T11"] * n_points,
             "timestamp": t_ix,
         }
     ).set_index(["id", "timestamp"])
 
-    fh = [1]
+    fh = 1
 
     forecaster = NaiveForecaster(strategy="last")
 
@@ -406,7 +406,7 @@ def test_predict_residuals():
     forecaster.fit(y_train, fh=fh)
 
     y_pred_1 = forecaster.predict()
-    y_resid = forecaster.predict_residuals()
+    y_resid = forecaster.predict_residuals(y=y_train)
     y_pred_2 = forecaster.predict()
     assert_series_equal(y_pred_1, y_pred_2)
     assert y_resid.index.equals(y_train.index)
@@ -485,26 +485,39 @@ def test_range_fh_in_predict():
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_remember_data():
-    """Test that the ``remember_data`` flag works as expected."""
+@pytest.mark.parametrize("remember_data", [True, False])
+def test_remember_data(remember_data):
+    """Test that the ``remember_data`` flag works as expected.
+
+    True: data is stored as self._X, self._y.
+    False: data is not stored, self._X and self._y are not set.
+    """
     from sktime.datasets import load_airline
+    from sktime.forecasting.base import BaseForecaster
 
     y = load_airline()
     X = load_airline()
-    f = YfromX.create_test_instance()
 
-    # turn off remembering _X, _y by config
-    f.set_config(**{"remember_data": False})
-    f.fit(y, X, fh=[1, 2, 3])
+    class _MinimalForecaster(BaseForecaster):
+        _tags = {"capability:exogenous": True}
 
-    assert f._X is None
-    assert f._y is None
+        def _fit(self, y, X, fh):
+            return self
 
-    f.set_config(**{"remember_data": True})
-    f.fit(y, X, fh=[1, 2, 3])
+        def _predict(self, fh, X):
+            return pd.Series(0, index=fh.to_absolute_index(self.cutoff))
 
-    assert f._X is not None
-    assert f._y is not None
+    f = _MinimalForecaster()
+    f.set_config(**{"remember_data": remember_data})
+
+    f.fit(y, X=X, fh=3)
+
+    if not remember_data:
+        assert not hasattr(f, "_y") or f._y is None
+        assert not hasattr(f, "_X") or f._X is None
+    else:
+        assert hasattr(f, "_y") and f._y is not None
+        assert hasattr(f, "_X") and f._X is not None
 
 
 @pytest.mark.skipif(
@@ -517,14 +530,14 @@ def test_panel_with_inner_freq():
 
     y = load_airline()
     ind = pd.date_range(
-        start="1960-01-01", periods=len(y.index), freq="H", name="datetime"
+        start="1960-01-01", periods=len(y.index), freq="h", name="datetime"
     )
     y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
 
     y_pan = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
-    assert y_pan.loc[0].index.freq == pd.Timedelta("24H"), "Expected 24H frequency"
+    assert y_pan.loc[0].index.freq == pd.Timedelta("24h"), "Expected 24H frequency"
 
-    fh = [1, 2]
+    fh = 2
     y_train, y_test = temporal_train_test_split(y_pan, test_size=len(fh))
 
     # fit update predict

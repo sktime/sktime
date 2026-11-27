@@ -2,6 +2,8 @@
 
 __author__ = ["fkiraly"]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas
 import pytest
@@ -16,10 +18,9 @@ from sktime.datatypes._check import (
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._registry import SCITYPE_LIST, scitype_to_mtype
+from sktime.datatypes._registry import generate_scitype_list, scitype_to_mtype
 from sktime.tests.test_switch import run_test_module_changed
-
-SCITYPES = SCITYPE_LIST
+from sktime.utils.deep_equals import deep_equals
 
 # scitypes where mtype inference is not unique
 # alignment is excluded since mtypes can be ambiguous
@@ -39,7 +40,7 @@ def _generate_scitype_mtype_combinations():
 
     sci_mtype_tuples = []
 
-    for scitype in SCITYPES:
+    for scitype in generate_scitype_list():
         mtypes = scitype_to_mtype(scitype)
 
         for mtype in mtypes:
@@ -438,7 +439,6 @@ def test_mtype_infer(scitype, mtype, fixture_index):
 # exclude these scitypes in inference of scitype test
 #  would lead to ambiguous results
 SKIP_SCITYPES = ["Alignment", "Table", "Proba"]
-SCITYPES_FOR_INFER_TEST = list(set(SCITYPE_LIST).difference(SKIP_SCITYPES))
 
 
 @pytest.mark.skipif(
@@ -464,6 +464,9 @@ def test_scitype_infer(scitype, mtype, fixture_index):
     if scitype in SKIP_SCITYPES or mtype in AMBIGUOUS_MTYPES:
         return None
 
+    SCITYPES = generate_scitype_list()
+    SCITYPES_FOR_INFER_TEST = list(set(SCITYPES).difference(SKIP_SCITYPES))
+
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
@@ -487,3 +490,38 @@ def test_object_support_for_series_scitype() -> None:
     )
 
     assert check_raise(sample_dataset, "pd.Series")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_check_does_not_mutate_input(scitype, mtype, fixture_index):
+    """Test that check_is_mtype does not mutate the input object.
+
+    Parameters
+    ----------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+
+    Raises
+    ------
+    AssertionError if check_is_mtype mutates the input object
+    """
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+
+    check_dict = generate_check_dict()
+    check_is_defined = (mtype, scitype) in check_dict.keys()
+
+    if fixture is not None and check_is_defined:
+        fixture_before = deepcopy(fixture)
+
+        check_is_mtype(
+            fixture, mtype, scitype, return_metadata=True, msg_return_dict="list"
+        )
+
+        assert deep_equals(fixture, fixture_before), (
+            f"check_is_mtype mutated input for scitype {scitype}, mtype {mtype}, "
+            f"fixture {fixture_index}"
+        )

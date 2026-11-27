@@ -181,7 +181,6 @@ class DateTimeFeatures(BaseTransformer):
         # --------------
         "authors": ["danbartl", "KishManani", "VyomkeshVyas"],
         "maintainers": ["VyomkeshVyas"],
-        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
         # estimator type
         # --------------
         "scitype:transform-input": "Series",

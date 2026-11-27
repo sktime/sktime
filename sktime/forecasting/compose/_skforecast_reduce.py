@@ -75,7 +75,7 @@ class SkforecastAutoreg(BaseForecaster):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     SkforecastAutoreg(lags=2, regressor=LinearRegression())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[2], coverage=[0.9, 0.95]
     ... )
@@ -97,7 +97,7 @@ class SkforecastAutoreg(BaseForecaster):
     ... )
     >>> forecaster.fit(y_train, X=X_train)  # doctest: +SKIP
     SkforecastAutoreg(lags=[2, 4], regressor=RandomForestRegressor())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3, X=X_test)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[1, 3], X=X_test, coverage=[0.6, 0.4]
     ... )
@@ -122,6 +122,7 @@ class SkforecastAutoreg(BaseForecaster):
         "maintainers": ["Abhay-Lejith", "yarnabrina"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -293,6 +294,8 @@ class SkforecastAutoreg(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         del fh  # avoid being detected as unused by ``vulture`` like tools
 
         self._forecaster = self._create_forecaster()
@@ -362,7 +365,7 @@ class SkforecastAutoreg(BaseForecaster):
         final_point_predictions = pd.Series(
             point_predictions[horizon_positions],
             index=absolute_horizons,
-            name=None if self._y.name is None else str(self._y.name),
+            name=None if self._cur_y.name is None else str(self._cur_y.name),
         )
 
         return final_point_predictions
@@ -554,7 +557,7 @@ class SkforecastRecursive(BaseForecaster):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     SkforecastRecursive(lags=2, regressor=LinearRegression())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[2], coverage=[0.9, 0.95]
     ... )
@@ -576,7 +579,7 @@ class SkforecastRecursive(BaseForecaster):
     ... )
     >>> forecaster.fit(y_train, X=X_train)  # doctest: +SKIP
     SkforecastRecursive(lags=[2, 4], regressor=RandomForestRegressor())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3, X=X_test)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[1, 3], X=X_test, coverage=[0.6, 0.4]
     ... )
@@ -598,6 +601,7 @@ class SkforecastRecursive(BaseForecaster):
         "maintainers": ["yarnabrina"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -765,6 +769,8 @@ class SkforecastRecursive(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         del fh  # avoid being detected as unused by ``vulture`` like tools
 
         self._forecaster = self._create_forecaster()
@@ -840,7 +846,7 @@ class SkforecastRecursive(BaseForecaster):
         final_point_predictions = pd.Series(
             point_predictions[horizon_positions],
             index=absolute_horizons,
-            name=None if self._y.name is None else str(self._y.name),
+            name=None if self._cur_y.name is None else str(self._cur_y.name),
         )
 
         return final_point_predictions

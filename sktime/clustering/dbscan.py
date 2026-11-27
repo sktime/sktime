@@ -92,6 +92,31 @@ class TimeSeriesDBSCAN(BaseClusterer):
     labels_ : ndarray of shape (n_samples)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
+
+    >>> X = np.array([
+    ...     [[1.0, 2.0, 3.0, 4.0]],
+    ...     [[1.1, 2.1, 3.1, 4.1]],
+    ...     [[0.9, 1.9, 2.9, 3.9]],
+    ...     [[10.0, 11.0, 12.0, 13.0]],
+    ...     [[10.1, 11.1, 12.1, 13.1]],
+    ...     [[9.9, 10.9, 11.9, 12.9]],
+    ... ])
+
+    >>> clusterer = TimeSeriesDBSCAN(
+    ...     distance="dtw",
+    ...     eps=0.5,
+    ...     min_samples=2,
+    ... )
+    >>> clusterer.fit(X)
+    TimeSeriesDBSCAN(...)
+
+    >>> clusterer.labels_
+    array([0, 0, 0, 1, 1, 1])
     """
 
     _tags = {

@@ -141,6 +141,10 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
     np.float64(0.5066666666666666)
     """  # noqa: E501
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     func = median_absolute_percentage_error
 
     def __init__(

@@ -269,7 +269,7 @@ class AutoARIMA(_PmdArimaAdapter):
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     AutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {
@@ -288,6 +288,7 @@ class AutoARIMA(_PmdArimaAdapter):
         # python_dependencies: "pmdarima" - inherited from _PmdArimaAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
@@ -466,10 +467,15 @@ class AutoARIMA(_PmdArimaAdapter):
         -------
         self : returns an instance of self.
         """
+        from sktime.datatypes import update_data
+
         update_pdq = self.update_pdq
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         if update_params:
             if update_pdq:
-                self._fit(y=self._y, X=self._X, fh=self._fh)
+                self._fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
             else:
                 if X is not None:
                     X = X.loc[y.index]
@@ -694,10 +700,11 @@ class ARIMA(_PmdArimaAdapter):
     ...     suppress_warnings=True)
     >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {
+        "category": ["statistical"],
         "authors": [
             "tgsmith61591",  # for pmdarima
             "charlesdrotar",  # for pmdarima
