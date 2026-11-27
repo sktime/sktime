@@ -33,9 +33,10 @@ y_test = s.iloc[n_train:]
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-def test_strategy_last(fh):
+@pytest.mark.parametrize("sp", [1, None])
+def test_strategy_last(fh, sp):
     """Test last strategy."""
-    f = NaiveForecaster(strategy="last")
+    f = NaiveForecaster(strategy="last", sp=sp)
     f.fit(y_train)
     y_pred = f.predict(fh)
     expected = np.repeat(y_train.iloc[-1], len(f.fh))
