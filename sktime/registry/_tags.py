@@ -3014,12 +3014,12 @@ class requires_y_true(_BaseTag):
 class requires_y_pred_benchmark(_BaseTag):
     """Behaviour flag: metric requires y_pred in evaluate.
 
-    - String name: ``"requires-y-pred-benchmark"``
+    - String name: ``"requires_y_pred_benchmark"``
     - Public behaviour flag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``True``
-    - Alias: ``"requires_y_pred_benchmark"``
+    - Alias: ``"requires-y-pred-benchmark"`` (legacy)
 
     This tag applies to metrics.
 
@@ -3032,7 +3032,7 @@ class requires_y_pred_benchmark(_BaseTag):
     """
 
     _tags = {
-        "tag_name": "requires-y-pred-benchmark",
+        "tag_name": "requires_y_pred_benchmark",
         "parent_type": "metric",
         "tag_type": "bool",
         "short_descr": (
@@ -3045,12 +3045,12 @@ class requires_y_pred_benchmark(_BaseTag):
 class requires_y_train(_BaseTag):
     """Behaviour flag: metric requires y_train in evaluate.
 
-    - String name: ``"requires-y-train"``
+    - String name: ``"requires_y_train"``
     - Public behaviour flag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``"requires_y_train"``
+    - Alias: ``"requires-y-train"`` (legacy)
 
     This tag applies to metrics.
 
@@ -3062,7 +3062,7 @@ class requires_y_train(_BaseTag):
     """
 
     _tags = {
-        "tag_name": "requires-y-train",
+        "tag_name": "requires_y_train",
         "parent_type": "metric",
         "tag_type": "bool",
         "short_descr": "does the metric require y_train to be passed in evaluate?",
@@ -4243,6 +4243,20 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
+    ),
+    # to be deprecated or removed
+    # TODO 1.5.0: remove deprecated metric tags below
+    (
+        "requires-y-train",
+        "metric",
+        "bool",
+        "deprecated tag for whether metric requires y_train",
+    ),
+    (
+        "requires-y-pred-benchmark",
+        "metric",
+        "bool",
+        "deprecated tag for whether metric requires y_pred_benchmark",
     ),
 ]
 

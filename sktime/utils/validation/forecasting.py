@@ -395,7 +395,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
 
     allow_y_pred_benchmark : boolean, optional, default=False
         whether to allow scorer classes
-        with ``requires-y-pred-benchmark`` tag = ``True``
+        with ``requires_y_pred_benchmark`` tag = ``True``
 
     obj : object or class, or None, optional, default=None
         if not None, will be used as a reference in the error message
@@ -458,7 +458,7 @@ def check_scoring(scoring, allow_y_pred_benchmark=False, obj=None):
         scoring = make_forecasting_scorer(func=scoring, greater_is_better=False)
 
     if hasattr(scoring, "get_class_tag"):
-        scoring_req_bench = scoring.get_class_tag("requires-y-pred-benchmark", False)
+        scoring_req_bench = scoring.get_class_tag("requires_y_pred_benchmark", False)
         if scoring_req_bench and not allow_y_pred_benchmark:
             msg = (
                 "Scoring requiring benchmark forecasts (y_pred_benchmark) are not "
