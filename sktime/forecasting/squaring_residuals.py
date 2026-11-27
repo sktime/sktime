@@ -61,11 +61,18 @@ class SquaringResiduals(BaseForecaster):
     steps_ahead : int, optional, default=1
         Steps ahead for which we predict the residuals
     strategy : str, optional, default='square'
-        Function applied to the residuals
+        Function applied to the residuals, either ``"square"`` or ``"abs"``.
+        The residual forecast determines distribution scale: its square root
+        for ``"square"``, or the forecast itself for ``"abs"``.
+        ``predict_var`` returns the variance of the resulting distribution,
+        rather than its scale. For a standard Normal assumption, this is the
+        squared scale; Laplace and Student's t also include their variance factor.
     distr : str, optional, default='norm'
         Distributional assumption (["norm", "laplace", "t", "cauchy"])
     distr_kwargs : dict, optional
-        Additional arguments required by the distribution
+        Additional scipy distribution arguments, e.g., ``df`` for Student's t.
+        Optional ``loc`` and ``scale`` act on the standardized residual law.
+        Distributions without finite variance return infinity in ``predict_var``.
 
     Attributes
     ----------
@@ -363,13 +370,13 @@ class SquaringResiduals(BaseForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self.forecaster_.predict(fh=fh_abs, X=X)
-        pred_var = self._predict_var(fh=fh, X=X)
+        pred_scale = self._predict_scale(fh=fh, X=X)
         if self.distr_kwargs is not None:
             z_scores = dist_fun.ppf(alpha, **self.distr_kwargs)
         else:
             z_scores = dist_fun.ppf(alpha)
 
-        errors = [pred_var * z for z in z_scores]
+        errors = [pred_scale * z for z in z_scores]
 
         var_names = self._get_varnames()
         var_name = var_names[0]
@@ -412,6 +419,19 @@ class SquaringResiduals(BaseForecaster):
                 "Defaulting to cov=False instead.",
                 obj=self,
             )
+        from scipy import stats
+
+        kwargs = self.distr_kwargs or {}
+        variance_factor = getattr(stats, self.distr).var(**kwargs)
+        # Match the infinite-variance convention used by skpro's heavy tails.
+        if self.distr == "cauchy" or (self.distr == "t" and 0 < kwargs["df"] <= 1):
+            variance_factor = float("inf")
+        pred_scale = self._predict_scale(fh=fh, X=X)
+        pred_var = pred_scale**2 * variance_factor
+        return pred_var.to_frame(name=self._get_varnames()[0])
+
+    def _predict_scale(self, fh, X=None):
+        """Forecast residual scale, keeping its units separate from variance."""
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
         fh_rel_index = fh_rel.to_pandas()
@@ -426,6 +446,32 @@ class SquaringResiduals(BaseForecaster):
             pred_var = pred_var**0.5
         pred_var.index = fh_abs.to_pandas()
         return pred_var
+
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Return the same location-scale law used for quantile forecasts."""
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        kwargs = dict(self.distr_kwargs or {})
+        scale = self._predict_scale(fh=fh, X=X).to_frame(name=self._get_varnames()[0])
+        mu = self._predict(fh=fh, X=X).to_frame() + scale * kwargs.pop("loc", 0)
+        scale = scale * kwargs.pop("scale", 1)
+        common = {"mu": mu, "index": mu.index, "columns": mu.columns, **kwargs}
+
+        if self.distr == "norm":
+            if _check_soft_dependencies("skpro", severity="none"):
+                from skpro.distributions.normal import Normal
+            else:
+                from sktime.base._proba._normal import Normal
+
+            return Normal(sigma=scale, **common)
+
+        from skpro.distributions import Cauchy, Laplace, TDistribution
+
+        if self.distr == "t":
+            return TDistribution(sigma=scale, **common)
+        if self.distr == "laplace":
+            return Laplace(scale=scale, **common)
+        return Cauchy(scale=scale, **common)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
