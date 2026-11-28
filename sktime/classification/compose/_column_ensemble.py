@@ -20,10 +20,11 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
     """Base Class for column ensemble."""
 
     _tags = {
-        "authors": ["abostrom"],
+        "authors": ["abostrom", "shubham5080"],
         "capability:multivariate": True,
         "capability:predict_proba": True,
-        "X_inner_mtype": ["nested_univ", "pd-multiindex"],
+        # pd-multiindex only — drop outdated nested_univ (part of #10716)
+        "X_inner_mtype": ["pd-multiindex"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
