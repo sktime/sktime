@@ -184,3 +184,35 @@ def test_bagging_does_not_reseed_global_numpy_rng():
             "fit mutated the process-global numpy RNG state "
             f"(random_state={random_state!r})"
         )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(BaggingClassifier),
+    reason="run test only if soft dependency present and increment test module",
+)
+def test_bagging_pd_multiindex_inner_mtype():
+    """Regression: X_inner_mtype is pd-multiindex only; nested_univ dropped."""
+    import pandas as pd
+
+    from sktime.classification.dummy import DummyClassifier
+
+    clf = BaggingClassifier(DummyClassifier(), n_estimators=3, random_state=0)
+    assert clf.get_tag("X_inner_mtype") == ["pd-multiindex"]
+
+    index = pd.MultiIndex.from_product(
+        [[0, 1, 2, 3], [0, 1, 2, 3, 4]], names=["instances", "timepoints"]
+    )
+    X = pd.DataFrame(
+        {
+            "var_0": np.arange(20, dtype=float),
+            "var_1": np.arange(20, dtype=float)[::-1],
+        },
+        index=index,
+    )
+    y = np.array([0, 0, 1, 1])
+
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+    assert y_pred.shape == (4,)
+    y_proba = clf.predict_proba(X)
+    assert y_proba.shape == (4, 2)
