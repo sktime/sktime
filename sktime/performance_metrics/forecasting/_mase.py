@@ -13,6 +13,7 @@ from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetric,
     _ScaledMetricTags,
 )
+from sktime.performance_metrics.forecasting._functions import _check_sp_and_y_train
 
 
 class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
@@ -186,6 +187,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         y_train = kwargs["y_train"]
         multioutput = self.multioutput
         sp = self.sp
+        sp = _check_sp_and_y_train(sp, y_train, "MeanAbsoluteScaledError")
 
         eps = self.eps
         if eps is None:

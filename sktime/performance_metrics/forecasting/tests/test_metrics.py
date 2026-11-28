@@ -571,6 +571,73 @@ def test_theilu2_class():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_scaled_metrics_sp_validation():
+    """Test validation of sp parameter in scaled forecasting error metrics.
+
+    Fixes #11738.
+    """
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteScaledError,
+        MeanSquaredScaledError,
+        MedianAbsoluteScaledError,
+        MedianSquaredScaledError,
+        mean_absolute_scaled_error,
+        mean_squared_scaled_error,
+        median_absolute_scaled_error,
+        median_squared_scaled_error,
+    )
+
+    y_train = np.array([5.0, 0.5, 4.0, 6.0, 3.0, 5.0, 2.0])
+    y_true = np.array([3.0, -0.5, 2.0, 7.0, 2.0])
+    y_pred = np.array([2.5, 0.0, 2.0, 8.0, 1.25])
+
+    # Valid sp with positive int and numpy integer
+    mase = MeanAbsoluteScaledError(sp=1)
+    res_class = mase(y_true, y_pred, y_train=y_train)
+    assert np.isfinite(res_class)
+
+    mase_np = MeanAbsoluteScaledError(sp=np.int64(2))
+    assert np.isfinite(mase_np(y_true, y_pred, y_train=y_train))
+
+    # Invalid sp values: 0, negative, float, bool, str, None
+    invalid_sps = [None, 0, -1, -2, 1.5, True, False, "12"]
+    for bad_sp in invalid_sps:
+        for metric_cls in [
+            MeanAbsoluteScaledError,
+            MeanSquaredScaledError,
+            MedianAbsoluteScaledError,
+            MedianSquaredScaledError,
+        ]:
+            with pytest.raises(ValueError):
+                metric_cls(sp=bad_sp)(y_true, y_pred, y_train=y_train)
+        with pytest.raises(ValueError):
+            mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, sp=bad_sp)
+        with pytest.raises(ValueError):
+            median_absolute_scaled_error(y_true, y_pred, y_train=y_train, sp=bad_sp)
+        with pytest.raises(ValueError):
+            mean_squared_scaled_error(y_true, y_pred, y_train=y_train, sp=bad_sp)
+        with pytest.raises(ValueError):
+            median_squared_scaled_error(y_true, y_pred, y_train=y_train, sp=bad_sp)
+
+    # sp exceeds or equals len(y_train)
+    y_train_short = np.array([5.0, 0.5, 4.0])  # len = 3
+    # Boundary: sp == len(y_train)
+    with pytest.raises(ValueError, match="Seasonal periodicity sp=3 exceeds or equals"):
+        MeanAbsoluteScaledError(sp=3)(y_true, y_pred, y_train=y_train_short)
+    with pytest.raises(ValueError, match="Seasonal periodicity sp=3 exceeds or equals"):
+        mean_absolute_scaled_error(y_true, y_pred, y_train=y_train_short, sp=3)
+
+    # sp > len(y_train)
+    with pytest.raises(ValueError, match="Seasonal periodicity sp=5 exceeds or equals"):
+        MeanAbsoluteScaledError(sp=5)(y_true, y_pred, y_train=y_train_short)
+    with pytest.raises(ValueError, match="Seasonal periodicity sp=5 exceeds or equals"):
+        mean_absolute_scaled_error(y_true, y_pred, y_train=y_train_short, sp=5)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_evaluate_by_index_returns_correct_index():
     """Test that evaluate_by_index returns results with the correct index.
 
