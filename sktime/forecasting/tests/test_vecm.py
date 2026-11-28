@@ -17,6 +17,38 @@ from sktime.tests.test_switch import run_test_for_class
     not run_test_for_class(VECM),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("steps", [[1], [4], [1, 3, 5]])
+@pytest.mark.parametrize("coverage", [[0.9], [0.9, 0.5]])
+def test_vecm_prediction_intervals_against_statsmodels(steps, coverage):
+    """Each endpoint belongs to its requested step, variable and coverage."""
+    from statsmodels.tsa.vector_ar.vecm import VECM as StatsmodelsVECM
+
+    rng = np.random.default_rng(21)
+    walk = rng.normal(size=64).cumsum()
+    y = pd.DataFrame(
+        {"z": walk, "a": 18 + 2 * walk + rng.normal(size=64)},
+        index=pd.period_range("2019-01", periods=64, freq="M"),
+    )
+    result = VECM().fit(y).predict_interval(fh=steps, coverage=coverage)
+    reference = StatsmodelsVECM(y).fit()
+
+    expected_index = pd.PeriodIndex([y.index[-1] + step for step in steps])
+    pd.testing.assert_index_equal(result.index, expected_index)
+    expected_columns = pd.MultiIndex.from_product(
+        [y.columns, coverage, ["lower", "upper"]]
+    )
+    pd.testing.assert_index_equal(result.columns, expected_columns)
+    for c in coverage:
+        _, lower, upper = reference.predict(steps=max(steps), alpha=1 - c)
+        for j, variable in enumerate(y.columns):
+            assert_allclose(result[variable, c, "lower"], lower[np.array(steps) - 1, j])
+            assert_allclose(result[variable, c, "upper"], upper[np.array(steps) - 1, j])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(VECM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_VECM_against_statsmodels():
     """Compares Sktime's and Statsmodel's VECM."""
     from statsmodels.tsa.api import VECM as _VECM
