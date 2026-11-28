@@ -3,9 +3,6 @@
 __all__ = ["VAR"]
 __author__ = ["thayeylolu", "aiwalter", "lbventura"]
 
-import itertools
-from collections import OrderedDict
-
 import numpy as np
 import pandas as pd
 
@@ -284,9 +281,13 @@ class VAR(_StatsModelsAdapter):
         fh_int = fh.to_relative(self.cutoff)
         steps = fh_int[-1]
 
-        y_cols_no_space = [str(col).replace(" ", "") for col in self._get_columns()]
-
-        df_list = []
+        rows = fh.to_indexer(self.cutoff)
+        index = fh.to_absolute_index(self.cutoff).rename(self._cur_y.index.name)
+        pred_int = pd.DataFrame(
+            index=index,
+            columns=self._get_columns("predict_interval", coverage=coverage),
+            dtype=float,
+        )
 
         for cov in coverage:
             alpha = 1 - cov
@@ -294,66 +295,14 @@ class VAR(_StatsModelsAdapter):
             if alpha >= 0.99999:
                 alpha = 0.99999
 
-            lower_cols = [f"{col} {alpha} lower" for col in y_cols_no_space]
-            upper_cols = [f"{col} {alpha} upper" for col in y_cols_no_space]
-
-            fcast_interval = model.forecast_interval(
+            _, lower, upper = model.forecast_interval(
                 self._last_n_lags_of_y, steps=steps, alpha=alpha
             )
-            lower_int, upper_int = fcast_interval[1], fcast_interval[-1]
+            for j, name in enumerate(self._get_varnames()):
+                pred_int[name, cov, "lower"] = lower[rows, j]
+                pred_int[name, cov, "upper"] = upper[rows, j]
 
-            # invert the "only_1s" column if it was added during fit
-            if self._y_metadata["n_features"] == 1:
-                lower_int = lower_int[:, [0]]
-                upper_int = upper_int[:, [0]]
-
-            lower_df = pd.DataFrame(lower_int, columns=lower_cols)
-            upper_df = pd.DataFrame(upper_int, columns=upper_cols)
-
-            df_list.append(pd.concat((lower_df, upper_df), axis=1))
-
-        concat_df = pd.concat(df_list, axis=1)
-
-        concat_df_columns = list(
-            OrderedDict.fromkeys(
-                [
-                    col_df
-                    for col in y_cols_no_space
-                    for col_df in concat_df.columns
-                    if col in col_df
-                ]
-            )
-        )
-
-        pre_output_df = concat_df[concat_df_columns]
-
-        pre_output_df_2 = pd.DataFrame(
-            pre_output_df.values,
-            columns=pd.MultiIndex.from_tuples(
-                [col.split(" ") for col in pre_output_df]
-            ),
-        )
-
-        final_columns = list(
-            itertools.product(
-                *[
-                    self._cur_y.columns,
-                    coverage,
-                    pre_output_df_2.columns.get_level_values(2).unique(),
-                ]
-            )
-        )
-
-        final_df = pd.DataFrame(
-            pre_output_df_2.iloc[fh.to_indexer(self.cutoff), :].values,
-            columns=pd.MultiIndex.from_tuples(final_columns),
-        )
-
-        index = fh.to_absolute_index(self.cutoff)
-        index.name = self._cur_y.index.name
-        final_df.index = index
-
-        return final_df
+        return pred_int
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

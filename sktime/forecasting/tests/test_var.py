@@ -19,6 +19,38 @@ from sktime.tests.test_switch import run_test_for_class
     not run_test_for_class(VAR),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("coverage", [[0.9], [0.9, 0.5]])
+def test_var_interval_overlapping_column_names(coverage):
+    """Each interval must belong to its target even if target names overlap."""
+    from statsmodels.tsa.api import VAR as StatsmodelsVAR
+
+    rng = np.random.default_rng(21)
+    y = pd.DataFrame(
+        {"a": rng.normal(size=48), "aa": rng.normal(20, 2, size=48)},
+        index=pd.period_range("2020-01", periods=48, freq="M", name="time"),
+    )
+    fh = [2, 5]
+    result = VAR(maxlags=1).fit(y).predict_interval(fh, coverage=coverage)
+    reference = StatsmodelsVAR(y).fit(maxlags=1)
+
+    expected_index = pd.PeriodIndex([y.index[-1] + step for step in fh], name="time")
+    pd.testing.assert_index_equal(result.index, expected_index)
+    columns = pd.MultiIndex.from_product([y.columns, coverage, ["lower", "upper"]])
+    pd.testing.assert_index_equal(result.columns, columns)
+    rows = np.array(fh) - 1
+    for cov in coverage:
+        _, lower, upper = reference.forecast_interval(
+            y.to_numpy()[-1:], steps=max(fh), alpha=1 - cov
+        )
+        for j, name in enumerate(y.columns):
+            assert_allclose(result[name, cov, "lower"], lower[rows, j])
+            assert_allclose(result[name, cov, "upper"], upper[rows, j])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(VAR),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_VAR_against_statsmodels():
     """Compares Sktime's and Statsmodel's VAR."""
     from statsmodels.tsa.api import VAR as _VAR
