@@ -185,6 +185,7 @@ class Detrender(BaseTransformer):
         forecaster = self._get_fitted_forecaster(X=X, y=y, fh=fh)
 
         X_pred = forecaster.predict(fh=fh, X=y)
+        X_pred = X_pred.reindex(X.index)
 
         if self.model == "additive":
             return X - X_pred
@@ -212,6 +213,7 @@ class Detrender(BaseTransformer):
         forecaster = self._get_fitted_forecaster(X=None, y=None, fh=fh)
 
         X_pred = forecaster.predict(fh=fh, X=y)
+        X_pred = X_pred.reindex(X.index)
 
         if self.model == "additive":
             return X + X_pred
