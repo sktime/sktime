@@ -102,8 +102,8 @@ class TiRexForecaster(BaseForecaster):
     ----------
     [1] TiRex: https://github.com/NX-AI/tirex
 
-    Example
-    ----------
+    Examples
+    --------
     >>> # Minimal usage (doctest is skipped since it requires torch and model files)
     >>> import pandas as pd
     >>> from sktime.forecasting.tirex import TiRexForecaster

@@ -937,8 +937,8 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
 
     Returned by ``make_forecasting_scorer``, in adaptation use cases.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sktime.performance_metrics.forecasting import make_forecasting_scorer
     >>> from sktime.performance_metrics.forecasting import mean_squared_error
     >>>
