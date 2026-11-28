@@ -281,27 +281,23 @@ class VECM(_StatsModelsAdapter):
         exog_fc = X.values if X is not None else None
         fh_int = fh.to_relative(self.cutoff)
         var_names = self._get_varnames()
-        int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
+        rows = fh.to_indexer(self.cutoff)
+        pred_int = pd.DataFrame(
+            index=fh.to_absolute_index(self.cutoff),
+            columns=self._get_columns("predict_interval", coverage=coverage),
+            dtype=float,
+        )
 
-        all_values = []  # will store predicted intervals for each coverage value
         for c in coverage:
-            alpha = 1 - c
             _, y_lower, y_upper = self._fitted_forecaster.predict(
                 steps=fh_int[-1],
                 exog_fc=exog_fc,
                 exog_coint_fc=self.exog_coint_fc,
-                alpha=alpha,
+                alpha=1 - c,
             )
-            values = []
-            for v_idx in range(len(var_names)):
-                values.append(y_lower[0][v_idx])
-                values.append(y_upper[0][v_idx])
-
-            all_values.extend(values)
-
-        pred_int = pd.DataFrame(
-            [all_values], index=fh.to_absolute_index(self.cutoff), columns=int_idx
-        )
+            for j, variable in enumerate(var_names):
+                pred_int[variable, c, "lower"] = y_lower[rows, j]
+                pred_int[variable, c, "upper"] = y_upper[rows, j]
 
         return pred_int
 
