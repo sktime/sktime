@@ -81,7 +81,7 @@ class BaggingClassifier(BaseClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly"],
+        "authors": ["fkiraly", "shubham5080"],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -89,7 +89,8 @@ class BaggingClassifier(BaseClassifier):
         "capability:predict_proba": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "X_inner_mtype": ["pd-multiindex", "nested_univ"],
+        # pd-multiindex only — drop outdated nested_univ (part of #10716)
+        "X_inner_mtype": ["pd-multiindex"],
     }
 
     def __init__(
@@ -125,10 +126,8 @@ class BaggingClassifier(BaseClassifier):
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
+            if self.get_tag("X_inner_mtype") = "pd-multiindex":
+                pd.DataFrame with MultiIndex (instance, time), columns = variables
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : 1D np.array of int, of shape [n_instances] - class labels for fitting
