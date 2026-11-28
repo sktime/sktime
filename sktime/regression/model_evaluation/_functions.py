@@ -98,21 +98,51 @@ def evaluate(
         - "dask_lazy": like "dask", but returns a lazy ``dask.dataframe.DataFrame``
 
     backend_params : dict, optional
-        Additional parameters passed to the backend.
-        Depends on the value of ``backend``:
+        additional parameters passed to the backend as config.
+        Directly passed to ``utils.parallel.parallelize``.
+        Valid keys depend on the value of ``backend``:
 
-        - For "None": ignored
-        - For "loky", "multiprocessing", "threading":
-        valid ``joblib.Parallel`` params (e.g., ``n_jobs``).
-        ``backend`` is controlled by this function and should not be included.
-        - For "joblib": user must include ``backend`` key in this dictionary.
-        Also accepts ``n_jobs`` and other ``joblib.Parallel`` args.
-        - For "dask": passed to ``dask.compute()``, e.g., ``scheduler="threads"``
+        - "None": no additional parameters, ``backend_params`` is ignored
+        - "loky", "multiprocessing" and "threading": default ``joblib`` backends
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          with the exception of ``backend`` which is directly controlled by
+          ``backend``. If ``n_jobs`` is not passed, it will default to ``-1``, other
+          parameters will default to ``joblib`` defaults.
+          Most common parameters:
 
-        Recommendation: Use "dask" or "loky" for parallel evaluate.
-        "threading" is unlikely to see speed ups due to the GIL and the serialization
-        backend (``cloudpickle``) for "dask" and "loky" is generally more robust
-        than the standard ``pickle`` library used in "multiprocessing".
+            - "n_jobs": int, default=-1; number of jobs to run in parallel.
+            - "verbose": int, default=0; verbosity level.
+            - "timeout": float or None, default=None; timeout limit for each task.
+
+          For full reference, see ``joblib.Parallel`` documentation:
+          https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``.
+          any valid keys for ``joblib.Parallel`` can be passed here, e.g., ``n_jobs``,
+          ``backend`` must be passed as a key of ``backend_params`` in this case.
+          If ``n_jobs`` is not passed, it will default to ``-1``, other parameters
+          will default to ``joblib`` defaults.
+          See ``joblib.Parallel`` documentation above for common parameters.
+        - "dask": any valid keys for ``dask.compute`` can be passed, e.g.,
+          ``scheduler``. Most common parameters:
+
+            - "scheduler": str, optional; scheduler to use, e.g., "threads",
+              "processes", or "single-threaded".
+            - "num_workers": int, optional; number of workers to use.
+            - "optimize_graph": bool, default=True; whether to optimize the task
+              graph before computation.
+
+          For full reference, see ``dask.compute`` documentation:
+          https://docs.dask.org/en/stable/generated/dask.compute.html
+        - "ray": The following keys can be passed:
+
+            - "ray_remote_args": dict, optional; valid keys for ``ray.init``, e.g.,
+              ``"num_cpus"`` (int), ``"num_gpus"`` (int), ``"address"`` (str).
+              For full reference, see ``ray.init`` documentation:
+              https://docs.ray.io/en/latest/ray-core/api/doc/ray.init.html
+            - "shutdown_ray": bool, default=True; False prevents ``ray`` from shutting
+              down after parallelization.
+            - "logger_name": str, default="ray"; name of the logger to use.
+            - "mute_warnings": bool, default=False; if True, suppresses warnings
 
     Returns
     -------
