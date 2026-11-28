@@ -14,7 +14,7 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
-    """Mean squared percentage error (MSPE), or RMSPE, or symmetric MSPE, RMSPE.
+    r"""Mean squared percentage error (MSPE), or RMSPE, or symmetric MSPE, RMSPE.
 
     If ``square_root`` is False then calculates MSPE and if ``square_root`` is True
     then calculates root mean squared percentage error (RMSPE). If ``symmetric``
@@ -30,6 +30,36 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     There is no limit on how large the error can be, particularly when ``y_true``
     values are close to zero. In such cases the function returns a large value
     instead of ``inf``.
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`,
+    at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the Mean Squared Percentage Error,
+    :math:`\frac{1}{n} \sum_{i=1}^n \left(\frac{y_i-\widehat{y}_i}{y_i}\right)^2`.
+    (the time indices are not used)
+
+    If ``relative_to="y_pred"``, the denominator :math:`y_i` is replaced by
+    :math:`\widehat{y}_i`. If ``symmetric`` is True, the denominator is
+    :math:`\frac{|y_i| + |\widehat{y}_i|}{2}` instead, giving sMSPE.
+
+    If ``square_root`` is True, the square root of the above is returned,
+    i.e., RMSPE or sRMSPE.
+
+    To avoid division by zero, any denominator above is replaced by ``eps``
+    if its absolute value is smaller than ``eps``; the value of ``eps`` defaults to
+    ``np.finfo(np.float64).eps`` if not specified.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the squared percentage error at that time index,
+    :math:`\left(\frac{y_i - \widehat{y}_i}{y_i}\right)^2`,
+    with the denominator replaced as above if ``relative_to="y_pred"``
+    or ``symmetric`` is True, for all time indices :math:`t_1, \dots, t_n`
+    in the input. If ``square_root`` is True, jackknife pseudo-values of RMSPE
+    are returned instead.
 
     Parameters
     ----------
