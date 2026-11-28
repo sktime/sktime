@@ -1,9 +1,11 @@
 """Regression tests for the LagLlama forecaster."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
-from sktime.datasets import load_airline
+from sktime.datasets import Longley, load_airline
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.lagllama import LagLlamaForecaster
 from sktime.tests.test_switch import run_test_for_class
 
@@ -58,3 +60,62 @@ def test_lagllama_airline_predictions_match_source_reference(
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.parametrize(
+    "inferred_freq, expected",
+    [
+        ("YS-JAN", "Y"),
+        ("AS-JAN", "Y"),
+        ("QS-JAN", "Q"),
+        ("QE-JAN", "Q-JAN"),
+        ("QE-FEB", "Q-FEB"),
+        ("QE-DEC", "Q"),
+        ("YE-JAN", "Y-JAN"),
+        ("AE-JAN", "Y-JAN"),
+        ("YE-DEC", "Y"),
+        ("AE-DEC", "Y"),
+        ("YS-APR", "Y-MAR"),
+        ("QS-FEB", "Q-JAN"),
+        ("ME", "M"),
+        ("W-SUN", "W-SUN"),
+        ("Q-DEC", "Q-DEC"),
+    ],
+)
+def test_lagllama_infer_freq_anchored_aliases(inferred_freq, expected, monkeypatch):
+    """Map inferred anchored date frequencies to valid period frequencies."""
+    monkeypatch.setattr(pd, "infer_freq", lambda index: inferred_freq)
+    forecaster = LagLlamaForecaster()
+    # Use DatetimeIndex with freq=None so infer_freq falls back to pd.infer_freq
+    idx = pd.DatetimeIndex(["2000-01-01", "2000-01-02", "2000-01-03"])
+
+    assert forecaster.infer_freq(idx) == expected
+
+
+def test_lagllama_infer_freq_longley_datetime_index():
+    """Longley's yearly DatetimeIndex converts to a GluonTS-compatible period."""
+    df = Longley().load("y").to_timestamp().to_frame()
+    forecaster = LagLlamaForecaster()
+
+    freq = forecaster.infer_freq(df.index)
+
+    assert freq == "Y"
+    df.to_period(freq=freq)
+
+
+@pytest.mark.parametrize("freq, expected", [("QE-DEC", "Q"), ("ME", "M")])
+def test_lagllama_infer_freq_and_extend_df(freq, expected):
+    """infer_freq returns period aliases while _extend_df extends DatetimeIndex."""
+    df = pd.DataFrame(
+        {"y": range(12)},
+        index=pd.date_range("2000-01-01", periods=12, freq=freq),
+    )
+    forecaster = LagLlamaForecaster()
+    forecaster._cutoff = pd.DatetimeIndex([df.index[-1]])
+
+    inferred = forecaster.infer_freq(df.index)
+    assert inferred == expected
+    df.to_period(freq=inferred)
+
+    extended = forecaster._extend_df(df, ForecastingHorizon([1, 2, 3]))
+    assert len(extended) == len(df) + 3
