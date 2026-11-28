@@ -737,7 +737,10 @@ class _HeterogenousMetaEstimator:
     def _sk_visual_block_(self):
         steps = getattr(self, self._steps_attr)
 
-        names, estimators = zip(*steps)
+        if len(steps) == 0:
+            names, estimators = [], []
+        else:
+            names, estimators = zip(*steps)
 
         name_details = [str(est) for est in estimators]
         return _VisualBlock(

@@ -438,3 +438,26 @@ def test_ixtox():
 
     ixtox = IxToX(level=-1)
     assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_empty_transformer_pipeline():
+    """Test that empty TransformerPipeline acts as an identity pass-through.
+
+    Fixes #11759.
+    """
+    pipe = TransformerPipeline(steps=[])
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+
+    pipe.fit(X)
+    Xt = pipe.transform(X)
+    pd.testing.assert_frame_equal(X, Xt)
+
+    X_inv = pipe.inverse_transform(Xt)
+    pd.testing.assert_frame_equal(X, X_inv)
+
+    assert pipe.get_tag("fit_is_empty")
+    assert pipe.get_tag("capability:inverse_transform")
