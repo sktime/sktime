@@ -369,11 +369,20 @@ class CutoffFhSplitter(BaseSplitter):
             if not isinstance(fh, ForecastingHorizon):
                 fh = ForecastingHorizon(fh)
 
-            if fh.freq is None and isinstance(y, pd.DatetimeIndex):
+            if fh.freq is None and isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)):
                 fh.freq = y.freq or y.inferred_freq
 
         def is_date_like(x):
-            return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)
+            return (
+                is_datetime64_any_dtype(x)
+                or isinstance(x, (pd.PeriodDtype, pd.PeriodIndex, pd.Period))
+                or (hasattr(x, "dtype") and isinstance(x.dtype, pd.PeriodDtype))
+                or (
+                    hasattr(x, "__iter__")
+                    and len(x) > 0
+                    and isinstance(x[0], (pd.Period, pd.Timestamp))
+                )
+            )
 
         if is_date_like(y) and not is_date_like(cutoff):
             cutoff = y[cutoff]
