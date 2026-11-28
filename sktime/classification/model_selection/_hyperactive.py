@@ -124,8 +124,8 @@ class TSCOptCV(_DelegatedClassifier):
             - "logger_name": str, default="ray"; name of the logger to use.
             - "mute_warnings": bool, default=False; if True, suppresses warnings
 
-    Example
-    -------
+    Examples
+    --------
     Any available tuning engine from hyperactive can be used, for example:
 
     * grid search - ``from hyperactive.opt import GridSearchSk as GridSearch``

@@ -50,23 +50,48 @@ class ResidualBoostingForecaster(BaseForecaster):
     residual_forecaster : sktime forecaster
         Model trained on the base model's in-sample residuals.
 
-    Example
-    -------
-    >>> from sktime.datasets import load_longley
-    >>> from sktime.forecasting.residual_booster import ResidualBoostingForecaster
-    >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.forecasting.compose import make_reduction
+    Examples
+    --------
+    Adding exogenous capability to a forecaster that ignores ``X``,
+    by fitting an exogenous capable reduction forecaster on its residuals.
+    Future values of ``X`` are required at prediction time, so ``X`` is
+    split together with ``y``:
+
     >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.compose import make_reduction
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.residual_booster import ResidualBoostingForecaster
+    >>> from sktime.split import temporal_train_test_split
     >>> y, X = load_longley()
-    >>> fh = 3
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(
+    ...     y, X, test_size=3
+    ... )
     >>> base = NaiveForecaster(strategy="last")
     >>> resid = make_reduction(
     ...     estimator=LinearRegression(),
     ...     strategy="recursive",
     ...     window_length=3,
     ... )
-    >>> booster = ResidualBoostingForecaster(base, resid).fit(y, X=X, fh=fh)
-    >>> y_pred = booster.predict(fh, X=X)
+    >>> booster = ResidualBoostingForecaster(base, resid)
+    >>> booster.fit(y_train, X=X_train, fh=[1, 2, 3])
+    ResidualBoostingForecaster(...)
+    >>> y_pred = booster.predict(X=X_test)
+
+    Adding probabilistic forecasting capability to a point forecaster,
+    by using a probabilistic forecaster as ``residual_forecaster``.
+    ``TrendForecaster`` does not produce prediction intervals by itself:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> y = load_airline()
+    >>> booster = ResidualBoostingForecaster(
+    ...     base_forecaster=TrendForecaster(),
+    ...     residual_forecaster=NaiveForecaster(strategy="mean"),
+    ... )
+    >>> booster.fit(y, fh=[1, 2, 3])
+    ResidualBoostingForecaster(...)
+    >>> y_pred_int = booster.predict_interval(coverage=0.9)
     """
 
     _tags = {
