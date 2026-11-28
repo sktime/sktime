@@ -782,6 +782,16 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
         multioutput : string "uniform_average" or "raw_values" determines how \
             multioutput results will be treated.
         """
+        if self._coverage is not None:
+            y_pred_coverage = np.unique(np.round(y_pred.columns.get_level_values(1), 7))
+            cov_check = np.round(self._coverage, 7)
+            if not np.isin(cov_check, y_pred_coverage).all():
+                raise ValueError(
+                    "not all coverage values in coverage are available in y_pred"
+                )
+            mask = np.isin(np.round(y_pred.columns.get_level_values(1), 7), cov_check)
+            y_pred = y_pred.iloc[:, mask]
+
         lower = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "lower"].to_numpy()
         upper = y_pred.iloc[:, y_pred.columns.get_level_values(2) == "upper"].to_numpy()
 
@@ -798,7 +808,9 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
         metric_array = upper - lower
 
         out_df = pd.DataFrame(
-            metric_array, columns=pd.MultiIndex.from_product([vars, scores])
+            metric_array,
+            index=y_pred.index,
+            columns=pd.MultiIndex.from_product([vars, scores]),
         )
 
         return out_df

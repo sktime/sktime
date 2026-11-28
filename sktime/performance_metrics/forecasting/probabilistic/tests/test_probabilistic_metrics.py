@@ -352,3 +352,83 @@ def test_empirical_coverage_boundary_equality(y_true_vals, lower_vals, upper_val
         f"Expected coverage 1.0 but got {coverage}. "
         "True values on interval boundaries should be counted as covered."
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_interval_width_coverage_filtering():
+    """Test IntervalWidth filters predictions when coverage parameter is provided."""
+    idx = pd.date_range("2023-01-01", periods=3, freq="D")
+    y_true = pd.Series([10.0, 11.0, 12.0], index=idx, name="y")
+
+    # 50% interval width is (12 - 8) = 4.0
+    # 90% interval width is (15 - 5) = 10.0
+    cols = pd.MultiIndex.from_tuples(
+        [
+            ("y", 0.5, "lower"),
+            ("y", 0.5, "upper"),
+            ("y", 0.9, "lower"),
+            ("y", 0.9, "upper"),
+        ]
+    )
+    y_pred = pd.DataFrame(
+        [
+            [8.0, 12.0, 5.0, 15.0],
+            [8.0, 12.0, 5.0, 15.0],
+            [8.0, 12.0, 5.0, 15.0],
+        ],
+        index=idx,
+        columns=cols,
+    )
+
+    # Specific coverage=0.5 must only compute 50% interval width (4.0)
+    iw_05 = IntervalWidth(coverage=0.5)
+    assert np.isclose(iw_05.evaluate(y_true, y_pred), 4.0)
+
+    # Specific coverage=0.9 must only compute 90% interval width (10.0)
+    iw_09 = IntervalWidth(coverage=0.9)
+    assert np.isclose(iw_09.evaluate(y_true, y_pred), 10.0)
+
+    # Default coverage=None computes across all coverages: (4.0 + 10.0) / 2 = 7.0
+    iw_all = IntervalWidth()
+    assert np.isclose(iw_all.evaluate(y_true, y_pred), 7.0)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_interval_width_preserves_time_index():
+    """Test that IntervalWidth.evaluate_by_index preserves the input time index."""
+    idx = pd.date_range("2023-01-01", periods=3, freq="D")
+    y_true = pd.Series([10.0, 11.0, 12.0], index=idx, name="y")
+    cols = pd.MultiIndex.from_tuples([("y", 0.5, "lower"), ("y", 0.5, "upper")])
+    y_pred = pd.DataFrame(
+        [[8.0, 12.0], [8.0, 12.0], [8.0, 12.0]], index=idx, columns=cols
+    )
+
+    iw = IntervalWidth()
+    res_by_idx = iw.evaluate_by_index(y_true, y_pred)
+
+    assert isinstance(res_by_idx.index, pd.DatetimeIndex)
+    pd.testing.assert_index_equal(res_by_idx.index, idx)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_interval_width_missing_coverage_raises_error():
+    """Test that requesting a coverage not present in y_pred raises a ValueError."""
+    idx = pd.date_range("2023-01-01", periods=2, freq="D")
+    y_true = pd.Series([10.0, 11.0], index=idx, name="y")
+    cols = pd.MultiIndex.from_tuples([("y", 0.5, "lower"), ("y", 0.5, "upper")])
+    y_pred = pd.DataFrame([[8.0, 12.0], [8.0, 12.0]], index=idx, columns=cols)
+
+    iw = IntervalWidth(coverage=0.9)
+    with pytest.raises(
+        ValueError, match="not all coverage values in coverage are available in y_pred"
+    ):
+        iw.evaluate(y_true, y_pred)
