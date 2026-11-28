@@ -98,6 +98,28 @@ def test_results(n_instances, n_timepoints, n_intervals):
 
 
 @pytest.mark.skipif(
+    not run_test_for_class(RandomIntervalFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_numpy3d_inner_mtype():
+    """Regression: X_inner_mtype is numpy3D (no nested_univ), equal-length panels work."""
+    X, _ = make_classification_problem(
+        n_instances=4, n_timepoints=16, return_numpy=True
+    )
+    assert X.ndim == 3
+
+    transformer = RandomIntervalFeatureExtractor(
+        n_intervals=2, features=[np.mean], random_state=0
+    )
+    assert transformer.get_tag("X_inner_mtype") == "numpy3D"
+
+    Xt = transformer.fit_transform(X)
+    assert isinstance(Xt, pd.DataFrame)
+    assert Xt.shape[0] == X.shape[0]
+    assert len(transformer.intervals_) == 2
+
+
+@pytest.mark.skipif(
     not run_test_for_class([RandomIntervalFeatureExtractor, RandomIntervalSegmenter]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
