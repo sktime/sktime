@@ -107,7 +107,7 @@ class PAA(BaseTransformer):
             return X.reshape(self.frames, -1).mean(axis=1).T
 
         indices = np.arange(X.shape[0] * self.frames) // self.frames
-        return X[indices.reshape(self.frames, -1)].sum(axis=1) / X.shape[0]
+        return X[indices.reshape(self.frames, -1)].mean(axis=1)
 
     def _transform_frame_size(self, X):
         if self.frame_size > X.shape[0]:
