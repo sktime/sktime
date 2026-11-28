@@ -14,24 +14,71 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
-    """Geometric mean relative squared error (GMRSE).
+    r"""Geometric mean relative squared error (GMRSE).
 
     If ``square_root`` is False then calculates GMRSE and if ``square_root`` is True
     then calculates root geometric mean relative squared error (RGMRSE).
 
+    Output is non-negative floating point. Smaller values are better.
+    The best value is approximately zero, rather than zero.
+
+    Like GMSE, GMRSE is measured in squared units of relative errors. RGMRSE is
+    on the same scale as relative errors. Because GMRSE and RGMRSE square the
+    relative errors rather than taking absolute values, they penalize large
+    relative errors more heavily than GMRAE.
+
+    For a univariate, non-hierarchical sample of true values
+    :math:`y_1, \dots, y_n`,
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`
+    (in :math:`\mathbb{R}`),
+    and benchmark predictions
+    :math:`\widehat{y}_1^{\text{bench}}, \dots, \widehat{y}_n^{\text{bench}}`,
+    at time indices :math:`t_1, \dots, t_n`,
+    the relative error at time index :math:`t_i` is defined as:
+
+    .. math::
+
+        r_i = \frac{y_i - \widehat{y}_i}{y_i - \widehat{y}_i^{\text{bench}}}
+
     In relative error metrics, relative errors are first calculated by
     scaling (dividing) the individual forecast errors by the error calculated
     using a benchmark method at the same index position. If the error of the
-    benchmark method is zero then a large value is returned.
+    benchmark method is zero, a large value is returned.
 
-    GMRSE applies geometric mean squared error (GMSE) to the resulting relative
-    errors. RGMRSE applies root geometric mean squared error (RGMSE) to the
-    resulting relative errors.
+    If ``square_root`` is False, ``evaluate`` or direct call returns the
+    Geometric Mean Relative Squared Error (GMRSE):
+
+    .. math::
+
+        \text{GMRSE} = \left( \prod_{i=1}^n r_i^2 \right)^{1/n}
+        = \exp\left( \frac{1}{n} \sum_{i=1}^n \ln(r_i^2) \right)
+
+    where occurrences of :math:`r_i^2 = 0` are replaced with a small value
+    :math:`\epsilon` to avoid evaluation errors in the geometric mean.
+
+    If ``square_root`` is True, ``evaluate`` or direct call returns the
+    Root Geometric Mean Relative Squared Error (RGMRSE):
+
+    .. math::
+
+        \text{RGMRSE} = \sqrt{\text{GMRSE}} = \left( \prod_{i=1}^n |r_i| \right)^{1/n}
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    jackknife pseudo-samples of the GMRSE (or RGMRSE, if ``square_root`` is True)
+    at that time index, :math:`n * \bar{\varepsilon} - (n-1) * \varepsilon_i`,
+    where :math:`\bar{\varepsilon}` is the metric over all time indices,
+    and :math:`\varepsilon_i` is the metric with the i-th time index removed.
+    Pseudo-samples are not themselves metric values, and can be negative.
 
     Parameters
     ----------
-    square_root : bool, default = False
-        Whether to take the square root of the metric
+    square_root : bool, default=False
+        Whether to take the square root of the metric.
+        If True, returns root geometric mean relative squared error (RGMRSE).
+        If False, returns geometric mean relative squared error (GMRSE).
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
@@ -70,8 +117,8 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
 
     References
     ----------
-    Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
-    forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
+    .. [1] Hyndman, R. J and Koehler, A. B. (2006). "Another look at measures of
+       forecast accuracy", International Journal of Forecasting, Volume 22, Issue 4.
 
     Examples
     --------
