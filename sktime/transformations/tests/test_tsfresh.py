@@ -1,15 +1,19 @@
 """Tests for TSFreshFeatureExtractor."""
 
-__author__ = ["AyushmannSeth", "mloning"]
+__author__ = ["AyushmannSeth", "mloning", "shubham5080"]
 
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.model_selection import train_test_split
 
 from sktime.datasets import load_arrow_head
 from sktime.datatypes import convert
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.tsfresh import TSFreshFeatureExtractor
+from sktime.transformations.tsfresh import (
+    TSFreshFeatureExtractor,
+    TSFreshRelevantFeatureExtractor,
+)
 from sktime.utils._testing.panel import make_classification_problem
 
 
@@ -74,3 +78,30 @@ def test_kind_tsfresh_extractor():
     )
     Xts_custom = ts_custom.fit_transform(X_train)
     assert Xts_custom.shape[1] == len(features_to_calc)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSFreshRelevantFeatureExtractor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_tsfresh_relevant_preserves_instance_index():
+    """Relevant extractor keeps instance index after pd-long migration (#10716)."""
+    X, y = make_classification_problem()
+    # non-default integer labels catch X.index vs column_id mistakes
+    X.index = pd.RangeIndex(start=100, stop=100 + len(X))
+    y = pd.Series(np.asarray(y), index=X.index)
+
+    transformer = TSFreshRelevantFeatureExtractor(
+        default_fc_parameters="minimal",
+        disable_progressbar=True,
+        show_warnings=False,
+        fdr_level=0.5,
+    )
+    assert transformer.get_tag("X_inner_mtype") == "pd-long"
+
+    Xt = transformer.fit_transform(X, y)
+    assert list(Xt.index) == list(X.index)
+
+    Xt2 = transformer.transform(X)
+    assert list(Xt2.index) == list(X.index)
+    assert Xt.shape[0] == X.shape[0]

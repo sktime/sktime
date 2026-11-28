@@ -2,7 +2,13 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
+__author__ = [
+    "AyushmaanSeth",
+    "mloning",
+    "alwinw",
+    "MatthewMiddlehurst",
+    "shubham5080",
+]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from skbase.utils.dependencies import _check_estimator_deps
@@ -15,14 +21,20 @@ class _TSFreshFeatureExtractor(BaseTransformer):
     """Base adapter class for tsfresh transformations."""
 
     _tags = {
-        "authors": ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"],
+        "authors": [
+            "AyushmaanSeth",
+            "mloning",
+            "alwinw",
+            "MatthewMiddlehurst",
+            "shubham5080",
+        ],
         "maintainers": ["AyushmaanSeth"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-long",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,  # is fit empty and can be skipped? Yes = True
         "python_dependencies": ["tsfresh", ["tsfresh>=0.21", "scipy<1.15"]],
@@ -30,7 +42,8 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         # therefore, we need to restrict the version of scipy
         # the dependency tag translates to:
         # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
-        "capability:categorical_in_X": False,
+        # pd-long uses a string kind column; that is structural, not a feature
+        "capability:categorical_in_X": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -250,7 +263,11 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     >>> X_transform2 = ts_custom.fit_transform(X_train) # doctest: +SKIP
     """
 
-    _tags = {"X_inner_mtype": "pd-long"}
+    _tags = {
+        "X_inner_mtype": "pd-long",
+        # pd-long stores variable names in a string kind column
+        "capability:categorical_in_X": True,
+    }
 
     def __init__(
         self,
@@ -287,16 +304,14 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of X must contain pandas.Series
-            Data to transform
+        X : pd.DataFrame
+            Panel in ``pd-long`` format (column_id, column_sort, column_kind, value)
         y : ignored argument for interface compatibility
 
         Returns
         -------
-        Xt : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of Xt contains pandas.Series
-            transformed version of X
+        Xt : pd.DataFrame
+            Extracted features, one row per instance
         """
         # lazy imports to avoid hard dependency
         from tsfresh import extract_features
@@ -474,10 +489,11 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     _tags = {
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "requires_y": True,  # does y need to be passed in fit?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-long",  # align with TSFreshFeatureExtractor (#10716)
         "y_inner_mtype": "pd_Series_Table",
         # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
+        "capability:categorical_in_X": True,
     }
 
     def __init__(
@@ -636,7 +652,36 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         # lazy imports to avoid hard dependency
         from tsfresh.transformers.feature_selector import FeatureSelector
 
-        self.extractor_ = TSFreshFeatureExtractor(
+        self.extractor_ = self._make_extractor()
+
+        self.selector_ = FeatureSelector(
+            n_jobs=self.default_fc_parameters_["n_jobs"],
+            chunksize=self.default_fc_parameters_["chunksize"],
+            ml_task=self.ml_task,
+            **self.default_fs_parameters_,
+        )
+
+        # X is already pd-long; call private _transform to avoid re-coercion
+        Xt = self._extract_features(X)
+        Xt = self.selector_.fit_transform(Xt, y)
+        Xt = Xt.reindex(self._instance_index(X))
+
+        self._is_fitted = True
+
+        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
+            X_out = self._convert_output(Xt, metadata=metadata)
+        else:
+            X_out = Xt
+        return X_out
+
+    @staticmethod
+    def _instance_index(X):
+        """Return instance ids from ``pd-long`` panel ``X`` (column_id order)."""
+        return X[X.columns[0]].drop_duplicates()
+
+    def _make_extractor(self):
+        """Construct the nested ``TSFreshFeatureExtractor`` (fit is empty)."""
+        return TSFreshFeatureExtractor(
             default_fc_parameters=self.default_fc_parameters,
             kind_to_fc_parameters=self.kind_to_fc_parameters,
             chunksize=self.chunksize,
@@ -649,24 +694,12 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             distributor=self.distributor,
         )
 
-        self.selector_ = FeatureSelector(
-            n_jobs=self.default_fc_parameters_["n_jobs"],
-            chunksize=self.default_fc_parameters_["chunksize"],
-            ml_task=self.ml_task,
-            **self.default_fs_parameters_,
-        )
-
-        Xt = self.extractor_.fit_transform(X)
-        Xt = self.selector_.fit_transform(Xt, y)
-        Xt = Xt.reindex(X.index)
-
-        self._is_fitted = True
-
-        if not hasattr(self, "_output_convert") or self._output_convert == "auto":
-            X_out = self._convert_output(Xt, metadata=metadata)
-        else:
-            X_out = Xt
-        return X_out
+    def _extract_features(self, X):
+        """Extract features from ``pd-long`` ``X`` without a second mtype coerce."""
+        # ``TSFreshFeatureExtractor`` is ``fit_is_empty``; skip public fit/transform
+        # so pd-long is not mis-identified and re-converted.
+        self.extractor_._is_fitted = True
+        return self.extractor_._transform(X)
 
     def _fit(self, X, y=None):
         """Fit.
@@ -674,7 +707,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Parameters
         ----------
         X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
+            Panel in ``pd-long`` format (column_id, column_sort, column_kind, value)
         y : pd.Series or np.array
             Target variable
 
@@ -685,18 +718,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         # lazy imports to avoid hard dependency
         from tsfresh.transformers.feature_selector import FeatureSelector
 
-        self.extractor_ = TSFreshFeatureExtractor(
-            default_fc_parameters=self.default_fc_parameters,
-            kind_to_fc_parameters=self.kind_to_fc_parameters,
-            chunksize=self.chunksize,
-            n_jobs=self.n_jobs,
-            show_warnings=self.show_warnings,
-            disable_progressbar=self.disable_progressbar,
-            profiling=self.profiling,
-            profiling_filename=self.profiling_filename,
-            profiling_sorting=self.profiling_sorting,
-            distributor=self.distributor,
-        )
+        self.extractor_ = self._make_extractor()
 
         self.selector_ = FeatureSelector(
             n_jobs=self.default_fc_parameters_["n_jobs"],
@@ -705,7 +727,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
             **self.default_fs_parameters_,
         )
 
-        Xt = self.extractor_.fit_transform(X)
+        Xt = self._extract_features(X)
         self.selector_.fit(Xt, y)
         return self
 
@@ -715,7 +737,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Parameters
         ----------
         X : pd.DataFrame
-            nested pandas DataFrame of shape [n_samples, n_columns]
+            Panel in ``pd-long`` format (column_id, column_sort, column_kind, value)
         y : pd.Series or np.array
             Target variable
 
@@ -724,9 +746,9 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
         Xt : pandas DataFrame
           Transformed pandas DataFrame
         """
-        Xt = self.extractor_.transform(X)
+        Xt = self._extract_features(X)
         Xt = self.selector_.transform(Xt)
-        return Xt.reindex(X.index)
+        return Xt.reindex(self._instance_index(X))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
