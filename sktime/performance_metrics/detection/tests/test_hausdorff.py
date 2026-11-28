@@ -31,3 +31,23 @@ def test_hausdorff():
     # closest locs are 1, 1, 5, 5, 5
     # absolute distance is max(0, 1, 0, 37, 38) = 38
     assert loss2 == 38
+
+def test_hausdorff_empty_inputs():
+    """Test directed Hausdorff distance with empty inputs.
+
+    Regression test for https://github.com/sktime/sktime/issues/11837
+    """
+    import numpy as np
+
+    metric = DirectedHausdorff()
+    y_non_empty = pd.DataFrame({"ilocs": [0, 2, 3]})
+    y_empty = pd.DataFrame({"ilocs": []})
+
+    # empty y_pred should return nan
+    assert np.isnan(metric(y_non_empty, y_empty))
+
+    # empty y_true should return nan
+    assert np.isnan(metric(y_empty, y_non_empty))
+
+    # both empty should return 0.0
+    assert metric(y_empty, y_empty) == 0.0

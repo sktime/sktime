@@ -75,6 +75,11 @@ class DirectedHausdorff(BaseDetectionMetric):
         y_true_locs = y_true_locs.to_numpy()
         y_pred_locs = y_pred_locs.to_numpy()
 
+        if len(y_pred_locs) == 0 and len(y_true_locs) == 0:
+            return 0.0
+        if len(y_pred_locs) == 0 or len(y_true_locs) == 0:
+            return np.nan
+
         y_true_closest = _find_closest_elements(y_pred_locs, y_true_locs)
         y_true_closest = np.array(y_true_closest)
 

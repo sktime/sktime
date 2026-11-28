@@ -31,6 +31,9 @@ def _find_closest_elements(a, b):
     i, j = 0, 0
     n, m = len(a), len(b)
 
+    if n == 0 or m == 0:
+        return []
+
     # List to store the result
     result = []
 
