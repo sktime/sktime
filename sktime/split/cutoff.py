@@ -259,7 +259,8 @@ class CutoffSplitter(BaseSplitter):
         """
         if array_is_int(self.cutoffs):
             return check_cutoffs(self.cutoffs)
-        return np.argwhere(y.index.isin(check_cutoffs(self.cutoffs))).flatten()
+        y_index = self._coerce_to_index(y)
+        return np.argwhere(y_index.isin(check_cutoffs(self.cutoffs))).flatten()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -39,6 +39,21 @@ def test_cutoff_window_splitter(y, cutoffs, fh, window_length):
             CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
 
 
+def test_cutoff_splitter_get_cutoffs_with_index():
+    """Test CutoffSplitter.get_cutoffs with a pandas Index."""
+    idx = pd.date_range("2020-01-01", periods=10, freq="D")
+
+    cv = CutoffSplitter(
+        cutoffs=pd.DatetimeIndex(["2020-01-04", "2020-01-07"]),
+        fh=pd.Timedelta("1D"),
+        window_length=pd.Timedelta("3D"),
+    )
+
+    result = cv.get_cutoffs(idx)
+
+    np.testing.assert_array_equal(result, np.array([3, 6]))
+
+
 @pytest.mark.skipif(
     not run_test_for_class([CutoffFhSplitter, ForecastingHorizon]),
     reason="run test only if softdeps are present and incrementally (if requested)",
