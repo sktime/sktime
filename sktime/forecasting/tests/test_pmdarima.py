@@ -11,6 +11,36 @@ from sktime.tests.test_switch import run_test_for_class
     not run_test_for_class(ARIMA),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_ARIMA_in_sample_after_update():
+    """Updated in-sample predictions retain their values at the requested dates."""
+    import numpy as np
+    import pandas as pd
+    from pmdarima.arima import ARIMA as PmdARIMA
+
+    y = pd.Series(
+        np.random.default_rng(7).normal(size=32),
+        index=pd.period_range("2020-01", periods=32, freq="M"),
+        name="sales",
+    )
+
+    params = {"order": (1, 0, 0), "suppress_warnings": True}
+    model = ARIMA(**params).fit(y.iloc[:24])
+    model.update(y.iloc[24:])
+    result = model.predict([-3, 0])
+
+    reference = PmdARIMA(**params).fit(y.iloc[:24])
+    reference.update(y.iloc[24:])
+    values = reference.predict_in_sample(start=28, end=31)
+    expected = pd.Series(
+        np.asarray(values)[[0, 3]], index=y.index[[28, 31]], name=y.name
+    )
+    pd.testing.assert_series_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ARIMA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_ARIMA_pred_quantiles_insample():
     """Test ARIMA predict_quantiles with in-sample fh.
 
