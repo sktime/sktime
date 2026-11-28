@@ -27,10 +27,10 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _multiton, _MultitonPretrainMixin
 
 
-class TotoForecaster(BaseForecaster):
+class TotoForecaster(_MultitonPretrainMixin, BaseForecaster):
     """Toto foundation model forecaster for zero-shot forecasting.
 
     Direct interface to forecaster from DataDog/toto [1]_.
@@ -170,7 +170,36 @@ class TotoForecaster(BaseForecaster):
 
         self.seed = seed
         self._seed = np.random.randint(0, 2**31) if seed is None else seed
+        self._multiton_key = None
+        self._device = device if device is not None else "cpu"
         super().__init__()
+
+    def _get_multiton_cache_class(self):
+        """Return the Toto cache-entry class."""
+        return _CachedTotoForecaster
+
+    def _get_loading_param_key(self):
+        """Return the Toto loading-param key."""
+        return self._get_toto_key()
+
+    def _get_multiton_cache_kwargs(self):
+        """Return kwargs needed to construct a Toto cache entry."""
+        return {
+            "toto_kwargs": self._get_toto_kwargs(),
+            "device": self._device,
+        }
+
+    def _get_multiton_model_attr(self):
+        """Return the forecaster attribute holding the cached model."""
+        return "forecaster_"
+
+    def _get_multiton_cache_model_attr(self):
+        """Return the cache-entry attribute holding the loaded forecaster."""
+        return "forecaster"
+
+    def _load_model(self):
+        """Return the Toto inference forecaster for mixin detachment."""
+        return self._load_forecaster()
 
     def _get_toto_key(self):
         """Get a unique key for the Toto model based on configuration parameters.
@@ -316,7 +345,7 @@ class TotoForecaster(BaseForecaster):
             return self.forecaster_
 
         forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
+            key=self._get_unique_key(),
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         ).load_from_checkpoint()
@@ -452,11 +481,12 @@ class TotoForecaster(BaseForecaster):
         # _load_forecaster() returns it on all subsequent fit/predict calls.
         lightning_module.model.eval()
         cached = _CachedTotoForecaster(
-            key=self._get_toto_key(),
+            key=self._get_unique_key(),
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         )
-        cached.forecaster = _TotoInference(lightning_module.model)
+        self.forecaster_ = _TotoInference(lightning_module.model)
+        cached.forecaster = self.forecaster_
 
         # Record the device as a picklable pretrained attribute
         self.pretrain_device_ = self._device
@@ -495,7 +525,7 @@ class TotoForecaster(BaseForecaster):
         future_exog = self._build_future_exog(X, prediction_length)
 
         forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
+            key=self._get_unique_key(),
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         ).load_from_checkpoint()
@@ -566,7 +596,7 @@ class TotoForecaster(BaseForecaster):
         future_exog = self._build_future_exog(X, prediction_length)
 
         forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
+            key=self._get_unique_key(),
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         ).load_from_checkpoint()

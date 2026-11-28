@@ -10,10 +10,10 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _multiton, _MultitonPretrainMixin
 
 
-class TimeMoEForecaster(BaseForecaster):
+class TimeMoEForecaster(_MultitonPretrainMixin, BaseForecaster):
     """
     Interface for TimeMOE forecaster.
 
@@ -243,8 +243,29 @@ class TimeMoEForecaster(BaseForecaster):
         self.training_args = training_args
         self.device = device
         self.dtype = dtype
+        self._multiton_key = None
 
         super().__init__()
+
+    def _get_multiton_cache_class(self):
+        """Return the TimeMoE cache-entry class."""
+        return _CachedTimeMoE
+
+    def _get_loading_param_key(self):
+        """Return the TimeMoE loading-param key."""
+        return self._get_unique_timemoe_key()
+
+    def _get_multiton_cache_kwargs(self):
+        """Return kwargs needed to construct a TimeMoE cache entry."""
+        return {
+            "timemoe_kwargs": self._get_timemoe_kwargs(),
+            "use_source_package": self.use_source_package,
+            "config": self._config,
+        }
+
+    def _get_multiton_cache_model_attr(self):
+        """Return the cache-entry model attribute."""
+        return "model"
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values condition on parameters.
@@ -374,7 +395,7 @@ class TimeMoEForecaster(BaseForecaster):
             return self.model_
 
         model = _CachedTimeMoE(
-            key=self._get_unique_timemoe_key(),
+            key=self._get_unique_key(),
             timemoe_kwargs=self._get_timemoe_kwargs(),
             use_source_package=self.use_source_package,
             config=self._config,

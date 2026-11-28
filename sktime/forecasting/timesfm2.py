@@ -27,10 +27,10 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _multiton, _MultitonPretrainMixin
 
 
-class TimesFM2Forecaster(BaseForecaster):
+class TimesFM2Forecaster(_MultitonPretrainMixin, BaseForecaster):
     """TimesFM-2.x forecaster via Hugging Face ``transformers``.
 
     This forecaster wraps TimesFM-2 prediction models [1]_, [2]_ from Hugging
@@ -379,8 +379,40 @@ class TimesFM2Forecaster(BaseForecaster):
         self.compute_loss_func = compute_loss_func
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
+        self._multiton_key = None
 
         super().__init__()
+
+    def _get_multiton_cache_class(self):
+        """Return the TimesFM-2 cache-entry class."""
+        return _CachedTimesFM2
+
+    def _get_loading_param_key(self):
+        """Return the TimesFM-2 loading-param key."""
+        return self._get_unique_key_without_detached()
+
+    def _get_unique_key_without_detached(self):
+        """Build the base TimesFM-2 loading-param key."""
+        key = {
+            "model_path": self.model_path,
+            "config": self.config,
+            "device_map": self.device_map,
+            "dtype": self.dtype,
+            "quantization_config": self.quantization_config,
+            "peft_config": self.peft_config,
+        }
+        return str(sorted(key.items()))
+
+    def _get_multiton_cache_kwargs(self):
+        """Return kwargs needed to construct a TimesFM-2 cache entry."""
+        return {
+            "model_path": self.model_path,
+            "config": self.config,
+            "device_map": self.device_map,
+            "dtype": self.dtype,
+            "quantization_config": self.quantization_config,
+            "peft_config": self.peft_config,
+        }
 
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain forecaster on panel/global data (first batch).
@@ -674,7 +706,7 @@ class TimesFM2Forecaster(BaseForecaster):
 
         return self.model_
 
-    def _get_unique_key(self):
+    def _get_loading_param_key(self):
         """Build cache key for the multiton model loader.
 
         Returns

@@ -128,6 +128,8 @@ class _PretrainMixin:
             a for a in dir(self) if a.endswith("_") and not a.startswith("_")
         }
 
+        self._detach_pretrained_multiton()
+
         if self._state == "new":
             self._pretrain(**kwargs)
         else:
@@ -149,6 +151,15 @@ class _PretrainMixin:
 
         self._state = "pretrained"
         return self
+
+    def _detach_pretrained_multiton(self):
+        """Detach pretrained state from shared cache-backed resources.
+
+        No-op default for estimators without a cache-backed mutating model.
+        Estimators that mutate shared multiton state should override this hook
+        before calling ``_pretrain`` or ``_pretrain_update``.
+        """
+        pass
 
     def get_pretrained_params(self, deep=True):
         """Get pretrained parameters of this estimator.

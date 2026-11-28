@@ -50,9 +50,18 @@ class _PretrainedCloner(BaseCloner):
         if obj.get_config()["clone_config"]:
             new_object.set_config(**obj.get_config())
         new_object._pretrained_attrs = list(obj._pretrained_attrs)
+        reference_attrs = (
+            obj._get_pretrained_reference_attrs()
+            if hasattr(obj, "_get_pretrained_reference_attrs")
+            else ()
+        )
         for attr in obj._pretrained_attrs:
             if hasattr(obj, attr):
-                setattr(new_object, attr, deepcopy(getattr(obj, attr)))
+                value = getattr(obj, attr)
+                if attr in reference_attrs:
+                    setattr(new_object, attr, value)
+                else:
+                    setattr(new_object, attr, deepcopy(value))
 
         new_object._state = "pretrained"
 
