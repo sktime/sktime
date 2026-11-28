@@ -118,3 +118,60 @@ def test_pivot_sp_consistent(sp, index_type, n_timepoints, anchor_side):
     df2_pivot_values = df2_pivot.values.flatten()
     df2_pivot_values = df2_pivot_values[~np.isnan(df2_pivot_values)]
     assert np.all(df_pivot_values[1:] == df2_pivot_values)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+@pytest.mark.parametrize("freq", ["MS", "QS", "YS", "ME", "QE", "YE"])
+@pytest.mark.parametrize("anchor_side", ["start", "end"])
+def test_pivot_sp_start_and_end_anchored_datetime(freq, anchor_side):
+    """Regression: _pivot_sp works for start- and end-anchored DatetimeIndex (#5109)."""
+    from sktime.utils.seasonality import _datetime_index_to_period
+
+    index = pd.date_range("2000-01-01", periods=24, freq=freq)
+    df = pd.DataFrame({"y": np.arange(24, dtype=float)}, index=index)
+
+    # period conversion itself must not raise on MonthBegin / QuarterBegin / YearBegin
+    period_ix = _datetime_index_to_period(index, freq=index.freq)
+    assert isinstance(period_ix, pd.PeriodIndex)
+
+    df_pivot = _pivot_sp(df, sp=4, anchor_side=anchor_side)
+    assert len(df_pivot.columns) == 4
+    assert isinstance(df_pivot.index, pd.DatetimeIndex)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(
+        ["sktime.utils", "sktime.forecasting.naive", "sktime.forecasting.model_selection"]
+    ),
+    reason="Run if forecasting/utils modules have changed.",
+)
+def test_naive_gridsearch_on_month_start_datetime_index():
+    """Regression for #5109: NaiveForecaster + GSCV on MS DatetimeIndex."""
+    from sktime.datasets import load_airline
+    from sktime.forecasting.model_selection import (
+        ForecastingGridSearchCV,
+        SlidingWindowSplitter,
+    )
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.performance_metrics.forecasting import MedianAbsoluteScaledError
+
+    y = load_airline()
+    y.index = y.index.to_timestamp()  # Period[M] -> DatetimeIndex with MonthBegin
+
+    cv = SlidingWindowSplitter(fh=list(range(1, 5)), window_length=36, step_length=6)
+    gscv = ForecastingGridSearchCV(
+        forecaster=NaiveForecaster(),
+        param_grid={"strategy": ["last", "mean"], "sp": [12]},
+        scoring=MedianAbsoluteScaledError(),
+        cv=cv,
+        error_score="raise",
+        backend="None",
+    )
+    gscv.fit(y)
+    assert gscv.best_params_ is not None
+    y_pred = gscv.predict(fh=[1, 2, 3])
+    assert y_pred.shape[0] == 3
+    assert not np.isnan(y_pred.to_numpy()).any()

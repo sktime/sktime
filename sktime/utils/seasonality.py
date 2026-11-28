@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # noqa: D100
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "shubham5080"]
 __all__ = []
 
 from warnings import warn
@@ -13,6 +13,74 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.utils.validation.forecasting import check_sp, check_y
+
+
+def _datetime_index_to_period(index, freq=None):
+    """Convert a DatetimeIndex to PeriodIndex.
+
+    Start-anchored datetime freqs (``MS``, ``QS``, ``YS`` / ``MonthBegin`` etc.)
+    raise when passed as the ``freq=`` object to ``DatetimeIndex.to_period`` on
+    current pandas (``AttributeError: ... _period_dtype_code``). Bare
+    ``to_period()`` succeeds and maps them to the matching period freq when the
+    index already has a frequency. End-anchored freqs (``ME``, ``QE``, ``YE``)
+    work with either path.
+    """
+    if not isinstance(index, pd.DatetimeIndex):
+        return index
+
+    # Prefer bare conversion when the index already carries a frequency —
+    # this is the reliable path for start-anchored offsets.
+    if index.freq is not None:
+        try:
+            return index.to_period()
+        except (AttributeError, TypeError, ValueError):
+            pass
+
+    # Index may have lost ``freq`` after pivoting; try the provided freq next.
+    if freq is not None:
+        try:
+            return index.to_period(freq=freq)
+        except (AttributeError, TypeError, ValueError):
+            pass
+        # Map start-anchored aliases (MS/QS/YS) to period aliases (M/Q/Y).
+        freqstr = getattr(freq, "freqstr", None) or (freq if isinstance(freq, str) else None)
+        if freqstr is not None:
+            alias_map = {
+                "MS": "M",
+                "ME": "M",
+                "QS": "Q",
+                "QE": "Q",
+                "YS": "Y",
+                "YE": "Y",
+            }
+            # Strip anchoring suffixes like QS-JAN -> Q
+            base = freqstr.split("-")[0]
+            mapped = alias_map.get(base, alias_map.get(freqstr))
+            for candidate in (mapped, freqstr, base):
+                if candidate is None:
+                    continue
+                try:
+                    return index.to_period(freq=candidate)
+                except (AttributeError, TypeError, ValueError):
+                    continue
+
+    return index.to_period()
+
+
+def _period_index_to_timestamp(period_index, freq=None, tz=None):
+    """Convert PeriodIndex back to DatetimeIndex.
+
+    Start-anchored datetime freqs (``MonthBegin`` / ``MS``, etc.) are not valid
+    period frequencies for ``PeriodIndex.to_timestamp(freq=...)``. Fall back to
+    ``how="start"`` so month-/quarter-/year-start anchors are preserved.
+    """
+    try:
+        out = period_index.to_timestamp(freq=freq)
+    except (AttributeError, TypeError, ValueError):
+        out = period_index.to_timestamp(how="start")
+    if tz is not None:
+        out = out.tz_localize(tz)
+    return out
 
 
 def autocorrelation_seasonality_test(y, sp):
@@ -116,7 +184,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     df, was_datetime = _make_period_index_df(df, freq)
 
     if isinstance(anchor.index, pd.DatetimeIndex):
-        aix = anchor.index.to_period(freq=freq)
+        aix = _datetime_index_to_period(anchor.index, freq=freq)
     else:
         aix = anchor.index
     aix_int = aix.astype("int64")
@@ -159,9 +227,9 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     df_pivot.index = pivot_ix
 
     if was_datetime:
-        df_pivot.index = df_pivot.index.to_timestamp(
-            freq=anchor.index.freq
-        ).tz_localize(anchor.index.tz)
+        df_pivot.index = _period_index_to_timestamp(
+            df_pivot.index, freq=anchor.index.freq, tz=anchor.index.tz
+        )
 
     df_pivot.columns = df_pivot.columns.droplevel(0)
 
@@ -171,7 +239,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
 def _make_period_index_df(df, freq):
     if isinstance(df.index, pd.DatetimeIndex):
         df = df.copy()
-        df.index = df.index.to_period(freq=freq)
+        df.index = _datetime_index_to_period(df.index, freq=freq)
         was_datetime = True
     else:
         was_datetime = False
@@ -222,7 +290,7 @@ def _unpivot_sp(df, template=None):
 
     offset = df_melt[df_melt.columns[0]]
     if isinstance(df_melt.index, pd.DatetimeIndex):
-        a = df_melt.index.to_period(freq=freq)
+        a = _datetime_index_to_period(df_melt.index, freq=freq)
         res = a + offset // period_len_int
         df_melt.index = res
         was_datetime = True
@@ -234,7 +302,10 @@ def _unpivot_sp(df, template=None):
     df_melt = df_melt.dropna()
 
     if was_datetime:
-        df_melt.index = df_melt.index.to_timestamp(template.index.freq).tz_localize(tz)
+        tmpl_freq = template.index.freq if template is not None else freq
+        df_melt.index = _period_index_to_timestamp(
+            df_melt.index, freq=tmpl_freq, tz=tz
+        )
 
     if template is not None:
         if hasattr(template, "columns"):
