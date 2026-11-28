@@ -66,6 +66,36 @@ def compare_predictions_against_statsmodels(
     not run_test_for_class(DynamicFactor),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_univariate_prediction_interval():
+    """Both bounds of a univariate interval belong to the original target."""
+    import numpy as np
+    import pandas as pd
+    from statsmodels.tsa.statespace.dynamic_factor import (
+        DynamicFactor as StatsmodelsDynamicFactor,
+    )
+
+    y = pd.DataFrame(
+        {"sales": np.random.default_rng(7).normal(size=64)},
+        index=pd.period_range("2020-01", periods=64, freq="M"),
+    )
+    params = {"k_factors": 0, "factor_order": 0, "error_order": 1}
+    result = DynamicFactor(**params).fit(y).predict_interval([2, 5], coverage=COVERAGES)
+
+    # statsmodels needs two series, so fit it with the same duplicate target.
+    model = StatsmodelsDynamicFactor(y.assign(sales__1=y["sales"]), **params)
+    forecast = model.fit(disp=False).get_forecast(steps=5)
+    for coverage in COVERAGES:
+        bounds = forecast.conf_int(alpha=1 - coverage).iloc[[1, 4]]
+        expected = bounds[["lower sales", "upper sales"]].set_axis(
+            ["lower", "upper"], axis=1
+        )
+        assert_frame_equal(result["sales", coverage], expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DynamicFactor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_DynamicFactor_without_exogenous_variables():
     """Test ``DynamicFactor`` in absence of exogenous variables."""
     from statsmodels.tsa.statespace.dynamic_factor import (
