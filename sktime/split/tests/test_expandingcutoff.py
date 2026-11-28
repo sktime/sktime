@@ -301,3 +301,28 @@ def test_expandingcutoff_step_length():
         for step_length in step_lengths:
             cv = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh, step_length=step_length)
             list(cv.split_series(y))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingCutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "fh_int, fh_list", [(1, [1]), (3, [1, 2, 3]), (np.int64(2), [1, 2])]
+)
+def test_expandingcutoff_fh_int(fh_int, fh_list):
+    """Test that int fh=k gives the same splits as fh=[1, ..., k]."""
+    y = _make_series(n_timepoints=10, random_state=42)
+    cutoff = y.index[3]
+    cv_int = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh_int, step_length=1)
+    cv_list = ExpandingCutoffSplitter(cutoff=cutoff, fh=fh_list, step_length=1)
+
+    np.testing.assert_array_equal(cv_int.get_cutoffs(y), cv_list.get_cutoffs(y))
+    assert cv_int.get_n_splits(y) == cv_list.get_n_splits(y)
+
+    splits_int = list(cv_int.split(y))
+    splits_list = list(cv_list.split(y))
+    assert len(splits_int) == len(splits_list)
+    for (train_a, test_a), (train_b, test_b) in zip(splits_int, splits_list):
+        np.testing.assert_array_equal(train_a, train_b)
+        np.testing.assert_array_equal(test_a, test_b)

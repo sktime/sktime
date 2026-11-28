@@ -665,6 +665,14 @@ Domain agnostic foundation models
 
     CiscoTSMForecaster
 
+.. currentmodule:: sktime.forecasting.ci_proto
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CIProtoForecaster
+
 .. currentmodule:: sktime.forecasting.falcon_tst
 
 .. autosummary::
@@ -785,6 +793,14 @@ Domain agnostic foundation models
 
     TafsutForecaster
 
+.. currentmodule:: sktime.forecasting.tempo
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TEMPOForecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
@@ -848,6 +864,14 @@ Domain agnostic foundation models
     :template: class.rst
 
     TimesFM3Forecaster
+
+.. currentmodule:: sktime.forecasting.timestral
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimestralForecaster
 
 .. currentmodule:: sktime.forecasting.ttm
 
