@@ -12,27 +12,63 @@ from sktime.performance_metrics.forecasting._functions import mean_asymmetric_er
 
 
 class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
-    """Calculate mean of asymmetric loss function.
+    r"""Calculate mean of asymmetric loss function.
 
     Output is non-negative floating point. The best value is 0.0.
 
     Error values that are less than the asymmetric threshold have
     ``left_error_function`` applied. Error values greater than or equal to
-    asymmetric threshold  have ``right_error_function`` applied.
+    asymmetric threshold have ``right_error_function`` applied.
+
+    For a univariate, non-hierarchical sample
+    of true values :math:`y_1, \dots, y_n` and
+    predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n`
+    (in :math:`\mathbb{R}`), at time indices :math:`t_1, \dots, t_n`,
+    ``evaluate`` or call returns the mean asymmetric loss:
+
+    .. math::
+
+      \frac{1}{n}\sum_{i=1}^n L(e_i)
+
+    where :math:`e_i = y_i - \widehat{y}_i` is the error at time index :math:`t_i`,
+    and :math:`L` is the piecewise loss
+
+    .. math::
+
+      L(e) =
+      \begin{cases}
+      p_l \cdot f_l(e) & \text{if } e < \tau, \\
+      p_r \cdot f_r(e) & \text{if } e \geq \tau.
+      \end{cases}
+
+    Here, :math:`\tau` is ``asymmetric_threshold``,
+    :math:`p_l` and :math:`p_r` are ``left_error_penalty`` and
+    ``right_error_penalty``, and :math:`f_l` and :math:`f_r` are the functions
+    selected by ``left_error_function`` and ``right_error_function``,
+    each either :math:`f(e) = e^2` (``'squared'``) or :math:`f(e) = |e|`
+    (``'absolute'``). The time indices are not used.
+
+    ``multioutput`` and ``multilevel`` control averaging across variables and
+    hierarchy indices, see below.
+
+    ``evaluate_by_index`` returns, at a time index :math:`t_i`,
+    the asymmetric loss at that time index, :math:`L(e_i)`,
+    for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Many forecasting loss functions (like those discussed in [1]_) assume that
     over- and under- predictions should receive an equal penalty. However, this
-    may not align with the actual cost faced by users' of the forecasts.
+    may not align with the actual cost faced by users of the forecasts.
     Asymmetric loss functions are useful when the cost of under- and over-
     prediction are not the same.
 
-    Setting ``asymmetric_threshold`` to zero, ``left_error_function`` to 'squared'
-    and ``right_error_function`` to 'absolute` results in a greater penalty
-    applied to over-predictions (y_true - y_pred < 0). The opposite is true
-    for ``left_error_function`` set to 'absolute' and ``right_error_function``
-    set to 'squared`.
+    Setting ``asymmetric_threshold`` to zero, ``left_error_function`` to
+    ``'squared'`` and ``right_error_function`` to ``'absolute'`` results in a
+    greater penalty applied to over-predictions (:math:`e_i < 0`, i.e.,
+    ``y_true - y_pred < 0``), for errors of magnitude larger than one.
+    The opposite is true for ``left_error_function`` set to ``'absolute'``
+    and ``right_error_function`` set to ``'squared'``.
 
-    The left_error_penalty and right_error_penalty can be used to add differing
+    ``left_error_penalty`` and ``right_error_penalty`` can be used to add differing
     multiplicative penalties to over-predictions and under-predictions.
 
     Parameters
@@ -110,8 +146,9 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     >>> asymmetric_error = MeanAsymmetricError()
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     np.float64(0.5)
-    >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
-    right_error_function='squared')
+    >>> asymmetric_error = MeanAsymmetricError(
+    ...     left_error_function='absolute', right_error_function='squared'
+    ... )
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     np.float64(0.4625)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
@@ -119,8 +156,9 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
     >>> asymmetric_error = MeanAsymmetricError()
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     np.float64(0.75)
-    >>> asymmetric_error = MeanAsymmetricError(left_error_function='absolute', \
-    right_error_function='squared')
+    >>> asymmetric_error = MeanAsymmetricError(
+    ...     left_error_function='absolute', right_error_function='squared'
+    ... )
     >>> asymmetric_error(y_true, y_pred)  # doctest: +SKIP
     np.float64(0.7083333333333334)
     >>> asymmetric_error = MeanAsymmetricError(multioutput='raw_values')
