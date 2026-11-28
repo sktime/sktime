@@ -6,6 +6,7 @@ __all__ = ["PluginParamsForecaster"]
 
 from inspect import signature
 
+from sktime.datatypes import update_data
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.param_est.plugin._common import _resolve_param_map
 
@@ -204,6 +205,11 @@ class PluginParamsForecaster(_DelegatedForecaster):
 
         # fit the forecaster, with the fitted parameter values
         forecaster.fit(y=y, fh=fh, X=X)
+
+        # the base class does not store data, so we keep it if we need to refit
+        if self.update_params:
+            self._cur_y = y
+            self._cur_X = X
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -252,18 +258,26 @@ class PluginParamsForecaster(_DelegatedForecaster):
             return self
         # else, we repeat fit on the entire data
         else:
-            # fit the parameter estimator to y
+            # pool the new data with the data seen so far
+            self._cur_y = update_data(self._cur_y, y)
+            if X is not None:
+                if self._cur_X is None:
+                    self._cur_X = X
+                else:
+                    self._cur_X = update_data(self._cur_X, X)
+
+            # update the parameter estimator
             param_est = self.param_est_
             param_est.update(y)
             fitted_params = param_est.get_fitted_params()
 
             # obtain the values of fitted params, and set forecaster to those
-            param_map = self.param_map_
-            new_params = {x: fitted_params[x] for x in param_map}
+            # param_map_ maps names in param_est to names in forecaster
+            new_params = {k: fitted_params[v] for k, v in self.param_map_.items()}
             forecaster.set_params(**new_params)
 
             # now fit forecaster on entire data
-            forecaster.fit(y=self._y, X=self._X)
+            forecaster.fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
         return self
 
     @classmethod
@@ -304,7 +318,14 @@ class PluginParamsForecaster(_DelegatedForecaster):
             "param_est": FixedParams({"sp": 4}),
             "params": "sp",
         }
-        params = [params1, params_fixed]
+        # renaming dict with update_params=True, soft dependency free
+        params_update = {
+            "forecaster": NaiveForecaster(),
+            "param_est": FixedParams({"foo": 4}),
+            "params": {"sp": "foo"},
+            "update_params": True,
+        }
+        params = [params1, params_fixed, params_update]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
